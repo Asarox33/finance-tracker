@@ -1,6 +1,49 @@
-.gradle/
+# Tout dossier build, out, bin, gradle cache, cible partout dans le projet
 build/
-node_modules/
-.env
+out/
+bin/
+.gradle/
+
+# Fichiers classes Java/Kotlin compilés
+*.class
+
+# Archives et artefacts
+*.jar
+!gradle-wrapper.jar
+*.war
+*.ear
+
+# Cache et fichiers générés Kotlin
+.kotlin/
+
+# Logs
+*.log
+
+# Dossiers et fichiers d’IDE et d’outils de développement
+idea/
 .idea/
+*.iml
+*.ipr
+*.iws
+vscode/
+.vscode/
+
+# Fichiers temporaires et swap
+*.swp
+*.swo
+
+# Tests de couverture
+jacoco.exec
+
+# Fichiers générés par Flyway
+flyway/
+flyway/sql/generated_*.sql
+
+# Fichiers d’environnement locaux (sauf exemple)
+.env
+.env.*
+!.env.example
+
+# Fichiers système
 .DS_Store
+Thumbs.db
