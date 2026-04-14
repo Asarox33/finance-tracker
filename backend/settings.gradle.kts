@@ -2,5 +2,6 @@ rootProject.name = "finance-tracker"
 
 include(
     "app",
-    "shared"
+    "shared",
+    "auth"
 )

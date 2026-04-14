@@ -1,0 +1,29 @@
+package com.finance.auth.infrastructure
+
+import com.finance.auth.application.TokenIssuer
+import com.finance.auth.domain.AuthToken
+import io.jsonwebtoken.Jwts
+import io.jsonwebtoken.security.Keys
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.stereotype.Component
+import java.util.Date
+import java.util.UUID
+
+@Component
+class TokenService(
+    @Value("\${auth.jwt.secret}") private val secret: String,
+    @Value("\${auth.jwt.expiration-ms}") private val expirationMs: Long
+) : TokenIssuer {
+
+    private val key by lazy { Keys.hmacShaKeyFor(secret.toByteArray()) }
+
+    override fun issue(userId: UUID): AuthToken {
+        val token = Jwts.builder()
+            .subject(userId.toString())
+            .issuedAt(Date())
+            .expiration(Date(System.currentTimeMillis() + expirationMs))
+            .signWith(key)
+            .compact()
+        return AuthToken(value = token, userId = userId)
+    }
+}
