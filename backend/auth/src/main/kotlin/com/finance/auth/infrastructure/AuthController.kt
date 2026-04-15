@@ -1,5 +1,7 @@
 package com.finance.auth.infrastructure
 
+import com.fasterxml.jackson.annotation.JsonCreator
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.finance.auth.application.AuthenticateUser
 import com.finance.auth.application.RegisterUser
 import jakarta.validation.Valid
@@ -19,16 +21,16 @@ class AuthController(
     private val registerUser: RegisterUser,
     private val authenticateUser: AuthenticateUser
 ) {
-    data class RegisterRequest(
-        @field:Email @field:NotBlank val email: String,
-        @field:NotBlank val password: String
+    data class RegisterRequest @JsonCreator constructor(
+        @JsonProperty("email") @field:Email @field:NotBlank val email: String,
+        @JsonProperty("password") @field:NotBlank val password: String
     )
 
     data class RegisterResponse(val userId: UUID)
 
-    data class LoginRequest(
-        @field:NotBlank val email: String,
-        @field:NotBlank val password: String
+    data class LoginRequest @JsonCreator constructor(
+        @JsonProperty("email") @field:NotBlank val email: String,
+        @JsonProperty("password") @field:NotBlank val password: String
     )
 
     data class LoginResponse(val token: String)

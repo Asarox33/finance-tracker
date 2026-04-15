@@ -21,7 +21,16 @@ management:
   endpoints:
     web:
       exposure:
-        include: health
+        include: health, info
   endpoint:
     health:
       show-details: never
+  info:
+    env:
+      enabled: true
+
+info:
+  app:
+    name: finance-tracker
+    version: 0.0.1
+    description: Personal finance tracking system

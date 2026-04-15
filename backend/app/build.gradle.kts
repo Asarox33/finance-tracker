@@ -11,15 +11,20 @@ kotlin {
 
 dependencies {
     implementation(project(":shared"))
+    implementation(project(":auth"))
 
     implementation(libs.spring.boot.starter.web)
     implementation(libs.spring.boot.starter.data.jpa)
     implementation(libs.spring.boot.starter.security)
     implementation(libs.spring.boot.starter.validation)
     implementation(libs.spring.boot.starter.actuator)
+    implementation(libs.springdoc.openapi)
     implementation(libs.postgresql)
     implementation(libs.flyway.core)
     implementation(libs.flyway.postgresql)
+    implementation(libs.jackson.kotlin)
+
+    implementation(kotlin("reflect"))
 
     testImplementation(libs.spring.boot.starter.test)
 }
