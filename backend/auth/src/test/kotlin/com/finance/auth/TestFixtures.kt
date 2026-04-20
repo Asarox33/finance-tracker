@@ -22,11 +22,19 @@ class InMemoryUserRepository : UserRepository {
 
 class InMemoryPasswordResetTokenRepository : PasswordResetTokenRepository {
     val store = mutableMapOf<UUID, PasswordResetToken>()
-    override fun save(token: PasswordResetToken): PasswordResetToken { store[token.id] = token; return token }
+
+    override fun save(token: PasswordResetToken): PasswordResetToken {
+        store[token.id] = token
+        return token
+    }
+
     override fun findByUserIdAndOtpHash(userId: UUID, rawOtp: String): PasswordResetToken? =
         store.values.firstOrNull { it.userId == userId && it.otpHash == rawOtp && !it.used }
+
     override fun invalidateAllForUser(userId: UUID) {
-        store.entries.filter { it.value.userId == userId }.forEach { store[it.key] = it.value.copy(used = true) }
+        store.entries
+            .filter { it.value.userId == userId }
+            .forEach { store[it.key] = it.value.copy(used = true) }
     }
 }
 
@@ -55,3 +63,5 @@ class NoOpCreateUserProfilePort : CreateUserProfilePort {
         return CreateUserProfilePort.Result(userId = command.id)
     }
 }
+
+const val VALID_PASSWORD = "Password1!securepass"

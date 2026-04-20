@@ -3,6 +3,7 @@ package com.finance.auth.application
 import com.finance.auth.FixedTokenIssuer
 import com.finance.auth.InMemoryUserRepository
 import com.finance.auth.PlainPasswordEncoder
+import com.finance.auth.VALID_PASSWORD
 import com.finance.auth.domain.User
 import com.finance.shared.error.AuthenticationFailedException
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -20,20 +21,20 @@ class AuthenticateUserTest {
 
     @Test
     fun authenticatesValidCredentials() {
-        repository.save(User(UUID.randomUUID(), "user@example.com", "secret", true))
-        assertNotNull(useCase.execute(AuthenticateUser.Command("user@example.com", "secret")))
+        repository.save(User(UUID.randomUUID(), "user@example.com", VALID_PASSWORD, true))
+        assertNotNull(useCase.execute(AuthenticateUser.Command("user@example.com", VALID_PASSWORD)))
     }
 
     @Test
     fun rejectsUnknownEmail() {
         assertThrows(AuthenticationFailedException::class.java) {
-            useCase.execute(AuthenticateUser.Command("ghost@example.com", "secret"))
+            useCase.execute(AuthenticateUser.Command("ghost@example.com", VALID_PASSWORD))
         }
     }
 
     @Test
     fun rejectsWrongPassword() {
-        repository.save(User(UUID.randomUUID(), "user@example.com", "secret", true))
+        repository.save(User(UUID.randomUUID(), "user@example.com", VALID_PASSWORD, true))
         assertThrows(AuthenticationFailedException::class.java) {
             useCase.execute(AuthenticateUser.Command("user@example.com", "wrong"))
         }
@@ -42,28 +43,28 @@ class AuthenticateUserTest {
     @Test
     fun incrementsFailedAttemptsOnWrongPassword() {
         val id = UUID.randomUUID()
-        repository.save(User(id, "user@example.com", "secret", true))
+        repository.save(User(id, "user@example.com", VALID_PASSWORD, true))
         runCatching { useCase.execute(AuthenticateUser.Command("user@example.com", "wrong")) }
-        val updated = repository.findById(id)!!
-        assert(updated.failedLoginAttempts == 1)
+        assertEquals(1, repository.findById(id)!!.failedLoginAttempts)
     }
 
     @Test
     fun locksAccountAfterThreeFailedAttempts() {
         val id = UUID.randomUUID()
-        repository.save(User(id, "user@example.com", "secret", true))
+        repository.save(User(id, "user@example.com", VALID_PASSWORD, true))
         repeat(3) { runCatching { useCase.execute(AuthenticateUser.Command("user@example.com", "wrong")) } }
-        val locked = repository.findById(id)!!
-        assert(!locked.active)
+        assert(!repository.findById(id)!!.active)
     }
 
     @Test
     fun throwsAccountLockedWhenCooldownNotPassed() {
         val now = Instant.now()
-        val locked = User(UUID.randomUUID(), "user@example.com", "secret", false, 3, now)
-        repository.save(locked)
+        repository.save(User(UUID.randomUUID(), "user@example.com", VALID_PASSWORD, false, 3, now))
         assertThrows(AccountLockedException::class.java) {
-            useCase.execute(AuthenticateUser.Command("user@example.com", "secret"))
+            useCase.execute(AuthenticateUser.Command("user@example.com", VALID_PASSWORD))
         }
     }
 }
+
+private fun assertEquals(expected: Int, actual: Int) =
+    org.junit.jupiter.api.Assertions.assertEquals(expected, actual)

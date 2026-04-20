@@ -3,6 +3,7 @@ package com.finance.auth.application
 import com.finance.auth.InMemoryPasswordResetTokenRepository
 import com.finance.auth.InMemoryUserRepository
 import com.finance.auth.PlainPasswordEncoder
+import com.finance.auth.VALID_PASSWORD
 import com.finance.auth.domain.PasswordResetToken
 import com.finance.auth.domain.User
 import com.finance.shared.error.BusinessRuleViolationException
@@ -24,18 +25,18 @@ class ResetPasswordTest {
     @Test
     fun resetsPasswordWithValidOtp() {
         val userId = UUID.randomUUID()
-        userRepository.save(User(userId, "user@example.com", "old", true))
+        userRepository.save(User(userId, "user@example.com", "oldhash", true))
         tokenRepository.save(validToken(userId, "123456"))
-        useCase.execute(ResetPassword.Command(userId, "123456", "newpass"))
-        assertEquals("newpass", userRepository.findById(userId)!!.passwordHash)
+        useCase.execute(ResetPassword.Command(userId, "123456", VALID_PASSWORD))
+        assertEquals(VALID_PASSWORD, userRepository.findById(userId)!!.passwordHash)
     }
 
     @Test
     fun reactivatesLockedAccountOnReset() {
         val userId = UUID.randomUUID()
-        userRepository.save(User(userId, "user@example.com", "old", false, 3))
+        userRepository.save(User(userId, "user@example.com", "oldhash", false, 3))
         tokenRepository.save(validToken(userId, "123456"))
-        useCase.execute(ResetPassword.Command(userId, "123456", "newpass"))
+        useCase.execute(ResetPassword.Command(userId, "123456", VALID_PASSWORD))
         val user = userRepository.findById(userId)!!
         assertTrue(user.active)
         assertEquals(0, user.failedLoginAttempts)
@@ -44,30 +45,40 @@ class ResetPasswordTest {
     @Test
     fun rejectsExpiredOtp() {
         val userId = UUID.randomUUID()
-        userRepository.save(User(userId, "user@example.com", "old", true))
+        userRepository.save(User(userId, "user@example.com", "oldhash", true))
         tokenRepository.save(expiredToken(userId, "123456"))
         assertThrows(BusinessRuleViolationException::class.java) {
-            useCase.execute(ResetPassword.Command(userId, "123456", "newpass"))
+            useCase.execute(ResetPassword.Command(userId, "123456", VALID_PASSWORD))
         }
     }
 
     @Test
     fun rejectsUsedOtp() {
         val userId = UUID.randomUUID()
-        userRepository.save(User(userId, "user@example.com", "old", true))
+        userRepository.save(User(userId, "user@example.com", "oldhash", true))
         tokenRepository.save(usedToken(userId, "123456"))
         assertThrows(InvalidRequestException::class.java) {
-            useCase.execute(ResetPassword.Command(userId, "123456", "newpass"))
+            useCase.execute(ResetPassword.Command(userId, "123456", VALID_PASSWORD))
         }
     }
 
     @Test
     fun rejectsInvalidOtp() {
         val userId = UUID.randomUUID()
-        userRepository.save(User(userId, "user@example.com", "old", true))
+        userRepository.save(User(userId, "user@example.com", "oldhash", true))
         tokenRepository.save(validToken(userId, "123456"))
         assertThrows(InvalidRequestException::class.java) {
-            useCase.execute(ResetPassword.Command(userId, "wrong", "newpass"))
+            useCase.execute(ResetPassword.Command(userId, "wrong", VALID_PASSWORD))
+        }
+    }
+
+    @Test
+    fun rejectsWeakNewPassword() {
+        val userId = UUID.randomUUID()
+        userRepository.save(User(userId, "user@example.com", "oldhash", true))
+        tokenRepository.save(validToken(userId, "123456"))
+        assertThrows(InvalidRequestException::class.java) {
+            useCase.execute(ResetPassword.Command(userId, "123456", "weak"))
         }
     }
 

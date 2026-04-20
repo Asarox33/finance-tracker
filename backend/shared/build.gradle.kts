@@ -14,5 +14,11 @@ kotlin {
                 // framework-free only
             }
         }
+        val jvmTest by getting {
+            dependencies {
+                implementation(libs.junit.jupiter)
+                runtimeOnly(libs.junit.platform.launcher)
+            }
+        }
     }
 }
