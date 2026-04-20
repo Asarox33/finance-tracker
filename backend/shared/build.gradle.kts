@@ -4,7 +4,7 @@ plugins {
 
 kotlin {
     explicitApi()
-    jvmToolchain(21)
+    jvmToolchain(25)
 
     jvm()
 
@@ -14,7 +14,7 @@ kotlin {
                 // framework-free only
             }
         }
-        val jvmTest by getting {
+        jvmTest {
             dependencies {
                 implementation(libs.junit.jupiter)
                 runtimeOnly(libs.junit.platform.launcher)

@@ -32,9 +32,9 @@ subprojects {
 
         val integrationTest by sourceSets.creating {
             compileClasspath += sourceSets.getByName("main").output +
-                sourceSets.getByName("test").output
+                    sourceSets.getByName("test").output
             runtimeClasspath += sourceSets.getByName("main").output +
-                sourceSets.getByName("test").output
+                    sourceSets.getByName("test").output
         }
 
         configurations[integrationTest.implementationConfigurationName]
@@ -60,6 +60,10 @@ subprojects {
 
         tasks.named("check") {
             dependsOn(integrationTestTask)
+        }
+
+        extensions.configure<org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension> {
+            jvmToolchain(25)
         }
     }
 }
