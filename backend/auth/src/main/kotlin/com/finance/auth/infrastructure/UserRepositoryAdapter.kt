@@ -11,14 +11,23 @@ class UserRepositoryAdapter(
 ) : UserRepository {
 
     override fun save(user: User): User {
-        val entity = JpaUserEntity(
-            id = user.id,
-            email = user.email,
-            passwordHash = user.passwordHash,
-            active = user.active
-        )
-        val saved = jpaUserRepository.save(entity)
-        return saved.toDomain()
+        val entity = jpaUserRepository.findById(user.id).orElse(null)
+            ?.also {
+                it.email = user.email
+                it.passwordHash = user.passwordHash
+                it.active = user.active
+                it.failedLoginAttempts = user.failedLoginAttempts
+                it.lastFailedLoginAt = user.lastFailedLoginAt
+            }
+            ?: JpaUserEntity(
+                id = user.id,
+                email = user.email,
+                passwordHash = user.passwordHash,
+                active = user.active,
+                failedLoginAttempts = user.failedLoginAttempts,
+                lastFailedLoginAt = user.lastFailedLoginAt
+            )
+        return jpaUserRepository.save(entity).toDomain()
     }
 
     override fun findByEmail(email: String): User? =
@@ -35,5 +44,7 @@ private fun JpaUserEntity.toDomain(): User = User(
     id = id,
     email = email,
     passwordHash = passwordHash,
-    active = active
+    active = active,
+    failedLoginAttempts = failedLoginAttempts,
+    lastFailedLoginAt = lastFailedLoginAt
 )

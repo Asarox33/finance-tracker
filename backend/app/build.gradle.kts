@@ -12,6 +12,7 @@ kotlin {
 dependencies {
     implementation(project(":shared"))
     implementation(project(":auth"))
+    implementation(project(":user-profile"))
 
     implementation(libs.spring.boot.starter.web)
     implementation(libs.spring.boot.starter.data.jpa)
@@ -23,6 +24,7 @@ dependencies {
     implementation(libs.flyway.core)
     implementation(libs.flyway.postgresql)
     implementation(libs.jackson.kotlin)
+    implementation(libs.bucket4j.core)
 
     implementation(kotlin("reflect"))
 

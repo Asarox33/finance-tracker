@@ -10,6 +10,7 @@ kotlin {
 
 dependencies {
     implementation(project(":shared"))
+    implementation(project(":user-profile"))
 
     implementation(libs.spring.boot.starter.web)
     implementation(libs.spring.boot.starter.data.jpa)
@@ -19,17 +20,17 @@ dependencies {
     implementation(libs.flyway.core)
     implementation(libs.flyway.postgresql)
     implementation(libs.jjwt.api)
-
     runtimeOnly(libs.jjwt.impl)
     runtimeOnly(libs.jjwt.jackson)
 
     testImplementation(libs.spring.boot.starter.test)
     testImplementation(libs.junit.jupiter)
-
     testRuntimeOnly(libs.junit.platform.launcher)
 
     "integrationTestImplementation"(libs.spring.boot.starter.test)
+    "integrationTestImplementation"(libs.junit.jupiter)
     "integrationTestImplementation"(libs.testcontainers.core)
     "integrationTestImplementation"(libs.testcontainers.postgresql)
     "integrationTestImplementation"(libs.testcontainers.junit)
+    "integrationTestRuntimeOnly"(libs.junit.platform.launcher)
 }

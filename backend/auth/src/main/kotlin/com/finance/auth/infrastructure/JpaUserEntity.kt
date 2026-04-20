@@ -4,20 +4,27 @@ import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.Id
 import jakarta.persistence.Table
+import java.time.Instant
 import java.util.UUID
 
 @Entity
 @Table(name = "users", schema = "auth")
 class JpaUserEntity(
     @Id
-    val id: UUID,
+    var id: UUID,
 
     @Column(nullable = false, unique = true)
-    val email: String,
+    var email: String,
 
     @Column(name = "password_hash", nullable = false)
-    val passwordHash: String,
+    var passwordHash: String,
 
     @Column(nullable = false)
-    val active: Boolean
+    var active: Boolean,
+
+    @Column(name = "failed_login_attempts", nullable = false)
+    var failedLoginAttempts: Int = 0,
+
+    @Column(name = "last_failed_login_at")
+    var lastFailedLoginAt: Instant? = null
 )

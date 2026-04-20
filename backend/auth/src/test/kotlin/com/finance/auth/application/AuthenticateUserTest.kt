@@ -8,6 +8,7 @@ import com.finance.shared.error.AuthenticationFailedException
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
+import java.time.Instant
 import java.util.UUID
 
 class AuthenticateUserTest {
@@ -20,8 +21,7 @@ class AuthenticateUserTest {
     @Test
     fun authenticatesValidCredentials() {
         repository.save(User(UUID.randomUUID(), "user@example.com", "secret", true))
-        val token = useCase.execute(AuthenticateUser.Command("user@example.com", "secret"))
-        assertNotNull(token)
+        assertNotNull(useCase.execute(AuthenticateUser.Command("user@example.com", "secret")))
     }
 
     @Test
@@ -40,9 +40,29 @@ class AuthenticateUserTest {
     }
 
     @Test
-    fun rejectsInactiveUser() {
-        repository.save(User(UUID.randomUUID(), "user@example.com", "secret", false))
-        assertThrows(AuthenticationFailedException::class.java) {
+    fun incrementsFailedAttemptsOnWrongPassword() {
+        val id = UUID.randomUUID()
+        repository.save(User(id, "user@example.com", "secret", true))
+        runCatching { useCase.execute(AuthenticateUser.Command("user@example.com", "wrong")) }
+        val updated = repository.findById(id)!!
+        assert(updated.failedLoginAttempts == 1)
+    }
+
+    @Test
+    fun locksAccountAfterThreeFailedAttempts() {
+        val id = UUID.randomUUID()
+        repository.save(User(id, "user@example.com", "secret", true))
+        repeat(3) { runCatching { useCase.execute(AuthenticateUser.Command("user@example.com", "wrong")) } }
+        val locked = repository.findById(id)!!
+        assert(!locked.active)
+    }
+
+    @Test
+    fun throwsAccountLockedWhenCooldownNotPassed() {
+        val now = Instant.now()
+        val locked = User(UUID.randomUUID(), "user@example.com", "secret", false, 3, now)
+        repository.save(locked)
+        assertThrows(AccountLockedException::class.java) {
             useCase.execute(AuthenticateUser.Command("user@example.com", "secret"))
         }
     }

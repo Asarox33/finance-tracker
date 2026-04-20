@@ -3,5 +3,6 @@ rootProject.name = "finance-tracker"
 include(
     "app",
     "shared",
-    "auth"
+    "auth",
+    "user-profile"
 )

@@ -20,6 +20,7 @@ class SecurityConfig {
                 auth
                     .requestMatchers(
                         "/api/auth/**",
+                        "/api/users/**",
                         "/actuator/health",
                         "/actuator/info",
                         "/swagger-ui/**",
