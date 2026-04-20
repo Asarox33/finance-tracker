@@ -11,8 +11,11 @@ import java.util.UUID
 
 @Component
 class TokenService(
-    @Value("\${auth.jwt.secret}") private val secret: String,
-    @Value("\${auth.jwt.expiration-ms}") private val expirationMs: Long
+    @param:Value("\${auth.jwt.secret}")
+    private val secret: String,
+
+    @param:Value("\${auth.jwt.expiration-ms}")
+    private val expirationMs: Long
 ) : TokenIssuer {
 
     private val key by lazy { Keys.hmacShaKeyFor(secret.toByteArray()) }

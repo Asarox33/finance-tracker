@@ -6,6 +6,7 @@ import com.finance.auth.PlainPasswordEncoder
 import com.finance.auth.VALID_PASSWORD
 import com.finance.auth.domain.User
 import com.finance.shared.error.AuthenticationFailedException
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
@@ -65,6 +66,3 @@ class AuthenticateUserTest {
         }
     }
 }
-
-private fun assertEquals(expected: Int, actual: Int) =
-    org.junit.jupiter.api.Assertions.assertEquals(expected, actual)

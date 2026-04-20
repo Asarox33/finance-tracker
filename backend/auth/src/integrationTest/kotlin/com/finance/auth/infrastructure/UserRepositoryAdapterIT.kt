@@ -43,6 +43,7 @@ class UserRepositoryAdapterIT {
     }
 
     @Autowired
+    @Suppress("SpringJavaInjectionPointsAutowiringInspection")
     lateinit var adapter: UserRepositoryAdapter
 
     @Test

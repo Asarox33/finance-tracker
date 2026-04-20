@@ -42,6 +42,7 @@ class UserProfileRepositoryAdapterIT {
     }
 
     @Autowired
+    @Suppress("SpringJavaInjectionPointsAutowiringInspection")
     lateinit var adapter: UserProfileRepositoryAdapter
 
     private fun profile(

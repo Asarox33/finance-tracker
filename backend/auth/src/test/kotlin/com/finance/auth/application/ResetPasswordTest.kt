@@ -22,12 +22,14 @@ class ResetPasswordTest {
     private val encoder = PlainPasswordEncoder()
     private val useCase = ResetPassword(userRepository, tokenRepository, encoder)
 
+    private val testOtp = "123456"
+
     @Test
     fun resetsPasswordWithValidOtp() {
         val userId = UUID.randomUUID()
         userRepository.save(User(userId, "user@example.com", "oldhash", true))
-        tokenRepository.save(validToken(userId, "123456"))
-        useCase.execute(ResetPassword.Command(userId, "123456", VALID_PASSWORD))
+        tokenRepository.save(validToken(userId))
+        useCase.execute(ResetPassword.Command(userId, testOtp, VALID_PASSWORD))
         assertEquals(VALID_PASSWORD, userRepository.findById(userId)!!.passwordHash)
     }
 
@@ -35,8 +37,8 @@ class ResetPasswordTest {
     fun reactivatesLockedAccountOnReset() {
         val userId = UUID.randomUUID()
         userRepository.save(User(userId, "user@example.com", "oldhash", false, 3))
-        tokenRepository.save(validToken(userId, "123456"))
-        useCase.execute(ResetPassword.Command(userId, "123456", VALID_PASSWORD))
+        tokenRepository.save(validToken(userId))
+        useCase.execute(ResetPassword.Command(userId, testOtp, VALID_PASSWORD))
         val user = userRepository.findById(userId)!!
         assertTrue(user.active)
         assertEquals(0, user.failedLoginAttempts)
@@ -46,9 +48,9 @@ class ResetPasswordTest {
     fun rejectsExpiredOtp() {
         val userId = UUID.randomUUID()
         userRepository.save(User(userId, "user@example.com", "oldhash", true))
-        tokenRepository.save(expiredToken(userId, "123456"))
+        tokenRepository.save(expiredToken(userId))
         assertThrows(BusinessRuleViolationException::class.java) {
-            useCase.execute(ResetPassword.Command(userId, "123456", VALID_PASSWORD))
+            useCase.execute(ResetPassword.Command(userId, testOtp, VALID_PASSWORD))
         }
     }
 
@@ -56,9 +58,9 @@ class ResetPasswordTest {
     fun rejectsUsedOtp() {
         val userId = UUID.randomUUID()
         userRepository.save(User(userId, "user@example.com", "oldhash", true))
-        tokenRepository.save(usedToken(userId, "123456"))
+        tokenRepository.save(usedToken(userId))
         assertThrows(InvalidRequestException::class.java) {
-            useCase.execute(ResetPassword.Command(userId, "123456", VALID_PASSWORD))
+            useCase.execute(ResetPassword.Command(userId, testOtp, VALID_PASSWORD))
         }
     }
 
@@ -66,7 +68,7 @@ class ResetPasswordTest {
     fun rejectsInvalidOtp() {
         val userId = UUID.randomUUID()
         userRepository.save(User(userId, "user@example.com", "oldhash", true))
-        tokenRepository.save(validToken(userId, "123456"))
+        tokenRepository.save(validToken(userId))
         assertThrows(InvalidRequestException::class.java) {
             useCase.execute(ResetPassword.Command(userId, "wrong", VALID_PASSWORD))
         }
@@ -76,21 +78,21 @@ class ResetPasswordTest {
     fun rejectsWeakNewPassword() {
         val userId = UUID.randomUUID()
         userRepository.save(User(userId, "user@example.com", "oldhash", true))
-        tokenRepository.save(validToken(userId, "123456"))
+        tokenRepository.save(validToken(userId))
         assertThrows(InvalidRequestException::class.java) {
-            useCase.execute(ResetPassword.Command(userId, "123456", "weak"))
+            useCase.execute(ResetPassword.Command(userId, testOtp, "weak"))
         }
     }
 
-    private fun validToken(userId: UUID, otp: String) = PasswordResetToken(
-        UUID.randomUUID(), userId, otp, Instant.now().plusSeconds(600), false
+    private fun validToken(userId: UUID) = PasswordResetToken(
+        UUID.randomUUID(), userId, testOtp, Instant.now().plusSeconds(600), false
     )
 
-    private fun expiredToken(userId: UUID, otp: String) = PasswordResetToken(
-        UUID.randomUUID(), userId, otp, Instant.now().minusSeconds(1), false
+    private fun expiredToken(userId: UUID) = PasswordResetToken(
+        UUID.randomUUID(), userId, testOtp, Instant.now().minusSeconds(1), false
     )
 
-    private fun usedToken(userId: UUID, otp: String) = PasswordResetToken(
-        UUID.randomUUID(), userId, otp, Instant.now().plusSeconds(600), true
+    private fun usedToken(userId: UUID) = PasswordResetToken(
+        UUID.randomUUID(), userId, testOtp, Instant.now().plusSeconds(600), true
     )
 }
