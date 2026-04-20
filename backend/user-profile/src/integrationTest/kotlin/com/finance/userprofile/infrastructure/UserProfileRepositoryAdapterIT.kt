@@ -1,5 +1,6 @@
 package com.finance.userprofile.infrastructure
 
+import com.finance.shared.Currency
 import com.finance.userprofile.UserTestApplication
 import com.finance.userprofile.domain.UserProfile
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -11,9 +12,9 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
-import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
+import org.testcontainers.postgresql.PostgreSQLContainer
 import java.util.UUID
 
 @SpringBootTest(classes = [UserTestApplication::class])
@@ -23,7 +24,7 @@ class UserProfileRepositoryAdapterIT {
 
     companion object {
         @Container
-        val postgres = PostgreSQLContainer<Nothing>("postgres:16").apply {
+        val postgres = PostgreSQLContainer("postgres:16").apply {
             withDatabaseName("finance_test")
             withUsername("test")
             withPassword("test")
@@ -50,7 +51,7 @@ class UserProfileRepositoryAdapterIT {
         firstName: String = "John",
         lastName: String = "Doe",
         displayName: String = "johndoe",
-        preferredCurrency: String = "EUR"
+        preferredCurrency: Currency = Currency.EUR
     ) = UserProfile(id, firstName, lastName, displayName, preferredCurrency, null)
 
     @Test
@@ -71,10 +72,10 @@ class UserProfileRepositoryAdapterIT {
     fun updatesExistingProfile() {
         val id = UUID.randomUUID()
         adapter.save(profile(id = id, displayName = "Old Name"))
-        adapter.save(profile(id = id, displayName = "New Name", preferredCurrency = "USD"))
+        adapter.save(profile(id = id, displayName = "New Name", preferredCurrency = Currency.USD))
         val found = adapter.findById(id)
         assertNotNull(found)
         assertEquals("New Name", found!!.displayName)
-        assertEquals("USD", found.preferredCurrency)
+        assertEquals(Currency.USD, found.preferredCurrency)
     }
 }

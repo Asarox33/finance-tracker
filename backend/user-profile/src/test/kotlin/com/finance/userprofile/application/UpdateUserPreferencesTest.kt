@@ -1,5 +1,6 @@
 package com.finance.userprofile.application
 
+import com.finance.shared.Currency
 import com.finance.shared.error.InvalidRequestException
 import com.finance.shared.error.NotFoundException
 import com.finance.userprofile.InMemoryUserProfileRepository
@@ -18,11 +19,11 @@ class UpdateUserPreferencesTest {
     fun updatesPreferencesSuccessfully() {
         val id = UUID.randomUUID()
         repository.save(testProfile(id = id))
-        val result = useCase.execute(command(userId = id, firstName = "Jane", lastName = "Smith", displayName = "janesmith", preferredCurrency = "USD"))
+        val result = useCase.execute(command(userId = id, firstName = "Jane", lastName = "Smith", displayName = "janesmith", preferredCurrency = Currency.USD))
         assertEquals("Jane", result.firstName)
         assertEquals("Smith", result.lastName)
         assertEquals("janesmith", result.displayName)
-        assertEquals("USD", result.preferredCurrency)
+        assertEquals(Currency.USD, result.preferredCurrency)
     }
 
     @Test
@@ -59,21 +60,12 @@ class UpdateUserPreferencesTest {
         }
     }
 
-    @Test
-    fun rejectsInvalidCurrencyCode() {
-        val id = UUID.randomUUID()
-        repository.save(testProfile(id = id))
-        assertThrows(InvalidRequestException::class.java) {
-            useCase.execute(command(userId = id, preferredCurrency = "EU"))
-        }
-    }
-
     private fun command(
         userId: UUID = UUID.randomUUID(),
         firstName: String = "John",
         lastName: String = "Doe",
         displayName: String = "johndoe",
-        preferredCurrency: String = "EUR"
+        preferredCurrency: Currency = Currency.EUR,
     ) = UpdateUserPreferences.Command(
         userId = userId,
         firstName = firstName,

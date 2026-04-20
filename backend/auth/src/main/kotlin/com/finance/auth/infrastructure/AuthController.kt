@@ -11,6 +11,7 @@ import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Size
 import org.springframework.http.HttpStatus
+import io.swagger.v3.oas.annotations.media.Schema
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -28,14 +29,19 @@ class AuthController(
     private val resetPassword: ResetPassword
 ) {
     data class RegisterRequest @JsonCreator constructor(
-        @JsonProperty("email")
+        @field:JsonProperty("email")
         @field:Email
         @field:NotBlank
+        @field:Schema(example = "user@example.com")
         @field:Size(max = 255)
         val email: String,
 
-        @JsonProperty("password")
+        @field:JsonProperty("password")
         @field:NotBlank
+        @field:Schema(
+            description = "User password (min 12 chars) with at least 1 Uppercase, 1 Lowercase, 1 figure, 1 special character",
+            example = "MyStrongPassword123!"
+        )
         @field:Size(min = 12, max = 128)
         val password: String
     )
@@ -43,38 +49,49 @@ class AuthController(
     data class RegisterResponse(val userId: UUID)
 
     data class LoginRequest @JsonCreator constructor(
-        @JsonProperty("email")
+        @field:JsonProperty("email")
         @field:NotBlank
+        @field:Schema(example = "user@example.com")
         @field:Size(max = 255)
         val email: String,
 
-        @JsonProperty("password")
+        @field:JsonProperty("password")
         @field:NotBlank
-        @field:Size(max = 128)
+        @field:Schema(
+            description = "User password (min 12 chars) with at least 1 Uppercase, 1 Lowercase, 1 figure, 1 special character",
+            example = "MyStrongPassword123!"
+        )
+        @field:Size(min = 12, max = 128)
         val password: String
     )
 
     data class LoginResponse(val token: String)
 
     data class RequestPasswordResetRequest @JsonCreator constructor(
-        @JsonProperty("email")
+        @field:JsonProperty("email")
         @field:Email
         @field:NotBlank
+        @field:Schema(example = "user@example.com")
         @field:Size(max = 255)
         val email: String
     )
 
     data class ResetPasswordRequest @JsonCreator constructor(
-        @JsonProperty("userId")
+        @field:JsonProperty("userId")
         val userId: UUID,
 
-        @JsonProperty("otp")
+        @field:JsonProperty("otp")
         @field:NotBlank
         @field:Size(min = 6, max = 6)
+        @field:Schema(example = "123456")
         val otp: String,
 
-        @JsonProperty("newPassword")
+        @field:JsonProperty("newPassword")
         @field:NotBlank
+        @field:Schema(
+            description = "User password (min 12 chars) with at least 1 Uppercase, 1 Lowercase, 1 figure, 1 special character",
+            example = "MyStrongPassword123!"
+        )
         @field:Size(min = 12, max = 128)
         val newPassword: String
     )

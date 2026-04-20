@@ -28,6 +28,8 @@ management:
   endpoint:
     health:
       show-details: never
+      probes:
+        enabled: false
   info:
     env:
       enabled: true

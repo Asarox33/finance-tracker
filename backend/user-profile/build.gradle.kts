@@ -11,18 +11,19 @@ kotlin {
 dependencies {
     implementation(project(":shared"))
 
-    implementation(libs.spring.boot.starter.web)
+    implementation(libs.spring.boot.starter.webmvc)
     implementation(libs.spring.boot.starter.data.jpa)
     implementation(libs.spring.boot.starter.validation)
+    implementation(libs.spring.boot.starter.flyway)
+    implementation(libs.springdoc.openapi)
     implementation(libs.postgresql)
-    implementation(libs.flyway.core)
     implementation(libs.flyway.postgresql)
 
-    testImplementation(libs.spring.boot.starter.test)
+    testImplementation(libs.spring.boot.starter.test.classic)
     testImplementation(libs.junit.jupiter)
     testRuntimeOnly(libs.junit.platform.launcher)
 
-    "integrationTestImplementation"(libs.spring.boot.starter.test)
+    "integrationTestImplementation"(libs.spring.boot.starter.test.classic)
     "integrationTestImplementation"(libs.junit.jupiter)
     "integrationTestImplementation"(libs.testcontainers.core)
     "integrationTestImplementation"(libs.testcontainers.postgresql)

@@ -2,6 +2,7 @@ package com.finance.auth.application
 
 import com.finance.auth.domain.User
 import com.finance.auth.domain.UserRepository
+import com.finance.shared.Currency
 import com.finance.shared.error.InvalidRequestException
 import com.finance.shared.validation.PasswordPolicy
 import java.util.UUID
@@ -40,7 +41,7 @@ class RegisterUser(
                 firstName = "Unknown",
                 lastName = "Unknown",
                 displayName = "New user",
-                preferredCurrency = "EUR",
+                preferredCurrency = Currency.USD,
                 birthDate = null
             )
         )

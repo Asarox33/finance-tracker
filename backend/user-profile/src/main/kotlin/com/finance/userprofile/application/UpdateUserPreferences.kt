@@ -1,5 +1,6 @@
 package com.finance.userprofile.application
 
+import com.finance.shared.Currency
 import com.finance.shared.error.InvalidRequestException
 import com.finance.shared.error.NotFoundException
 import com.finance.userprofile.domain.UserProfile
@@ -15,7 +16,7 @@ class UpdateUserPreferences(
         val firstName: String,
         val lastName: String,
         val displayName: String,
-        val preferredCurrency: String,
+        val preferredCurrency: Currency,
         val birthDate: LocalDate?
     )
 
@@ -23,7 +24,6 @@ class UpdateUserPreferences(
         if (command.firstName.isBlank()) throw InvalidRequestException("First name must not be blank")
         if (command.lastName.isBlank()) throw InvalidRequestException("Last name must not be blank")
         if (command.displayName.isBlank()) throw InvalidRequestException("Display name must not be blank")
-        if (command.preferredCurrency.length != 3) throw InvalidRequestException("Preferred currency must be a 3-letter ISO 4217 code")
 
         val profile = userProfileRepository.findById(command.userId)
             ?: throw NotFoundException("User profile not found: ${command.userId}")

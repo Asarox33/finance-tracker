@@ -8,9 +8,12 @@ import com.finance.shared.error.NotFoundException
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
+import org.springframework.web.servlet.resource.NoResourceFoundException
+
 
 @RestControllerAdvice
 class GlobalExceptionHandler {
@@ -18,6 +21,14 @@ class GlobalExceptionHandler {
     private val log = LoggerFactory.getLogger(GlobalExceptionHandler::class.java)
 
     data class ErrorResponse(val message: String, val errors: List<String> = emptyList())
+
+    @ExceptionHandler(HttpMessageNotReadableException::class)
+    fun handleNotReadable(ex: HttpMessageNotReadableException): ResponseEntity<ErrorResponse> {
+        log.warn("Invalid request body: {}", ex.message)
+        return ResponseEntity
+            .status(HttpStatus.BAD_REQUEST)
+            .body(ErrorResponse(message = "Invalid request body: ${extractReadableMessage(ex)}"))
+    }
 
     @ExceptionHandler(MethodArgumentNotValidException::class)
     fun handleValidation(ex: MethodArgumentNotValidException): ResponseEntity<ErrorResponse> {
@@ -58,9 +69,26 @@ class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ErrorResponse(ex.message ?: "Resource not found"))
     }
 
+    @ExceptionHandler(NoResourceFoundException::class)
+    fun handleNoResourceFound(): ResponseEntity<Void> {
+        return ResponseEntity.notFound().build()
+    }
+
     @ExceptionHandler(Exception::class)
     fun handleUnexpected(ex: Exception): ResponseEntity<ErrorResponse> {
         log.error("Unexpected error: {}", ex.message, ex)
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ErrorResponse("An unexpected error occurred"))
+    }
+
+    private fun extractReadableMessage(ex: HttpMessageNotReadableException): String {
+        val cause = ex.cause ?: return "Malformed JSON or invalid value"
+        val message = cause.message ?: return "Malformed JSON or invalid value"
+        val enumMatch = Regex("""not one of the values accepted for Enum class: \[([^]]+)]""")
+            .find(message)
+        if (enumMatch != null) {
+            val field = Regex("""from String "([^"]+)"""").find(message)?.groupValues?.get(1) ?: "unknown"
+            return "Invalid value \"$field\". Accepted values are: [${enumMatch.groupValues[1]}]"
+        }
+        return "Malformed JSON or invalid value"
     }
 }

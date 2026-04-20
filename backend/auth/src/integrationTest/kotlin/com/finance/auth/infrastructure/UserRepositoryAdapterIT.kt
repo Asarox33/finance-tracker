@@ -12,9 +12,9 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
-import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
+import org.testcontainers.postgresql.PostgreSQLContainer
 import java.util.UUID
 
 @SpringBootTest(classes = [AuthTestApplication::class])
@@ -24,7 +24,7 @@ class UserRepositoryAdapterIT {
 
     companion object {
         @Container
-        val postgres = PostgreSQLContainer<Nothing>("postgres:16").apply {
+        val postgres = PostgreSQLContainer("postgres:16").apply {
             withDatabaseName("finance_test")
             withUsername("test")
             withPassword("test")

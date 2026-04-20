@@ -11,10 +11,10 @@ import java.util.UUID
 
 @Component
 class TokenService(
-    @param:Value("\${auth.jwt.secret}")
+    @param:Value($$"${auth.jwt.secret}")
     private val secret: String,
 
-    @param:Value("\${auth.jwt.expiration-ms}")
+    @param:Value($$"${auth.jwt.expiration-ms}")
     private val expirationMs: Long
 ) : TokenIssuer {
 
