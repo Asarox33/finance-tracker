@@ -16,6 +16,9 @@ spring:
       - classpath:db/migration/auth
       - classpath:db/migration/user_profile
     out-of-order: false
+  security:
+    user:
+      password: ${SECURITY_USER_PASSWORD:disabled}
 
 server:
   port: 8080

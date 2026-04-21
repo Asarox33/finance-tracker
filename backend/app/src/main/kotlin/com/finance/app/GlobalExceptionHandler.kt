@@ -83,12 +83,19 @@ class GlobalExceptionHandler {
     private fun extractReadableMessage(ex: HttpMessageNotReadableException): String {
         val cause = ex.cause ?: return "Malformed JSON or invalid value"
         val message = cause.message ?: return "Malformed JSON or invalid value"
-        val enumMatch = Regex("""not one of the values accepted for Enum class: \[([^]]+)]""")
-            .find(message)
+
+        val emptyStringMatch = Regex("""Cannot coerce empty String.*to `([^`]+)`""").find(message)
+        if (emptyStringMatch != null) {
+            val typeName = emptyStringMatch.groupValues[1].substringAfterLast(".")
+            return "Invalid value: empty string is not allowed for field of type $typeName"
+        }
+
+        val enumMatch = Regex("""not one of the values accepted for Enum class: \[([^]]+)]""").find(message)
         if (enumMatch != null) {
             val field = Regex("""from String "([^"]+)"""").find(message)?.groupValues?.get(1) ?: "unknown"
             return "Invalid value \"$field\". Accepted values are: [${enumMatch.groupValues[1]}]"
         }
+
         return "Malformed JSON or invalid value"
     }
 }
