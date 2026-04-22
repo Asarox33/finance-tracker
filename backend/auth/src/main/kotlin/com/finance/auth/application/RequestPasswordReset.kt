@@ -4,6 +4,7 @@ import com.finance.auth.domain.PasswordResetToken
 import com.finance.auth.domain.PasswordResetTokenRepository
 import com.finance.auth.domain.UserRepository
 import com.finance.shared.error.NotFoundException
+import org.slf4j.LoggerFactory
 import java.time.Instant
 import java.util.UUID
 
@@ -14,6 +15,8 @@ class RequestPasswordReset(
     private val passwordEncoder: PasswordEncoder,
     private val emailSender: EmailSender
 ) {
+    private val log = LoggerFactory.getLogger(RequestPasswordReset::class.java)
+
     data class Command(val email: String)
 
     fun execute(command: Command) {
@@ -32,10 +35,14 @@ class RequestPasswordReset(
         )
         passwordResetTokenRepository.save(token)
 
-        emailSender.send(
-            to = command.email,
-            subject = "Password reset code",
-            body = "Your password reset code is: $rawOtp. It expires in 10 minutes."
-        )
+        try {
+            emailSender.send(
+                to = command.email,
+                subject = "Password reset code",
+                body = "Your password reset code is: $rawOtp. It expires in 10 minutes."
+            )
+        } catch (ex: Exception) {
+            log.error("Failed to send password reset email to={}: {}", command.email, ex.message)
+        }
     }
 }

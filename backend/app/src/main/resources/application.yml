@@ -37,6 +37,10 @@ management:
     env:
       enabled: true
 
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] [%X{correlationId}] %-5level %logger{36} - %msg%n"
+
 info:
   app:
     name: finance-tracker

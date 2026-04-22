@@ -21,6 +21,8 @@ dependencies {
     implementation(libs.postgresql)
     implementation(libs.flyway.postgresql)
     implementation(libs.jjwt.api)
+    implementation(libs.resend)
+    implementation(kotlin("reflect"))
     runtimeOnly(libs.jjwt.impl)
     runtimeOnly(libs.jjwt.jackson)
 

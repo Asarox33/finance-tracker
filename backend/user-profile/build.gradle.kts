@@ -18,6 +18,7 @@ dependencies {
     implementation(libs.springdoc.openapi)
     implementation(libs.postgresql)
     implementation(libs.flyway.postgresql)
+    implementation(kotlin("reflect"))
 
     testImplementation(libs.spring.boot.starter.test.classic)
     testImplementation(libs.junit.jupiter)

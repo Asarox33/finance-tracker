@@ -4,6 +4,10 @@ springdoc:
   swagger-ui:
     enabled: false
 
+resend:
+  api-key: ${RESEND_API_KEY}
+  from: ${RESEND_FROM_EMAIL}
+
 logging:
   level:
     com.finance: INFO

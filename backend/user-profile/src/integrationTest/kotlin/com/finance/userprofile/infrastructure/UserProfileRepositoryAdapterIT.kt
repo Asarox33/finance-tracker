@@ -1,8 +1,8 @@
 package com.finance.userprofile.infrastructure
 
-import com.finance.shared.Currency
 import com.finance.userprofile.UserTestApplication
 import com.finance.userprofile.domain.UserProfile
+import com.finance.shared.Currency
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
@@ -37,8 +37,13 @@ class UserProfileRepositoryAdapterIT {
             registry.add("spring.datasource.username", postgres::getUsername)
             registry.add("spring.datasource.password", postgres::getPassword)
             registry.add("spring.datasource.driver-class-name") { "org.postgresql.Driver" }
+            registry.add("spring.flyway.enabled") { "true" }
             registry.add("spring.flyway.locations") { "classpath:db/migration/user_profile" }
             registry.add("spring.jpa.hibernate.ddl-auto") { "validate" }
+            registry.add("spring.autoconfigure.exclude") {
+                "org.springframework.boot.security.autoconfigure.SecurityAutoConfiguration," +
+                        "org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoConfiguration"
+            }
         }
     }
 

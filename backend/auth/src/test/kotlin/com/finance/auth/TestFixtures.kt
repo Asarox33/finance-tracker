@@ -28,8 +28,8 @@ class InMemoryPasswordResetTokenRepository : PasswordResetTokenRepository {
         return token
     }
 
-    override fun findByUserIdAndOtpHash(userId: UUID, rawOtp: String): PasswordResetToken? =
-        store.values.firstOrNull { it.userId == userId && it.otpHash == rawOtp && !it.used }
+    override fun findByUserIdAndOtpHash(userId: UUID, otpHash: String): PasswordResetToken? =
+        store.values.firstOrNull { it.userId == userId && it.otpHash == otpHash && !it.used }
 
     override fun invalidateAllForUser(userId: UUID) {
         store.entries

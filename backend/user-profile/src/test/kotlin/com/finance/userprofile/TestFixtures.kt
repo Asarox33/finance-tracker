@@ -1,5 +1,6 @@
 package com.finance.userprofile
 
+import com.finance.shared.Currency
 import com.finance.userprofile.domain.UserProfile
 import com.finance.userprofile.domain.UserProfileRepository
 import java.util.UUID
@@ -15,5 +16,5 @@ fun testProfile(
     firstName: String = "John",
     lastName: String = "Doe",
     displayName: String = "johndoe",
-    preferredCurrency: String = "EUR",
+    preferredCurrency: Currency = Currency.EUR
 ) = UserProfile(id, firstName, lastName, displayName, preferredCurrency, null)

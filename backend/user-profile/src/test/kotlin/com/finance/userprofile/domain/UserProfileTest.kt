@@ -31,11 +31,6 @@ class UserProfileTest {
     }
 
     @Test
-    fun rejectsInvalidCurrencyCode() {
-        assertThrows(BusinessRuleViolationException::class.java) { testProfile(preferredCurrency = "EU") }
-    }
-
-    @Test
     fun hasNoEmailField() {
         val fields = UserProfile::class.java.declaredFields.map { it.name }
         assert("email" !in fields)

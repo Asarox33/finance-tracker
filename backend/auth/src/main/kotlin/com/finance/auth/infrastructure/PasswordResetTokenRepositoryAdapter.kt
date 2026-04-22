@@ -30,10 +30,10 @@ class PasswordResetTokenRepositoryAdapter(
         return token
     }
 
-    override fun findByUserIdAndOtpHash(userId: UUID, rawOtp: String): PasswordResetToken? {
+    override fun findByUserIdAndOtpHash(userId: UUID, otpHash: String): PasswordResetToken? {
         return jpaRepo.findByUserId(userId)
             .filter { !it.used }
-            .firstOrNull { passwordEncoder.matches(rawOtp, it.otpHash) }
+            .firstOrNull { passwordEncoder.matches(otpHash, it.otpHash) }
             ?.toDomain()
     }
 
