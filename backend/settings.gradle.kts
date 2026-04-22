@@ -8,7 +8,8 @@ include(
     "app",
     "shared",
     "auth",
-    "user-profile"
+    "user-profile",
+    "institution"
 )
 
 buildCache {

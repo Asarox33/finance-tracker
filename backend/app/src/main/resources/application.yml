@@ -15,6 +15,7 @@ spring:
     locations:
       - classpath:db/migration/auth
       - classpath:db/migration/user_profile
+      - classpath:db/migration/institution
     out-of-order: false
   security:
     user:

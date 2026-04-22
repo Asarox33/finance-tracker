@@ -12,8 +12,8 @@ import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Past
 import jakarta.validation.constraints.Size
 import org.springframework.format.annotation.DateTimeFormat
+import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -28,29 +28,29 @@ class UserProfileController(
     private val updateUserPreferences: UpdateUserPreferences
 ) {
     data class UpdatePreferencesRequest @JsonCreator constructor(
-        @field:JsonProperty("firstName")
+        @param:JsonProperty("firstName")
         @field:NotBlank
-        @field:Schema(example = "John")
         @field:Size(max = 255)
+        @field:Schema(example = "John")
         val firstName: String,
 
-        @field:JsonProperty("lastName")
+        @param:JsonProperty("lastName")
         @field:NotBlank
-        @field:Schema(example = "DOE")
         @field:Size(max = 255)
+        @field:Schema(example = "DOE")
         val lastName: String,
 
-        @field:JsonProperty("displayName")
+        @param:JsonProperty("displayName")
         @field:NotBlank
-        @field:Schema(example = "JohnDoe")
         @field:Size(max = 255)
+        @field:Schema(example = "JohnDoe")
         val displayName: String,
 
-        @field:JsonProperty("preferredCurrency")
-        @field:Schema(example = "USD")
+        @param:JsonProperty("preferredCurrency")
+        @field:Schema(example = "EUR")
         val preferredCurrency: Currency,
 
-        @field:JsonProperty("birthDate")
+        @param:JsonProperty("birthDate")
         @field:Past(message = "Birth date must be in the past")
         @field:DateTimeFormat(pattern = "yyyy-MM-dd")
         @field:Schema(example = "1990-01-15")
@@ -66,18 +66,18 @@ class UserProfileController(
         val birthDate: LocalDate?
     )
 
-    @GetMapping("/{userId}")
-    fun get(@PathVariable userId: UUID): UserProfileResponse =
-        getUserProfile.execute(userId).toResponse()
+    @GetMapping("/me")
+    fun getMe(@AuthenticationPrincipal userId: String): UserProfileResponse =
+        getUserProfile.execute(UUID.fromString(userId)).toResponse()
 
-    @PutMapping("/{userId}/preferences")
-    fun updatePreferences(
-        @PathVariable userId: UUID,
+    @PutMapping("/me/preferences")
+    fun updateMyPreferences(
+        @AuthenticationPrincipal userId: String,
         @Valid @RequestBody request: UpdatePreferencesRequest
     ): UserProfileResponse =
         updateUserPreferences.execute(
             UpdateUserPreferences.Command(
-                userId = userId,
+                userId = UUID.fromString(userId),
                 firstName = request.firstName,
                 lastName = request.lastName,
                 displayName = request.displayName,

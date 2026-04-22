@@ -29,14 +29,14 @@ class AuthController(
     private val resetPassword: ResetPassword
 ) {
     data class RegisterRequest @JsonCreator constructor(
-        @field:JsonProperty("email")
+        @param:JsonProperty("email")
         @field:Email
         @field:NotBlank
         @field:Schema(example = "user@example.com")
         @field:Size(max = 255)
         val email: String,
 
-        @field:JsonProperty("password")
+        @param:JsonProperty("password")
         @field:NotBlank
         @field:Schema(
             description = "User password (min 12 chars) with at least 1 Uppercase, 1 Lowercase, 1 figure, 1 special character",
@@ -49,13 +49,13 @@ class AuthController(
     data class RegisterResponse(val userId: UUID)
 
     data class LoginRequest @JsonCreator constructor(
-        @field:JsonProperty("email")
+        @param:JsonProperty("email")
         @field:NotBlank
         @field:Schema(example = "user@example.com")
         @field:Size(max = 255)
         val email: String,
 
-        @field:JsonProperty("password")
+        @param:JsonProperty("password")
         @field:NotBlank
         @field:Schema(
             description = "User password (min 12 chars) with at least 1 Uppercase, 1 Lowercase, 1 figure, 1 special character",
@@ -68,7 +68,7 @@ class AuthController(
     data class LoginResponse(val token: String)
 
     data class RequestPasswordResetRequest @JsonCreator constructor(
-        @field:JsonProperty("email")
+        @param:JsonProperty("email")
         @field:Email
         @field:NotBlank
         @field:Schema(example = "user@example.com")
@@ -77,16 +77,16 @@ class AuthController(
     )
 
     data class ResetPasswordRequest @JsonCreator constructor(
-        @field:JsonProperty("userId")
+        @param:JsonProperty("userId")
         val userId: UUID,
 
-        @field:JsonProperty("otp")
+        @param:JsonProperty("otp")
         @field:NotBlank
         @field:Size(min = 6, max = 6)
         @field:Schema(example = "123456")
         val otp: String,
 
-        @field:JsonProperty("newPassword")
+        @param:JsonProperty("newPassword")
         @field:NotBlank
         @field:Schema(
             description = "User password (min 12 chars) with at least 1 Uppercase, 1 Lowercase, 1 figure, 1 special character",
