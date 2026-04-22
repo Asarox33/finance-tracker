@@ -53,13 +53,16 @@ class InstitutionRepositoryAdapterIT {
     @Suppress("SpringJavaInjectionPointsAutowiringInspection")
     lateinit var adapter: InstitutionRepositoryAdapter
 
+    private val userId = UUID.randomUUID()
+
     @Test
     fun savesAndFindsById() {
         val id = UUID.randomUUID()
-        adapter.save(Institution(id, "BNP Paribas", InstitutionType.BANK, Country.FR, "BNPAFRPP"))
+        adapter.save(Institution(id, "BNP Paribas", InstitutionType.BANK, Country.FR, "BNPAFRPP", userId))
         val found = adapter.findById(id)
         assertNotNull(found)
         assertEquals("BNP Paribas", found!!.name)
+        assertEquals(userId, found.createdByUserId)
     }
 
     @Test
@@ -69,14 +72,14 @@ class InstitutionRepositoryAdapterIT {
 
     @Test
     fun listsInstitutions() {
-        adapter.save(Institution(UUID.randomUUID(), "Societe Generale", InstitutionType.BANK, Country.FR, "SOGEFRPP"))
+        adapter.save(Institution(UUID.randomUUID(), "Societe Generale", InstitutionType.BANK, Country.FR, "SOGEFRPP", userId))
         val result = adapter.findAll(0, 20)
         assertTrue(result.isNotEmpty())
     }
 
     @Test
     fun detectsDuplicateNameAndCountry() {
-        adapter.save(Institution(UUID.randomUUID(), "Credit Agricole", InstitutionType.BANK, Country.FR, null))
+        adapter.save(Institution(UUID.randomUUID(), "Credit Agricole", InstitutionType.BANK, Country.FR, null, userId))
         assertTrue(adapter.existsByNameAndCountry("Credit Agricole", Country.FR))
     }
 }

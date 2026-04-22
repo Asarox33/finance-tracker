@@ -7,11 +7,13 @@ import com.finance.shared.error.InvalidRequestException
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
+import java.util.UUID
 
 class CreateInstitutionTest {
 
     private val repository = InMemoryInstitutionRepository()
     private val useCase = CreateInstitution(repository)
+    private val userId = UUID.randomUUID()
 
     @Test
     fun createsInstitutionSuccessfully() {
@@ -36,6 +38,7 @@ class CreateInstitutionTest {
         name = name,
         type = InstitutionType.BANK,
         country = Country.FR,
-        bic = "BNPAFRPP"
+        bic = "BNPAFRPP",
+        createdByUserId = userId
     )
 }

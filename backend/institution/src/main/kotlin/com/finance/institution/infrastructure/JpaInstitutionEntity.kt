@@ -28,5 +28,8 @@ class JpaInstitutionEntity(
     var country: Country,
 
     @Column(length = 11)
-    var bic: String?
+    var bic: String?,
+
+    @Column(name = "created_by_user_id", nullable = false, updatable = false)
+    var createdByUserId: UUID
 )

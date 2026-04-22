@@ -9,7 +9,8 @@ data class Institution(
     val name: String,
     val type: InstitutionType,
     val country: Country,
-    val bic: String?
+    val bic: String?,
+    val createdByUserId: UUID
 ) {
     init {
         if (name.isBlank()) throw BusinessRuleViolationException("Institution name must not be blank")

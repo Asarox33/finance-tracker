@@ -14,7 +14,8 @@ class CreateInstitution(
         val name: String,
         val type: InstitutionType,
         val country: Country,
-        val bic: String?
+        val bic: String?,
+        val createdByUserId: UUID
     )
 
     data class Result(val institutionId: UUID)
@@ -29,7 +30,8 @@ class CreateInstitution(
             name = command.name,
             type = command.type,
             country = command.country,
-            bic = command.bic?.uppercase()
+            bic = command.bic?.uppercase(),
+            createdByUserId = command.createdByUserId
         )
         return Result(institutionId = institutionRepository.save(institution).id)
     }

@@ -25,7 +25,8 @@ class InstitutionRepositoryAdapter(
                 name = institution.name,
                 type = institution.type,
                 country = institution.country,
-                bic = institution.bic
+                bic = institution.bic,
+                createdByUserId = institution.createdByUserId
             )
         return jpaRepo.save(entity).toDomain()
     }
@@ -47,5 +48,6 @@ private fun JpaInstitutionEntity.toDomain() = Institution(
     name = name,
     type = type,
     country = country,
-    bic = bic
+    bic = bic,
+    createdByUserId = createdByUserId
 )

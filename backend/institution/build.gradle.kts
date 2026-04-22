@@ -15,6 +15,7 @@ dependencies {
     implementation(libs.spring.boot.starter.data.jpa)
     implementation(libs.spring.boot.starter.validation)
     implementation(libs.spring.boot.starter.flyway)
+    implementation(libs.spring.boot.starter.security)
     implementation(libs.springdoc.openapi)
     implementation(libs.postgresql)
     implementation(libs.flyway.postgresql)

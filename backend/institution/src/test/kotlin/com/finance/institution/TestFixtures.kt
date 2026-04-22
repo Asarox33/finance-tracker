@@ -22,5 +22,6 @@ fun testInstitution(
     name: String = "BNP Paribas",
     type: InstitutionType = InstitutionType.BANK,
     country: Country = Country.FR,
-    bic: String? = "BNPAFRPP"
-) = Institution(id, name, type, country, bic)
+    bic: String? = "BNPAFRPP",
+    createdByUserId: UUID = UUID.randomUUID()
+) = Institution(id, name, type, country, bic, createdByUserId)

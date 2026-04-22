@@ -14,6 +14,7 @@ import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Size
 import org.springframework.http.HttpStatus
+import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -57,18 +58,23 @@ class InstitutionController(
         val name: String,
         val type: InstitutionType,
         val country: Country,
-        val bic: String?
+        val bic: String?,
+        val createdByUserId: UUID
     )
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    fun create(@Valid @RequestBody request: CreateInstitutionRequest): InstitutionResponse {
+    fun create(
+        @AuthenticationPrincipal userId: String,
+        @Valid @RequestBody request: CreateInstitutionRequest
+    ): InstitutionResponse {
         val result = createInstitution.execute(
             CreateInstitution.Command(
                 name = request.name,
                 type = request.type,
                 country = request.country,
-                bic = request.bic
+                bic = request.bic,
+                createdByUserId = UUID.fromString(userId)
             )
         )
         return getInstitution.execute(result.institutionId).toResponse()
@@ -92,6 +98,7 @@ class InstitutionController(
         name = name,
         type = type,
         country = country,
-        bic = bic
+        bic = bic,
+        createdByUserId = createdByUserId
     )
 }
