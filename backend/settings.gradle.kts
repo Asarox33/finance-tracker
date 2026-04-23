@@ -10,7 +10,8 @@ include(
     "auth",
     "user-profile",
     "institution",
-    "asset"
+    "asset",
+    "account"
 )
 
 buildCache {
