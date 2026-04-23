@@ -9,7 +9,8 @@ include(
     "shared",
     "auth",
     "user-profile",
-    "institution"
+    "institution",
+    "asset"
 )
 
 buildCache {

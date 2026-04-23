@@ -18,6 +18,18 @@ allprojects {
 
 val skipIT: Boolean = findProperty("skipIT")?.toString()?.toBoolean() ?: false
 
+tasks.register<TestReport>("testAggregateReport") {
+    group = "reporting"
+    description = "Runs all unit tests and generates aggregated report."
+    destinationDirectory.set(layout.buildDirectory.dir("reports/tests/aggregated"))
+    testResults.from(
+        subprojects.map { subproject ->
+            subproject.tasks.withType<Test>()
+        }
+    )
+    dependsOn(subprojects.map { it.tasks.withType<Test>() })
+}
+
 subprojects {
     dependencyLocking {
         lockAllConfigurations()
@@ -64,6 +76,12 @@ subprojects {
 
         extensions.configure<org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension> {
             jvmToolchain(25)
+        }
+    }
+
+    plugins.withId("org.jetbrains.kotlin.multiplatform") {
+        tasks.withType<Test> {
+            useJUnitPlatform()
         }
     }
 }

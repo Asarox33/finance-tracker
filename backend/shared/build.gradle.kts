@@ -22,3 +22,7 @@ kotlin {
         }
     }
 }
+
+tasks.named<Test>("jvmTest") {
+    useJUnitPlatform()
+}
