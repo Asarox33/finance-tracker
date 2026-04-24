@@ -10,6 +10,7 @@ bucket4j = "8.18.0"
 junit = "6.0.3"
 jackson-kotlin = "3.1.2"
 resend = "3.1.0"
+kover = "0.9.1"
 
 [libraries]
 spring-boot-starter-webmvc = { module = "org.springframework.boot:spring-boot-starter-webmvc", version.ref = "spring-boot" }
@@ -41,3 +42,4 @@ kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", versi
 kotlin-spring = { id = "org.jetbrains.kotlin.plugin.spring", version.ref = "kotlin" }
 kotlin-jpa = { id = "org.jetbrains.kotlin.plugin.jpa", version.ref = "kotlin" }
 spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
+kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }

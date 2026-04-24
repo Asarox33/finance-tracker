@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.kotlin.spring) apply false
     alias(libs.plugins.kotlin.jpa) apply false
     alias(libs.plugins.spring.boot) apply false
+    alias(libs.plugins.kover)
 }
 
 allprojects {
@@ -20,7 +21,7 @@ val skipIT: Boolean = findProperty("skipIT")?.toString()?.toBoolean() ?: false
 
 tasks.register<TestReport>("testAggregateReport") {
     group = "reporting"
-    description = "Runs all unit tests and generates aggregated report."
+    description = "Runs all unit tests, generates aggregated test report and coverage report."
     destinationDirectory.set(layout.buildDirectory.dir("reports/tests/aggregated"))
     testResults.from(
         subprojects.map { subproject ->
@@ -28,6 +29,41 @@ tasks.register<TestReport>("testAggregateReport") {
         }
     )
     dependsOn(subprojects.map { it.tasks.withType<Test>() })
+    finalizedBy(tasks.named("koverHtmlReport"))
+}
+
+dependencies {
+    kover(project(":app"))
+    kover(project(":auth"))
+    kover(project(":user-profile"))
+    kover(project(":institution"))
+    kover(project(":asset"))
+    kover(project(":account"))
+}
+
+kover {
+    reports {
+        filters {
+            excludes {
+                classes(
+                    "*Application*",
+                    "*Config*",
+                    "*Entity*",
+                    "*.infrastructure.*Repository*"
+                )
+            }
+        }
+        total {
+            html {
+                onCheck = false
+                htmlDir = layout.buildDirectory.dir("reports/kover/html")
+            }
+            xml {
+                onCheck = false
+                xmlFile = layout.buildDirectory.file("reports/kover/report.xml")
+            }
+        }
+    }
 }
 
 subprojects {
@@ -40,6 +76,8 @@ subprojects {
     }
 
     plugins.withId("org.jetbrains.kotlin.jvm") {
+        apply(plugin = "org.jetbrains.kotlinx.kover")
+
         val sourceSets = extensions.getByType<SourceSetContainer>()
 
         val integrationTest by sourceSets.creating {
