@@ -46,10 +46,10 @@ kover {
         filters {
             excludes {
                 classes(
+                    "*.infrastructure.*",
+                    "*.app.*",
                     "*Application*",
-                    "*Config*",
-                    "*Entity*",
-                    "*.infrastructure.*Repository*"
+                    "*Config*"
                 )
             }
         }
