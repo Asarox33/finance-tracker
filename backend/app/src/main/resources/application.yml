@@ -18,6 +18,7 @@ spring:
       - classpath:db/migration/institution
       - classpath:db/migration/asset
       - classpath:db/migration/account
+      - classpath:db/migration/transaction
     out-of-order: false
   security:
     user:

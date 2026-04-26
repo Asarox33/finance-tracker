@@ -39,6 +39,7 @@ dependencies {
     kover(project(":institution"))
     kover(project(":asset"))
     kover(project(":account"))
+    kover(project(":transaction"))
 }
 
 kover {

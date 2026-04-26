@@ -1,0 +1,147 @@
+package com.finance.transaction.infrastructure
+
+import com.fasterxml.jackson.annotation.JsonCreator
+import com.fasterxml.jackson.annotation.JsonProperty
+import com.finance.shared.Currency
+import com.finance.shared.PageResult
+import com.finance.transaction.application.GetTransaction
+import com.finance.transaction.application.ListAccountTransactions
+import com.finance.transaction.application.RecordTransaction
+import com.finance.transaction.domain.Transaction
+import com.finance.transaction.domain.TransactionType
+import io.swagger.v3.oas.annotations.media.Schema
+import jakarta.validation.Valid
+import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.Size
+import org.springframework.format.annotation.DateTimeFormat
+import org.springframework.http.HttpStatus
+import org.springframework.security.core.annotation.AuthenticationPrincipal
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.bind.annotation.ResponseStatus
+import org.springframework.web.bind.annotation.RestController
+import java.time.LocalDate
+import java.util.UUID
+
+@RestController
+@RequestMapping("/api/transactions")
+class TransactionController(
+    private val recordTransaction: RecordTransaction,
+    private val getTransaction: GetTransaction,
+    private val listAccountTransactions: ListAccountTransactions
+) {
+    data class RecordTransactionRequest @JsonCreator constructor(
+        @param:JsonProperty("accountId")
+        @field:Schema(example = "3fa85f64-5717-4562-b3fc-2c963f66afa6")
+        val accountId: UUID,
+
+        @param:JsonProperty("assetId")
+        @field:Schema(example = "3fa85f64-5717-4562-b3fc-2c963f66afa6")
+        val assetId: UUID?,
+
+        @param:JsonProperty("type")
+        @field:Schema(example = "DEPOSIT")
+        val type: TransactionType,
+
+        @param:JsonProperty("amount")
+        @field:Schema(example = "10000", description = "Amount in minor units (e.g. cents)")
+        val amount: Long,
+
+        @param:JsonProperty("currency")
+        @field:Schema(example = "EUR")
+        val currency: Currency,
+
+        @param:JsonProperty("date")
+        @field:DateTimeFormat(pattern = "yyyy-MM-dd")
+        @field:Schema(example = "2024-01-15")
+        val date: LocalDate,
+
+        @param:JsonProperty("label")
+        @field:NotBlank
+        @field:Size(max = 255)
+        @field:Schema(example = "Monthly salary")
+        val label: String,
+
+        @param:JsonProperty("notes")
+        @field:Size(max = 1000)
+        @field:Schema(example = "January 2024 salary")
+        val notes: String?
+    )
+
+    data class TransactionResponse(
+        val id: UUID,
+        val accountId: UUID,
+        val assetId: UUID?,
+        val type: TransactionType,
+        val amount: Long,
+        val currency: Currency,
+        val date: LocalDate,
+        val label: String,
+        val notes: String?
+    )
+
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    fun record(
+        @AuthenticationPrincipal userId: String,
+        @Valid @RequestBody request: RecordTransactionRequest
+    ): TransactionResponse {
+        val result = recordTransaction.execute(
+            RecordTransaction.Command(
+                accountId = request.accountId,
+                assetId = request.assetId,
+                type = request.type,
+                amount = request.amount,
+                currency = request.currency,
+                date = request.date,
+                label = request.label,
+                notes = request.notes
+            )
+        )
+        return getTransaction.execute(result.transactionId).toResponse()
+    }
+
+    @GetMapping("/{transactionId}")
+    fun get(
+        @AuthenticationPrincipal _userId: String,
+        @PathVariable transactionId: UUID
+    ): TransactionResponse =
+        getTransaction.execute(transactionId).toResponse()
+
+    @GetMapping
+    fun list(
+        @AuthenticationPrincipal _userId: String,
+        @RequestParam accountId: UUID,
+        @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") from: LocalDate?,
+        @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") to: LocalDate?,
+        @RequestParam(defaultValue = "0") page: Int,
+        @RequestParam(defaultValue = "20") pageSize: Int
+    ): PageResult<TransactionResponse> {
+        val result = listAccountTransactions.execute(
+            ListAccountTransactions.Query(
+                accountId = accountId,
+                from = from,
+                to = to,
+                page = page,
+                pageSize = pageSize
+            )
+        )
+        return PageResult.of(result.items.map { it.toResponse() }, page, pageSize, result.totalItems)
+    }
+
+    private fun Transaction.toResponse() = TransactionResponse(
+        id = id,
+        accountId = accountId,
+        assetId = assetId,
+        type = type,
+        amount = amount,
+        currency = currency,
+        date = date,
+        label = label,
+        notes = notes
+    )
+}

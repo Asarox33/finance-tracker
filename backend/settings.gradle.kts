@@ -11,7 +11,8 @@ include(
     "user-profile",
     "institution",
     "asset",
-    "account"
+    "account",
+    "transaction"
 )
 
 buildCache {
