@@ -13,7 +13,8 @@ include(
     "asset",
     "account",
     "transaction",
-    "fees"
+    "fees",
+    "price"
 )
 
 buildCache {

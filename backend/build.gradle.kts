@@ -41,6 +41,7 @@ dependencies {
     kover(project(":account"))
     kover(project(":transaction"))
     kover(project(":fees"))
+    kover(project(":price"))
 }
 
 kover {
