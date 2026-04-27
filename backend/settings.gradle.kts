@@ -12,7 +12,8 @@ include(
     "institution",
     "asset",
     "account",
-    "transaction"
+    "transaction",
+    "fees"
 )
 
 buildCache {
