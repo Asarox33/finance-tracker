@@ -21,6 +21,7 @@ spring:
       - classpath:db/migration/transaction
       - classpath:db/migration/fees
       - classpath:db/migration/price
+      - classpath:db/migration/fx
     out-of-order: false
   security:
     user:
@@ -59,4 +60,7 @@ auth:
     expiration-ms: ${AUTH_JWT_EXPIRATION_MS}
 
 price:
+  lookback-days: 30
+
+fx:
   lookback-days: 30

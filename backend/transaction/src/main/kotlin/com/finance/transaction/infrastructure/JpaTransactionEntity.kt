@@ -41,5 +41,22 @@ class JpaTransactionEntity(
     var label: String,
 
     @Column(columnDefinition = "TEXT")
-    var notes: String?
+    var notes: String?,
+
+    @Column(name = "applied_fx_rate")
+    var appliedFxRate: Long?,
+
+    @Column(name = "applied_fx_rate_scale")
+    var appliedFxRateScale: Int?,
+
+    @Column(name = "applied_fx_rate_date")
+    var appliedFxRateDate: LocalDate?,
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "applied_fx_source_currency", length = 3)
+    var appliedFxSourceCurrency: Currency?,
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "applied_fx_target_currency", length = 3)
+    var appliedFxTargetCurrency: Currency?
 )

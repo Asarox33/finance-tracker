@@ -19,7 +19,12 @@ class RecordTransaction(
         val currency: Currency,
         val date: LocalDate,
         val label: String,
-        val notes: String?
+        val notes: String?,
+        val appliedFxRate: Long? = null,
+        val appliedFxRateScale: Int? = null,
+        val appliedFxRateDate: LocalDate? = null,
+        val appliedFxSourceCurrency: Currency? = null,
+        val appliedFxTargetCurrency: Currency? = null
     )
 
     data class Result(val transactionId: UUID)
@@ -27,6 +32,18 @@ class RecordTransaction(
     fun execute(command: Command): Result {
         if (command.label.isBlank()) throw InvalidRequestException("Transaction label must not be blank")
         if (command.amount == 0L) throw InvalidRequestException("Transaction amount must not be zero")
+
+        val fxFields = listOf(
+            command.appliedFxRate,
+            command.appliedFxRateScale,
+            command.appliedFxRateDate,
+            command.appliedFxSourceCurrency,
+            command.appliedFxTargetCurrency
+        )
+        val fxProvided = fxFields.count { it != null }
+        if (fxProvided > 0 && fxProvided != fxFields.size) {
+            throw InvalidRequestException("All FX rate fields must be provided together or not at all")
+        }
 
         val transaction = Transaction(
             id = UUID.randomUUID(),
@@ -37,7 +54,12 @@ class RecordTransaction(
             currency = command.currency,
             date = command.date,
             label = command.label,
-            notes = command.notes
+            notes = command.notes,
+            appliedFxRate = command.appliedFxRate,
+            appliedFxRateScale = command.appliedFxRateScale,
+            appliedFxRateDate = command.appliedFxRateDate,
+            appliedFxSourceCurrency = command.appliedFxSourceCurrency,
+            appliedFxTargetCurrency = command.appliedFxTargetCurrency
         )
         return Result(transactionId = transactionRepository.save(transaction).id)
     }

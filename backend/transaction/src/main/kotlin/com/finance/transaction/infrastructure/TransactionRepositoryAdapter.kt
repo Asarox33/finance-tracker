@@ -22,7 +22,12 @@ class TransactionRepositoryAdapter(
             currency = transaction.currency,
             date = transaction.date,
             label = transaction.label,
-            notes = transaction.notes
+            notes = transaction.notes,
+            appliedFxRate = transaction.appliedFxRate,
+            appliedFxRateScale = transaction.appliedFxRateScale,
+            appliedFxRateDate = transaction.appliedFxRateDate,
+            appliedFxSourceCurrency = transaction.appliedFxSourceCurrency,
+            appliedFxTargetCurrency = transaction.appliedFxTargetCurrency
         )
         return jpaRepo.save(entity).toDomain()
     }
@@ -63,5 +68,10 @@ private fun JpaTransactionEntity.toDomain() = Transaction(
     currency = currency,
     date = date,
     label = label,
-    notes = notes
+    notes = notes,
+    appliedFxRate = appliedFxRate,
+    appliedFxRateScale = appliedFxRateScale,
+    appliedFxRateDate = appliedFxRateDate,
+    appliedFxSourceCurrency = appliedFxSourceCurrency,
+    appliedFxTargetCurrency = appliedFxTargetCurrency
 )

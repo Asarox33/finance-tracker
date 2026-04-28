@@ -3,7 +3,9 @@ package com.finance.transaction.domain
 import com.finance.shared.Currency
 import com.finance.shared.error.BusinessRuleViolationException
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 import java.util.UUID
@@ -33,12 +35,44 @@ class TransactionTest {
         assertEquals(-5000L, tx.amount)
     }
 
+    @Test
+    fun acceptsTransactionWithFxRate() {
+        val tx = transaction(
+            appliedFxRate = 91500L,
+            appliedFxRateScale = 5,
+            appliedFxRateDate = LocalDate.of(2024, 1, 15),
+            appliedFxSourceCurrency = Currency.USD,
+            appliedFxTargetCurrency = Currency.EUR
+        )
+        assertTrue(tx.hasFxRate())
+    }
+
+    @Test
+    fun acceptsTransactionWithoutFxRate() {
+        val tx = transaction()
+        assertFalse(tx.hasFxRate())
+    }
+
+    @Test
+    fun rejectsPartialFxRateFields() {
+        assertThrows(BusinessRuleViolationException::class.java) {
+            transaction(appliedFxRate = 91500L)
+        }
+    }
+
     private fun transaction(
         label: String = "Monthly salary",
-        amount: Long = 10000L
+        amount: Long = 10000L,
+        appliedFxRate: Long? = null,
+        appliedFxRateScale: Int? = null,
+        appliedFxRateDate: LocalDate? = null,
+        appliedFxSourceCurrency: Currency? = null,
+        appliedFxTargetCurrency: Currency? = null
     ) = Transaction(
         UUID.randomUUID(), UUID.randomUUID(), null,
         TransactionType.DEPOSIT, amount, Currency.EUR,
-        LocalDate.of(2024, 1, 15), label, null
+        LocalDate.of(2024, 1, 15), label, null,
+        appliedFxRate, appliedFxRateScale, appliedFxRateDate,
+        appliedFxSourceCurrency, appliedFxTargetCurrency
     )
 }

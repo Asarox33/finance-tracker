@@ -40,7 +40,6 @@ class TransactionController(
         val accountId: UUID,
 
         @param:JsonProperty("assetId")
-        @field:Schema(example = "3fa85f64-5717-4562-b3fc-2c963f66afa6")
         val assetId: UUID?,
 
         @param:JsonProperty("type")
@@ -68,8 +67,28 @@ class TransactionController(
 
         @param:JsonProperty("notes")
         @field:Size(max = 1000)
-        @field:Schema(example = "January 2024 salary")
-        val notes: String?
+        val notes: String?,
+
+        @param:JsonProperty("appliedFxRate")
+        @field:Schema(example = "91500", description = "FX rate in minor units at transaction time")
+        val appliedFxRate: Long? = null,
+
+        @param:JsonProperty("appliedFxRateScale")
+        @field:Schema(example = "5")
+        val appliedFxRateScale: Int? = null,
+
+        @param:JsonProperty("appliedFxRateDate")
+        @field:DateTimeFormat(pattern = "yyyy-MM-dd")
+        @field:Schema(example = "2024-01-15")
+        val appliedFxRateDate: LocalDate? = null,
+
+        @param:JsonProperty("appliedFxSourceCurrency")
+        @field:Schema(example = "USD")
+        val appliedFxSourceCurrency: Currency? = null,
+
+        @param:JsonProperty("appliedFxTargetCurrency")
+        @field:Schema(example = "EUR")
+        val appliedFxTargetCurrency: Currency? = null
     )
 
     data class TransactionResponse(
@@ -81,13 +100,18 @@ class TransactionController(
         val currency: Currency,
         val date: LocalDate,
         val label: String,
-        val notes: String?
+        val notes: String?,
+        val appliedFxRate: Long?,
+        val appliedFxRateScale: Int?,
+        val appliedFxRateDate: LocalDate?,
+        val appliedFxSourceCurrency: Currency?,
+        val appliedFxTargetCurrency: Currency?
     )
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     fun record(
-        @AuthenticationPrincipal userId: String,
+        @AuthenticationPrincipal _userId: String,
         @Valid @RequestBody request: RecordTransactionRequest
     ): TransactionResponse {
         val result = recordTransaction.execute(
@@ -99,7 +123,12 @@ class TransactionController(
                 currency = request.currency,
                 date = request.date,
                 label = request.label,
-                notes = request.notes
+                notes = request.notes,
+                appliedFxRate = request.appliedFxRate,
+                appliedFxRateScale = request.appliedFxRateScale,
+                appliedFxRateDate = request.appliedFxRateDate,
+                appliedFxSourceCurrency = request.appliedFxSourceCurrency,
+                appliedFxTargetCurrency = request.appliedFxTargetCurrency
             )
         )
         return getTransaction.execute(result.transactionId).toResponse()
@@ -122,13 +151,7 @@ class TransactionController(
         @RequestParam(defaultValue = "20") pageSize: Int
     ): PageResult<TransactionResponse> {
         val result = listAccountTransactions.execute(
-            ListAccountTransactions.Query(
-                accountId = accountId,
-                from = from,
-                to = to,
-                page = page,
-                pageSize = pageSize
-            )
+            ListAccountTransactions.Query(accountId, from, to, page, pageSize)
         )
         return PageResult.of(result.items.map { it.toResponse() }, page, pageSize, result.totalItems)
     }
@@ -142,6 +165,11 @@ class TransactionController(
         currency = currency,
         date = date,
         label = label,
-        notes = notes
+        notes = notes,
+        appliedFxRate = appliedFxRate,
+        appliedFxRateScale = appliedFxRateScale,
+        appliedFxRateDate = appliedFxRateDate,
+        appliedFxSourceCurrency = appliedFxSourceCurrency,
+        appliedFxTargetCurrency = appliedFxTargetCurrency
     )
 }

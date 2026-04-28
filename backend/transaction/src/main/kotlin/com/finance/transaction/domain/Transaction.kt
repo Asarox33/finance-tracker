@@ -14,10 +14,22 @@ data class Transaction(
     val currency: Currency,
     val date: LocalDate,
     val label: String,
-    val notes: String?
+    val notes: String?,
+    val appliedFxRate: Long? = null,
+    val appliedFxRateScale: Int? = null,
+    val appliedFxRateDate: LocalDate? = null,
+    val appliedFxSourceCurrency: Currency? = null,
+    val appliedFxTargetCurrency: Currency? = null
 ) {
     init {
         if (label.isBlank()) throw BusinessRuleViolationException("Transaction label must not be blank")
         if (amount == 0L) throw BusinessRuleViolationException("Transaction amount must not be zero")
+        val fxFields = listOf(appliedFxRate, appliedFxRateScale, appliedFxRateDate, appliedFxSourceCurrency, appliedFxTargetCurrency)
+        val fxProvided = fxFields.count { it != null }
+        if (fxProvided > 0 && fxProvided != fxFields.size) {
+            throw BusinessRuleViolationException("All FX rate fields must be provided together or not at all")
+        }
     }
+
+    fun hasFxRate(): Boolean = appliedFxRate != null
 }

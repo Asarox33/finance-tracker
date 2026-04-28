@@ -14,7 +14,8 @@ include(
     "account",
     "transaction",
     "fees",
-    "price"
+    "price",
+    "fx"
 )
 
 buildCache {
