@@ -98,7 +98,7 @@ class FxController(
         @AuthenticationPrincipal _userId: String,
         @Valid @RequestBody request: RecordFxRateRequest
     ): FxRateResponse {
-        val result = recordFxRate.execute(
+        recordFxRate.execute(
             RecordFxRate.Command(
                 sourceCurrency = request.sourceCurrency,
                 targetCurrency = request.targetCurrency,

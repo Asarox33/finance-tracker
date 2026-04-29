@@ -114,7 +114,7 @@ class TransactionController(
         @AuthenticationPrincipal _userId: String,
         @Valid @RequestBody request: RecordTransactionRequest
     ): TransactionResponse {
-        val result = recordTransaction.execute(
+        val transactionId = recordTransaction.execute(
             RecordTransaction.Command(
                 accountId = request.accountId,
                 assetId = request.assetId,
@@ -130,8 +130,8 @@ class TransactionController(
                 appliedFxSourceCurrency = request.appliedFxSourceCurrency,
                 appliedFxTargetCurrency = request.appliedFxTargetCurrency
             )
-        )
-        return getTransaction.execute(result.transactionId).toResponse()
+        ).transactionId
+        return getTransaction.execute(transactionId).toResponse()
     }
 
     @GetMapping("/{transactionId}")
