@@ -22,6 +22,7 @@ spring:
       - classpath:db/migration/fees
       - classpath:db/migration/price
       - classpath:db/migration/fx
+      - classpath:db/migration/inflation
     out-of-order: false
   security:
     user:

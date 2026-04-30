@@ -43,6 +43,7 @@ dependencies {
     kover(project(":fees"))
     kover(project(":price"))
     kover(project(":fx"))
+    kover(project(":inflation"))
 }
 
 kover {
