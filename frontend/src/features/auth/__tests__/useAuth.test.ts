@@ -1,0 +1,148 @@
+import { renderHook, act } from "@testing-library/react";
+import { useLogin, useRegister, usePasswordReset, useLogout } from "@/features/auth/hooks/useAuth";
+import * as httpModule from "@/lib/http";
+import * as authApiModule from "@/features/auth/api/authApi";
+
+const mockPush = jest.fn();
+
+jest.mock("next/navigation", () => ({
+  useRouter: () => ({ push: mockPush }),
+  useSearchParams: () => ({ get: () => null }),
+}));
+
+jest.mock("@/lib/http", () => ({
+  getToken: jest.fn(() => null),
+  setToken: jest.fn(),
+  setUserId: jest.fn(),
+  removeToken: jest.fn(),
+  removeUserId: jest.fn(),
+  isAuthenticated: jest.fn(() => false),
+  http: { post: jest.fn(), get: jest.fn() },
+}));
+
+jest.mock("@/features/auth/api/authApi", () => ({
+  authApi: {
+    login: jest.fn(),
+    register: jest.fn(),
+    requestPasswordReset: jest.fn(),
+    confirmPasswordReset: jest.fn(),
+  },
+}));
+
+const mockPayload = btoa(JSON.stringify({ sub: "user-123" }));
+const mockToken = `header.${mockPayload}.signature`;
+
+describe("useLogin", () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it("calls authApi.login with credentials", async () => {
+    (authApiModule.authApi.login as jest.Mock).mockResolvedValue({ token: mockToken });
+    const { result } = renderHook(() => useLogin());
+    await act(async () => { await result.current.login("test@example.com", "Password123!"); });
+    expect(authApiModule.authApi.login).toHaveBeenCalledWith({
+      email: "test@example.com",
+      password: "Password123!",
+    });
+  });
+
+  it("sets loading during login", async () => {
+    let resolve: (v: { token: string }) => void = () => {};
+    (authApiModule.authApi.login as jest.Mock).mockReturnValue(
+        new Promise(r => { resolve = r; })
+    );
+    const { result } = renderHook(() => useLogin());
+    act(() => { result.current.login("test@example.com", "Password123!"); });
+    expect(result.current.loading).toBe(true);
+    await act(async () => { resolve({ token: mockToken }); });
+    expect(result.current.loading).toBe(false);
+  });
+
+  it("sets error on failure", async () => {
+    (authApiModule.authApi.login as jest.Mock).mockRejectedValue({ message: "Invalid credentials" });
+    const { result } = renderHook(() => useLogin());
+    await act(async () => { await result.current.login("test@example.com", "wrong"); });
+    expect(result.current.error?.message).toBe("Invalid credentials");
+    expect(result.current.error?.locked).toBe(false);
+  });
+
+  it("sets locked=true when message contains locked", async () => {
+    (authApiModule.authApi.login as jest.Mock).mockRejectedValue({
+      message: "Account is temporarily locked",
+    });
+    const { result } = renderHook(() => useLogin());
+    await act(async () => { await result.current.login("test@example.com", "wrong"); });
+    expect(result.current.error?.locked).toBe(true);
+  });
+
+  it("sets token and userId on success", async () => {
+    (authApiModule.authApi.login as jest.Mock).mockResolvedValue({ token: mockToken });
+    const { result } = renderHook(() => useLogin());
+    await act(async () => { await result.current.login("test@example.com", "Password123!"); });
+    expect(httpModule.setToken).toHaveBeenCalledWith(mockToken);
+    expect(httpModule.setUserId).toHaveBeenCalledWith("user-123");
+  });
+});
+
+describe("useRegister", () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it("calls authApi.register with credentials", async () => {
+    (authApiModule.authApi.register as jest.Mock).mockResolvedValue({ userId: "u-1" });
+    const { result } = renderHook(() => useRegister());
+    await act(async () => { await result.current.register("test@example.com", "Password123!"); });
+    expect(authApiModule.authApi.register).toHaveBeenCalledWith({
+      email: "test@example.com",
+      password: "Password123!",
+    });
+  });
+
+  it("sets error on failure", async () => {
+    (authApiModule.authApi.register as jest.Mock).mockRejectedValue({
+      message: "Email already registered",
+    });
+    const { result } = renderHook(() => useRegister());
+    await act(async () => { await result.current.register("test@example.com", "Password123!"); });
+    expect(result.current.error).toBe("Email already registered");
+  });
+});
+
+describe("usePasswordReset", () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it("moves to confirm step after successful request", async () => {
+    (authApiModule.authApi.requestPasswordReset as jest.Mock).mockResolvedValue(undefined);
+    const { result } = renderHook(() => usePasswordReset());
+    expect(result.current.step).toBe("request");
+    await act(async () => { await result.current.requestReset("test@example.com"); });
+    expect(result.current.step).toBe("confirm");
+  });
+
+  it("moves to done step after successful confirm", async () => {
+    (authApiModule.authApi.requestPasswordReset as jest.Mock).mockResolvedValue(undefined);
+    (authApiModule.authApi.confirmPasswordReset as jest.Mock).mockResolvedValue(undefined);
+    const { result } = renderHook(() => usePasswordReset());
+    await act(async () => { await result.current.requestReset("test@example.com"); });
+    await act(async () => {
+      await result.current.confirmReset("user-id", "123456", "NewPassword123!");
+    });
+    expect(result.current.step).toBe("done");
+  });
+
+  it("backToRequest resets step and error", async () => {
+    (authApiModule.authApi.requestPasswordReset as jest.Mock).mockResolvedValue(undefined);
+    const { result } = renderHook(() => usePasswordReset());
+    await act(async () => { await result.current.requestReset("test@example.com"); });
+    act(() => { result.current.backToRequest(); });
+    expect(result.current.step).toBe("request");
+    expect(result.current.error).toBeNull();
+  });
+});
+
+describe("useLogout", () => {
+  it("removes token and userId", () => {
+    const { result } = renderHook(() => useLogout());
+    act(() => { result.current.logout(); });
+    expect(httpModule.removeToken).toHaveBeenCalled();
+    expect(httpModule.removeUserId).toHaveBeenCalled();
+  });
+});

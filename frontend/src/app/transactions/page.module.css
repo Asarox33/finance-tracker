@@ -1,0 +1,35 @@
+.page { min-height: 100vh; animation: fadeIn 0.3s ease; }
+.body { padding: 0 2rem 2rem; display: flex; flex-direction: column; gap: 1.5rem; }
+.filters { display: flex; gap: 1rem; flex-wrap: wrap; }
+.filterField { min-width: 240px; }
+
+.formCard { border-color: var(--accent); }
+.formTitle { font-family: var(--font-display), serif; font-size: 1.125rem; margin-bottom: 1.25rem; }
+.formError {
+  background: var(--danger-dim); border: 1px solid var(--danger);
+  border-radius: var(--radius-sm); color: var(--danger);
+  padding: 0.75rem 1rem; font-size: 0.875rem; margin-bottom: 1rem;
+}
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+.field { display: flex; flex-direction: column; }
+.formActions {
+  display: flex; justify-content: flex-end; gap: 0.75rem;
+  margin-top: 1.5rem; padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
+}
+
+.skels { display: flex; flex-direction: column; gap: 0.5rem; }
+.rowSkel { height: 3.5rem; }
+.pagination { display: flex; align-items: center; justify-content: center; gap: 1rem; padding: 1rem; }
+.pageBtn {
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); color: var(--text);
+  padding: 0.375rem 0.75rem; font-size: 1rem; transition: all var(--transition);
+}
+.pageBtn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.pageBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+.pageInfo { color: var(--text-muted); font-size: 0.875rem; }

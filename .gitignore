@@ -1,49 +1,51 @@
-# Tout dossier build, out, bin, gradle cache, cible partout dans le projet
+# ─── Backend (Kotlin / Gradle) ───────────────────────────────────────────────
+.gradle/
 build/
 out/
-bin/
-.gradle/
-
-# Fichiers classes Java/Kotlin compilés
 *.class
-
-# Archives et artefacts
 *.jar
-!gradle-wrapper.jar
 *.war
 *.ear
+*.nar
+!gradle/wrapper/gradle-wrapper.jar
 
-# Cache et fichiers générés Kotlin
-.kotlin/
+# IntelliJ
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Kotlin
+*.kotlin_module
 
 # Logs
 *.log
 
-# Dossiers et fichiers d’IDE et d’outils de développement
-idea/
-.idea/
-*.iml
-*.ipr
-*.iws
-vscode/
-.vscode/
-
-# Fichiers temporaires et swap
-*.swp
-*.swo
-
-# Tests de couverture
-jacoco.exec
-
-# Fichiers générés par Flyway
-flyway/
-flyway/sql/generated_*.sql
-
-# Fichiers d’environnement locaux (sauf exemple)
-.env
-.env.*
-!.env.example
-
-# Fichiers système
+# OS
 .DS_Store
 Thumbs.db
+desktop.ini
+
+# ─── Frontend (Next.js / Node) ───────────────────────────────────────────────
+frontend/node_modules/
+frontend/.next/
+frontend/.swc/
+frontend/out/
+frontend/coverage/
+frontend/playwright-report/
+frontend/test-results/
+frontend/junit-results/
+frontend/*.tsbuildinfo
+frontend/next-env.d.ts
+
+# ─── Environment — NEVER commit secrets ──────────────────────────────────────
+.env
+.env.local
+.env*.local
+**/.env.local
+**/.env*.local
+
+# ─── Editor ──────────────────────────────────────────────────────────────────
+.vscode/
+*.swp
+*.swo
