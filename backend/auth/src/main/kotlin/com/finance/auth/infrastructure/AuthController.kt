@@ -77,8 +77,11 @@ class AuthController(
     )
 
     data class ResetPasswordRequest @JsonCreator constructor(
-        @param:JsonProperty("userId")
-        val userId: UUID,
+        @param:JsonProperty("email")
+        @field:Email
+        @field:NotBlank
+        @field:Schema(example = "user@example.com")
+        val email: String,
 
         @param:JsonProperty("otp")
         @field:NotBlank
@@ -88,11 +91,8 @@ class AuthController(
 
         @param:JsonProperty("newPassword")
         @field:NotBlank
-        @field:Schema(
-            description = "User password (min 12 chars) with at least 1 Uppercase, 1 Lowercase, 1 figure, 1 special character",
-            example = "MyStrongPassword123!"
-        )
         @field:Size(min = 12, max = 128)
+        @field:Schema(example = "MyStrongPassword123!")
         val newPassword: String
     )
 
@@ -125,7 +125,7 @@ class AuthController(
     fun resetPassword(@Valid @RequestBody request: ResetPasswordRequest) {
         resetPassword.execute(
             ResetPassword.Command(
-                userId = request.userId,
+                email = request.email,
                 rawOtp = request.otp,
                 newPassword = request.newPassword
             )

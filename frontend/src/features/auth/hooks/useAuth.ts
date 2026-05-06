@@ -38,7 +38,12 @@ export function useLogin() {
     } catch (err) {
       const apiErr = err as ApiError;
       const locked = apiErr?.message?.toLowerCase().includes("locked") ?? false;
-      setError({ message: apiErr.message ?? "Login failed", locked });
+      setError({
+        message: locked
+            ? "Account locked — too many failed attempts. Please try again later."
+            : apiErr.message ?? "Login failed",
+        locked,
+      });
     } finally {
       setLoading(false);
     }
@@ -86,11 +91,11 @@ export function usePasswordReset() {
     }
   }
 
-  async function confirmReset(userId: string, otp: string, newPassword: string) {
+  async function confirmReset(email: string, otp: string, newPassword: string) {
     setLoading(true);
     setError(null);
     try {
-      await authApi.confirmPasswordReset({ userId, otp, newPassword });
+      await authApi.confirmPasswordReset({ email, otp, newPassword });
       setStep("done");
     } catch (err) {
       setError((err as ApiError).message ?? "Reset failed");

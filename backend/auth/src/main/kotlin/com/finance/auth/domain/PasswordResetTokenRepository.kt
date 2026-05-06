@@ -4,6 +4,7 @@ import java.util.UUID
 
 interface PasswordResetTokenRepository {
     fun save(token: PasswordResetToken): PasswordResetToken
+    fun findByUserId(userId: UUID): List<PasswordResetToken>
     fun findByUserIdAndOtpHash(userId: UUID, otpHash: String): PasswordResetToken?
     fun invalidateAllForUser(userId: UUID)
 }

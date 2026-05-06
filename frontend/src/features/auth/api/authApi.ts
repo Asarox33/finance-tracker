@@ -5,7 +5,11 @@ export interface LoginResponse { token: string; }
 export interface RegisterRequest { email: string; password: string; }
 export interface RegisterResponse { userId: string; }
 export interface PasswordResetRequest { email: string; }
-export interface PasswordResetConfirmRequest { userId: string; otp: string; newPassword: string; }
+export interface PasswordResetConfirmRequest {
+  email: string;
+  otp: string;
+  newPassword: string;
+}
 
 export const authApi = {
   login: (body: LoginRequest) =>

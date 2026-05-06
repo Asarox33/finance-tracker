@@ -8,7 +8,6 @@ import styles from "../page.module.css";
 export default function ResetPage() {
   const { step, loading, error, requestReset, confirmReset, backToRequest } = usePasswordReset();
   const [email, setEmail] = useState("");
-  const [userId, setUserId] = useState("");
   const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -26,7 +25,7 @@ export default function ResetPage() {
       setClientError("Passwords do not match");
       return;
     }
-    await confirmReset(userId, otp, newPassword);
+    await confirmReset(email, otp, newPassword);
   }
 
   const displayError = clientError ?? error;
@@ -58,23 +57,12 @@ export default function ResetPage() {
               <span className={styles.logo} aria-hidden="true">◈</span>
               <h1 className={styles.title}>Enter reset code</h1>
               <p className={styles.subtitle}>
-                Check your email at <strong>{email}</strong> for the 6-digit code and your user ID.
+                Enter the 6-digit code sent to <strong>{email}</strong>
               </p>
             </header>
 
             <form onSubmit={handleConfirm} noValidate aria-label="Password reset confirmation form">
               {displayError && <div role="alert" className={styles.error}>{displayError}</div>}
-
-              <div className={styles.field}>
-                <label htmlFor="userId">User ID <span style={{ color: "var(--text-dim)", fontWeight: 400 }}>(from email)</span></label>
-                <input
-                    id="userId" type="text" required aria-required="true"
-                    value={userId} onChange={e => setUserId(e.target.value)}
-                    placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                    disabled={loading} autoComplete="off"
-                    style={{ fontFamily: "var(--font-mono)", fontSize: "0.8125rem" }}
-                />
-              </div>
 
               <div className={styles.field}>
                 <label htmlFor="otp">6-digit code</label>
@@ -85,14 +73,16 @@ export default function ResetPage() {
                     value={otp} onChange={e => setOtp(e.target.value.replace(/\D/g, ""))}
                     placeholder="123456" disabled={loading}
                     autoComplete="one-time-code"
-                    style={{ fontFamily: "var(--font-mono)", letterSpacing: "0.3em", fontSize: "1.25rem" }}
+                    style={{ fontFamily: "var(--font-mono), monospace", letterSpacing: "0.3em", fontSize: "1.25rem" }}
                 />
               </div>
 
               <div className={styles.field}>
                 <label htmlFor="newPassword">
                   New password
-                  <span style={{ fontWeight: 400, color: "var(--text-dim)", marginLeft: "0.5rem", textTransform: "none" }}>min 12 chars</span>
+                  <span style={{ fontWeight: 400, color: "var(--text-dim)", marginLeft: "0.5rem", textTransform: "none" }}>
+                  min 12 chars
+                </span>
                 </label>
                 <input
                     id="newPassword" type="password" autoComplete="new-password"
