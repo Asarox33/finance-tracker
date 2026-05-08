@@ -12,20 +12,34 @@ function mockResponse(body: unknown, status = 200) {
   });
 }
 
+function makeValidToken(): string {
+  const header = btoa(JSON.stringify({ alg: "HS256" }));
+  const payload = btoa(JSON.stringify({
+    sub: "user-123",
+    exp: Math.floor(Date.now() / 1000) + 3600,
+  }));
+  return `${header}.${payload}.signature`;
+}
+
 describe("accountsApi", () => {
   beforeEach(() => {
     mockFetch.mockClear();
-    jest.spyOn(Storage.prototype, "getItem").mockReturnValue("mock-token");
+    jest.spyOn(Storage.prototype, "getItem").mockImplementation((key) => {
+      if (key === "auth_token") return makeValidToken();
+      return null;
+    });
   });
 
   it("lists accounts with Authorization header", async () => {
     mockResponse({ items: [], totalItems: 0, totalPages: 0, page: 0, pageSize: 20, isEmpty: true, isFirst: true, isLast: true });
     await accountsApi.list();
     expect(mockFetch).toHaveBeenCalledWith(
-      expect.stringContaining("/accounts"),
-      expect.objectContaining({
-        headers: expect.objectContaining({ Authorization: "Bearer mock-token" }),
-      })
+        expect.stringContaining("/accounts"),
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            Authorization: expect.stringContaining("Bearer "),
+          }),
+        })
     );
   });
 
@@ -35,8 +49,8 @@ describe("accountsApi", () => {
     const result = await accountsApi.get(id);
     expect(result.id).toBe(id);
     expect(mockFetch).toHaveBeenCalledWith(
-      expect.stringContaining(`/accounts/${id}`),
-      expect.anything()
+        expect.stringContaining(`/accounts/${id}`),
+        expect.anything()
     );
   });
 
@@ -44,8 +58,8 @@ describe("accountsApi", () => {
     mockResponse(null, 204);
     await accountsApi.close("acc-1");
     expect(mockFetch).toHaveBeenCalledWith(
-      expect.stringContaining("/accounts/acc-1"),
-      expect.objectContaining({ method: "DELETE" })
+        expect.stringContaining("/accounts/acc-1"),
+        expect.objectContaining({ method: "DELETE" })
     );
   });
 
@@ -54,8 +68,8 @@ describe("accountsApi", () => {
     mockResponse({ ...body, id: "new-id", userId: "u1", status: "ACTIVE" });
     await accountsApi.create(body);
     expect(mockFetch).toHaveBeenCalledWith(
-      expect.stringContaining("/accounts"),
-      expect.objectContaining({ method: "POST" })
+        expect.stringContaining("/accounts"),
+        expect.objectContaining({ method: "POST" })
     );
   });
 });

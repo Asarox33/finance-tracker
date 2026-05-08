@@ -1,0 +1,42 @@
+.page { min-height: 100vh; animation: fadeIn 0.3s ease; }
+.body { padding: 0 2rem 2rem; max-width: 640px; }
+
+.skels { display: flex; flex-direction: column; gap: 1rem; }
+.skel { height: 3rem; }
+
+.error {
+    background: var(--danger-dim); border: 1px solid var(--danger);
+    border-radius: var(--radius-sm); color: var(--danger);
+    padding: 0.75rem 1rem; font-size: 0.875rem; margin-bottom: 1.25rem;
+}
+
+.success {
+    background: var(--success-dim); border: 1px solid var(--success);
+    border-radius: var(--radius-sm); color: var(--success);
+    padding: 0.75rem 1rem; font-size: 0.875rem; margin-bottom: 1.25rem;
+}
+
+.fieldset { border: none; padding: 0; margin: 0 0 1.5rem; }
+
+.legend {
+    font-size: 0.75rem; font-weight: 500; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--text-muted);
+    margin-bottom: 1rem; width: 100%;
+    padding-bottom: 0.5rem; border-bottom: 1px solid var(--border);
+}
+
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+.field { display: flex; flex-direction: column; margin-bottom: 1rem; }
+
+.hint { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.375rem; }
+
+.actions {
+    display: flex; justify-content: flex-end;
+    padding-top: 1rem; border-top: 1px solid var(--border);
+}
+
+@media (max-width: 480px) {
+    .row { grid-template-columns: 1fr; }
+    .body { padding: 0 1rem 1rem; }
+}

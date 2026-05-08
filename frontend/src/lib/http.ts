@@ -1,9 +1,26 @@
 const BASE_URL = "/api";
 
+function isTokenExpired(token: string): boolean {
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    if (!payload.exp) return false;
+    return Date.now() >= payload.exp * 1000;
+  } catch {
+    return true;
+  }
+}
+
 export function getToken(): string | null {
   if (typeof window === "undefined") return null;
   try {
-    return localStorage.getItem("auth_token");
+    const token = localStorage.getItem("auth_token");
+    if (!token) return null;
+    if (isTokenExpired(token)) {
+      localStorage.removeItem("auth_token");
+      localStorage.removeItem("user_id");
+      return null;
+    }
+    return token;
   } catch {
     return null;
   }

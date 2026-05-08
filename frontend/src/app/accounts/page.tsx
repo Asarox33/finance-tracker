@@ -9,6 +9,7 @@ import {
 } from "@/shared/components/ui";
 import type { Account, AccountType } from "@/shared/types";
 import styles from "./page.module.css";
+import { CURRENCIES } from "@/lib/currencies";
 
 const ACCOUNT_TYPES: AccountType[] = [
   "CHECKING", "SAVINGS", "BROKERAGE", "CRYPTO", "REAL_ESTATE", "RETIREMENT", "OTHER"
@@ -131,13 +132,16 @@ function AddAccountForm({ onSuccess, onCancel }: { onSuccess: () => void; onCanc
 
             <div className={styles.field}>
               <label htmlFor="acc-currency">Currency</label>
-              <input
-                  id="acc-currency" type="text" required aria-required="true"
-                  maxLength={3} value={currency}
-                  onChange={e => setCurrency(e.target.value.toUpperCase())}
-                  placeholder="EUR" disabled={loading}
-                  style={{ fontFamily: "var(--font-mono)", textTransform: "uppercase" }}
-              />
+              <select
+                  id="acc-currency"
+                  value={currency}
+                  onChange={e => setCurrency(e.target.value)}
+                  disabled={loading}
+              >
+                {CURRENCIES.map(c => (
+                    <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
             </div>
 
             <div className={styles.field}>
