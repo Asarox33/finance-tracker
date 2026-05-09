@@ -4,7 +4,11 @@ Per-module reference: responsibilities, key domain rules, and important behavior
 
 ---
 
-## shared
+## Backend Modules
+
+---
+
+### shared
 
 **Purpose:** Framework-free primitives shared across all modules. Kotlin Multiplatform (JVM + common).
 
@@ -23,7 +27,7 @@ Per-module reference: responsibilities, key domain rules, and important behavior
 
 ---
 
-## auth
+### auth
 
 **Purpose:** User registration, login (JWT), password reset via OTP email.
 
@@ -43,9 +47,16 @@ Per-module reference: responsibilities, key domain rules, and important behavior
 
 **Dependencies:** `user-profile` (via `CreateUserProfilePort` — creates a profile on registration)
 
+**Frontend integration:**
+- `POST /api/auth/login` → returns `{ token }` (JWT); frontend extracts `sub` claim as user ID
+- `POST /api/auth/register` → returns `{ userId }`; frontend redirects to `/login?registered=1`
+- `POST /api/auth/password-reset/request` → 204; frontend advances to OTP entry step
+- `POST /api/auth/password-reset/confirm` → 204; frontend shows success screen
+- Locked account returns HTTP 429; frontend detects this by checking `error.message.includes("locked")`
+
 ---
 
-## user-profile
+### user-profile
 
 **Purpose:** Stores display name, first/last name, preferred currency, birth date.
 
@@ -56,9 +67,15 @@ Per-module reference: responsibilities, key domain rules, and important behavior
 
 **Key use cases:** `CreateUserProfile`, `GetUserProfile`, `UpdateUserPreferences`
 
+**Frontend integration:**
+- `GET /api/users/me` → returns `UserProfile`; used in `AppShell` to show `displayName` in sidebar and in `/profile` page to pre-fill the form
+- `PUT /api/users/me/preferences` → updates name, display name, preferred currency, birth date
+- The profile form is pre-populated via `useEffect` watching the SWR data; updates trigger `mutate()` to refresh
+- Preferred currency from the profile is **not** yet auto-applied to analytics pages (those default to `EUR`)
+
 ---
 
-## institution
+### institution
 
 **Purpose:** Reference data for financial institutions (banks, brokers, etc.).
 
@@ -69,9 +86,14 @@ Per-module reference: responsibilities, key domain rules, and important behavior
 
 **Key use cases:** `CreateInstitution`, `GetInstitution`, `ListInstitutions`
 
+**Frontend integration:**
+- No institution management UI exists yet
+- The account creation form requires the user to manually type an `institutionId` UUID — a significant UX gap
+- Institutions must be created via the API directly (e.g. via Swagger UI in dev mode)
+
 ---
 
-## asset
+### asset
 
 **Purpose:** Reference data for financial assets (stocks, ETFs, crypto, real estate, etc.).
 
@@ -84,9 +106,14 @@ Per-module reference: responsibilities, key domain rules, and important behavior
 
 **Key use cases:** `CreateAsset`, `GetAsset`, `ListAssets`
 
+**Frontend integration:**
+- No asset management UI exists yet
+- The transaction form does not expose an asset selector; `assetId` is not sent even for BUY/SELL transactions
+- Assets must be created via the API directly
+
 ---
 
-## account
+### account
 
 **Purpose:** User-owned financial accounts (checking, savings, brokerage, etc.).
 
@@ -98,9 +125,18 @@ Per-module reference: responsibilities, key domain rules, and important behavior
 
 **Key use cases:** `CreateAccount`, `GetAccount`, `ListUserAccounts`, `CloseAccount`
 
+**Frontend integration:**
+- `GET /api/accounts?page=0&pageSize=20` → `PageResult<Account>`; displayed as a card grid on `/accounts`
+- `POST /api/accounts` → creates account; requires `institutionId`, `name`, `type`, `currency`
+- `DELETE /api/accounts/:id` → closes account (204); requires browser `confirm()` dialog
+- Account types shown: `CHECKING`, `SAVINGS`, `BROKERAGE`, `CRYPTO`, `REAL_ESTATE`, `RETIREMENT`, `OTHER`
+- Currency picker uses full ISO 4217 list from `src/lib/currencies.ts`
+- `ACTIVE` accounts are filterable in the transaction page's account selector
+- Dashboard shows a count of active accounts and their breakdown table (via `portfolioValue.snapshots`)
+
 ---
 
-## transaction
+### transaction
 
 **Purpose:** Records financial movements on accounts (deposits, withdrawals, buys, sells, etc.).
 
@@ -114,11 +150,21 @@ Per-module reference: responsibilities, key domain rules, and important behavior
 
 **Querying:** `ListAccountTransactions` supports optional `from`/`to` date range filtering.
 
+**Frontend integration:**
+- `GET /api/transactions?accountId=...&page=0&pageSize=20` → `PageResult<Transaction>`; displayed as a table on `/transactions`
+- Account must be selected from a dropdown; only `ACTIVE` accounts are listed
+- `POST /api/transactions` → body includes `accountId`, `type`, `amount` (minor units), `currency`, `date`, `label`, `notes?`
+- Amount input accepts decimal (e.g. `100.50`); converted to minor units before sending: `Math.round(float * 10^2)`
+- Negative amounts (for WITHDRAWAL etc.) are allowed — the input's placeholder says "use − for withdrawals"
+- Transaction type badge colors: `DEPOSIT`/`DIVIDEND` → success (green), `WITHDRAWAL`/`FEE`/`TAX` → danger (red), `BUY`/`SELL` → warning (yellow), `TRANSFER`/`OTHER` → default (grey)
+- Date range filter (`from`/`to`) is supported by the API and hook but **not yet exposed in the UI**
+- Pagination is implemented (previous/next buttons, page X of Y display)
+
 ---
 
-## fees
+### fees
 
-**Purpose:** Records fees associated with accounts or transactions (brokerage, management, custody, etc.).
+**Purpose:** Records fees associated with accounts or transactions.
 
 **Domain rules:**
 - `label` must not be blank
@@ -127,9 +173,13 @@ Per-module reference: responsibilities, key domain rules, and important behavior
 
 **Key use cases:** `RecordFee`, `GetFee`, `ListFees`
 
+**Frontend integration:**
+- No fee recording or viewing UI exists yet
+- Fees are included in analytics calculations (via `FeePortAdapter`) but not directly visible to the user in the UI
+
 ---
 
-## price
+### price
 
 **Purpose:** Historical asset price storage with fallback lookup.
 
@@ -142,9 +192,11 @@ Per-module reference: responsibilities, key domain rules, and important behavior
 
 **Key use cases:** `RecordAssetPrice`, `GetAssetPrice`, `ListAssetPrices`
 
+**Frontend integration:** No UI. Prices must be managed via the API directly.
+
 ---
 
-## fx
+### fx
 
 **Purpose:** FX rate storage and currency conversion.
 
@@ -160,9 +212,14 @@ Per-module reference: responsibilities, key domain rules, and important behavior
 
 **Conversion formula:** `targetAmount = sourceAmount * rate / 10^rateScale`
 
+**Frontend integration:**
+- No FX rate management UI exists yet
+- FX rates are used transparently by analytics to convert account balances to the reference currency
+- The `Transaction` type includes FX rate fields (`appliedFxRate`, etc.) which are displayed in the transaction table as an "FX" badge when present
+
 ---
 
-## inflation
+### inflation
 
 **Purpose:** Consumer price index storage and inflation factor computation.
 
@@ -180,9 +237,11 @@ Per-module reference: responsibilities, key domain rules, and important behavior
 
 **Key use cases:** `RecordInflationIndex`, `GetInflationIndex`, `ComputeInflationFactor`
 
+**Frontend integration:** No UI. Inflation indices must be managed via the API directly.
+
 ---
 
-## analytics
+### analytics
 
 **Purpose:** Read-only cross-module computations. No database. No persistence.
 
@@ -211,3 +270,124 @@ Per-module reference: responsibilities, key domain rules, and important behavior
 `convertedAmount = amount * rate / 10^rateScale` (returns 0 if no rate available — silent degradation)
 
 **Important limitation:** `AccountPortAdapter` fetches up to 1000 accounts (`pageSize=1000`); `TransactionPortAdapter` and `FeePortAdapter` fetch up to 10,000 items. Not suitable for users with very large datasets.
+
+**Frontend integration:**
+- `GET /api/analytics/portfolio-value?asOf=YYYY-MM-DD&referenceCurrency=EUR` → `PortfolioValue` with `totalValue`, `currency`, `asOf`, `snapshots[]`
+- `GET /api/analytics/performance?from=...&to=...&referenceCurrency=EUR` → `PortfolioPerformance` with `startValue`, `endValue`, `gainLoss`, `gainLossBasisPoints`, `currency`, `from`, `to`
+- Same shape for `performance-after-fees` and `performance-after-inflation`
+- Dashboard uses `usePortfolioValue("EUR")` and `usePerformance("EUR", 12)` for its KPI cards
+- Analytics page adds period selector (3M/6M/1Y/3Y) that changes the `months` parameter; `monthsAgo(n)` and `today()` compute the date range
+- All three performance variants are shown side-by-side in a comparison grid and detail table
+- Reference currency is hardcoded to `"EUR"` in all analytics pages; it does not yet read from user profile preferences
+
+---
+
+## Frontend Modules
+
+---
+
+### `src/lib/http.ts`
+
+**Purpose:** Central HTTP client. All API calls go through this module.
+
+**Key exports:**
+- `http.get<T>(path)`, `http.post<T>(path, body)`, `http.put<T>(path, body)`, `http.delete<T>(path)`
+- `getToken()`, `setToken(token)`, `removeToken()`
+- `getUserId()`, `setUserId(id)`, `removeUserId()`
+- `isAuthenticated()` — checks token existence and expiry
+
+**Rules:**
+- All requests prepend `BASE_URL = "/api"` to the path
+- JWT is automatically injected as `Authorization: Bearer <token>` if present
+- Token expiry is checked before every request; expired tokens are cleared silently
+- On HTTP 401: clears token + userId + redirects to `/login` via `window.location.href`
+- On HTTP 204 or zero `content-length`: returns `undefined` without calling `.json()`
+- Throws the raw JSON error body for non-OK responses (for consistent error handling in hooks)
+
+---
+
+### `src/lib/format.ts`
+
+**Purpose:** Formatting utilities for display values.
+
+**Rules:**
+- `formatMoney` always uses `fr-FR` locale (comma decimal separator, space thousands separator)
+- `formatDate` always uses `fr-FR` locale (e.g. "15 janv. 2024")
+- `formatBasisPoints` always prefixes `+` for non-negative values; divides by 100 to get percentage
+- `today()` and `monthsAgo(n)` always return `YYYY-MM-DD` strings (ISO 8601 date-only)
+
+---
+
+### `src/lib/currencies.ts`
+
+**Purpose:** Full ISO 4217 currency list as a readonly const array with a derived `CurrencyCode` type.
+
+**Rules:**
+- Do not add currencies not in ISO 4217
+- The array drives both the account creation currency picker and the profile preferred currency picker
+
+---
+
+### `src/shared/types/index.ts`
+
+**Purpose:** Single source of truth for all TypeScript types shared between features.
+
+**Key types:**
+
+| Type | Description |
+|---|---|
+| `ApiError` | `{ message, errors?, correlationId? }` — shape of backend error responses |
+| `PageResult<T>` | `{ items, totalItems, totalPages, page, pageSize, isEmpty, isFirst, isLast }` |
+| `UserProfile` | `{ id, firstName, lastName, displayName, preferredCurrency, birthDate }` |
+| `Account` | `{ id, userId, institutionId, name, type, currency, status }` |
+| `AccountType` | Union: `"CHECKING" \| "SAVINGS" \| "BROKERAGE" \| "CRYPTO" \| "REAL_ESTATE" \| "RETIREMENT" \| "OTHER"` |
+| `Transaction` | Full transaction with FX rate fields |
+| `TransactionType` | Union: `"DEPOSIT" \| "WITHDRAWAL" \| "TRANSFER" \| "BUY" \| "SELL" \| "DIVIDEND" \| "FEE" \| "TAX" \| "OTHER"` |
+| `PortfolioValue` | `{ totalValue, currency, asOf, snapshots: AccountSnapshot[] }` |
+| `AccountSnapshot` | Per-account value in account currency and reference currency |
+| `PortfolioPerformance` | `{ startValue, endValue, currency, gainLoss, gainLossBasisPoints, from, to }` |
+
+**Rules:**
+- Never duplicate these types in feature modules — always import from `@/shared/types`
+- Amounts in all types are minor-unit integers matching backend representation
+- Add new types here when a new backend DTO is introduced
+
+---
+
+### `src/shared/components/ui.tsx`
+
+**Purpose:** Reusable UI primitives. No business logic.
+
+| Component | Props | Notes |
+|---|---|---|
+| `Card` | `children`, `className?` | White-surface container with border and padding |
+| `Skeleton` | `className?` | Animated shimmer placeholder |
+| `Badge` | `children`, `variant?` (`default`/`success`/`danger`/`warning`) | Pill-shaped label |
+| `Button` | All `<button>` attrs + `variant?`, `size?`, `loading?` | Shows spinner when `loading=true`; disables when loading or `disabled` |
+| `PageHeader` | `title`, `description?`, `action?` | Page title area with optional right-side action slot |
+| `EmptyState` | `title`, `description?` | Centered empty content indicator |
+| `ErrorState` | `message?` | Red alert box for error states |
+
+**Rules:**
+- These components have no feature-specific logic
+- Do not add business logic or API calls here
+- Use `clsx` for conditional class merging
+- All styling via `ui.module.css` using CSS custom properties
+
+---
+
+### `src/shared/components/AppShell.tsx`
+
+**Purpose:** Authenticated page wrapper. Provides sidebar navigation, auth guard, session timeout.
+
+**Behavior:**
+- Renders `null` if `isAuthenticated()` is false (while redirect is in flight)
+- Sidebar links: Dashboard (`⬡`), Accounts (`◫`), Transactions (`⇌`), Analytics (`◈`)
+- Bottom section: display name from profile, Profile link (`◉`), Sign out button (`⊗`)
+- Active link detected via `usePathname().startsWith(href)` — `aria-current="page"` is set
+- Responsive: sidebar collapses to a horizontal top bar on screens ≤768px; labels hidden, only icons shown
+
+**Rules:**
+- Every authenticated layout (`dashboard/layout.tsx`, `accounts/layout.tsx`, etc.) must wrap children in `<AppShell>`
+- Do not add page-specific content to `AppShell`
+- `useSessionTimeout` must remain called inside `AppShell` (it attaches global event listeners)

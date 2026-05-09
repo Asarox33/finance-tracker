@@ -2,9 +2,13 @@
 
 ## Overview
 
-Finance Tracker is a **monorepo** with a Kotlin/Spring Boot backend and a Next.js frontend (frontend code not provided). The backend follows **Hexagonal Architecture (Ports & Adapters)** strictly, organized as a **multi-module Gradle project**.
+Finance Tracker is a **monorepo** with a Kotlin/Spring Boot backend and a Next.js frontend. The backend follows **Hexagonal Architecture (Ports & Adapters)** strictly, organized as a **multi-module Gradle project**. The frontend follows a **feature-oriented architecture** using Next.js App Router with CSS Modules.
+
+---
 
 ## Technology Stack
+
+### Backend
 
 | Layer | Technology |
 |---|---|
@@ -15,12 +19,26 @@ Finance Tracker is a **monorepo** with a Kotlin/Spring Boot backend and a Next.j
 | API Docs | SpringDoc OpenAPI 3 |
 | Email | Resend (prod), Console logger (dev) |
 | Rate Limiting | Bucket4j |
-| Frontend | Next.js (TypeScript) |
 | Build | Gradle 9.4.1 with version catalog (`libs.versions.toml`) |
 | Testing | JUnit 5 (Jupiter 6), Testcontainers 2 |
 | Coverage | Kover 0.9.8 |
 
-## Module Structure
+### Frontend
+
+| Layer | Technology |
+|---|---|
+| Framework | Next.js 16 (App Router, Server Components) |
+| Language | TypeScript 6 (strict mode) |
+| Data Fetching | SWR 2.4 |
+| Styling | CSS Modules (no external UI library) |
+| Unit/Integration Tests | Jest 30 + React Testing Library 16 |
+| E2E Tests | Playwright 1.59 |
+| Utilities | clsx 2.1 |
+| Node Requirement | >=20.9.0 |
+
+---
+
+## Backend Module Structure
 
 ```
 backend/
@@ -39,7 +57,63 @@ backend/
 └── analytics/            # Portfolio value & performance computation (read-only, no DB)
 ```
 
-## Hexagonal Architecture Pattern
+## Frontend Source Structure
+
+```
+frontend/src/
+├── app/                          # Next.js App Router pages & layouts
+│   ├── layout.tsx                # Root layout (metadata, globals.css, ThemeToggle)
+│   ├── page.tsx                  # Root redirect → /dashboard
+│   ├── globals.css               # Global CSS variables, resets, base styles
+│   ├── login/                    # Auth pages (no AppShell)
+│   │   ├── layout.tsx
+│   │   ├── page.tsx              # Login form
+│   │   ├── register/page.tsx     # Registration form
+│   │   └── reset/page.tsx        # Password reset (3-step: request→confirm→done)
+│   ├── dashboard/                # Portfolio KPIs + account breakdown table
+│   ├── accounts/                 # Account list + create + close
+│   ├── transactions/             # Transaction list + create (per account)
+│   ├── analytics/                # Performance comparison + period details
+│   └── profile/                  # User profile edit form
+├── features/                     # Business feature modules
+│   ├── auth/
+│   │   ├── api/authApi.ts        # login, register, requestPasswordReset, confirmPasswordReset
+│   │   ├── hooks/useAuth.ts      # useLogin, useRegister, usePasswordReset, useLogout
+│   │   └── __tests__/
+│   ├── accounts/
+│   │   ├── api/accountsApi.ts    # list, get, create, close
+│   │   ├── hooks/useAccounts.ts  # useAccounts, useAccount
+│   │   └── __tests__/
+│   ├── analytics/
+│   │   ├── api/analyticsApi.ts   # portfolioValue, performance, performanceAfterFees, performanceAfterInflation
+│   │   ├── hooks/useAnalytics.ts # usePortfolioValue, usePerformance, usePerformanceAfterFees, usePerformanceAfterInflation
+│   │   └── __tests__/
+│   ├── transactions/
+│   │   ├── api/transactionsApi.ts # list, get, create
+│   │   └── hooks/useTransactions.ts
+│   └── user-profile/
+│       ├── api/userProfileApi.ts  # getMe, updatePreferences
+│       ├── hooks/useUserProfile.ts # useUserProfile, useUpdatePreferences
+│       └── __tests__/
+├── shared/
+│   ├── components/
+│   │   ├── AppShell.tsx          # Sidebar nav + auth guard wrapper
+│   │   ├── ThemeToggle.tsx       # Dark/light toggle (fixed position)
+│   │   └── ui.tsx                # Card, Skeleton, Badge, Button, PageHeader, EmptyState, ErrorState
+│   ├── hooks/
+│   │   ├── useAuthGuard.ts       # Redirects to /login if unauthenticated
+│   │   ├── useSessionTimeout.ts  # Auto-logout after 5 min inactivity
+│   │   └── useTheme.ts           # Dark/light theme with localStorage persistence
+│   └── types/index.ts            # All shared TypeScript interfaces & types
+└── lib/
+    ├── http.ts                   # Fetch wrapper, JWT token management, auth helpers
+    ├── format.ts                 # formatMoney, formatDate, formatBasisPoints, today, monthsAgo
+    └── currencies.ts             # Full ISO 4217 currency list (const array + CurrencyCode type)
+```
+
+---
+
+## Backend Hexagonal Architecture Pattern
 
 Every domain module (except `shared` and `analytics`) follows the same three-layer layout:
 
@@ -61,7 +135,49 @@ Every domain module (except `shared` and `analytics`) follows the same three-lay
 
 The `analytics` module differs: it has **no DB of its own** and depends on other modules through **port interfaces** (`AccountPort`, `TransactionPort`, `FxRatePort`, etc.), with adapters in `infrastructure/adapters/` that delegate to the appropriate use cases.
 
-## Dependency Flow
+---
+
+## Frontend Architecture Patterns
+
+### Routing & Layout
+
+- **App Router** with nested layouts. All authenticated pages wrap their content in `<AppShell>`.
+- Auth pages (`/login/**`) use a minimal layout with no sidebar.
+- Root page (`/`) redirects to `/dashboard`.
+- API routes are proxied: Next.js rewrites `/api/:path*` → `${NEXT_PUBLIC_API_URL}/api/:path*` via `next.config.ts`.
+
+### Data Fetching
+
+- All server data fetching uses **SWR** with feature-local hooks (e.g. `useAccounts`, `usePortfolioValue`).
+- SWR keys are arrays: `["accounts", page]`, `["portfolio-value", asOf, currency]`, etc.
+- Mutations call the API directly then invoke `mutate()` to revalidate.
+- No global state store — all state is local to components or SWR cache.
+
+### HTTP Client (`src/lib/http.ts`)
+
+- Thin wrapper around `fetch` with automatic JWT injection.
+- Token stored in `localStorage` under key `auth_token`; user ID under `user_id`.
+- On 401 response: clears token + user ID, redirects to `/login`.
+- Token expiry is checked client-side before each request; expired tokens are cleared immediately.
+- Exports: `http.get`, `http.post`, `http.put`, `http.delete`, plus `getToken`, `setToken`, `removeToken`, `getUserId`, `setUserId`, `removeUserId`, `isAuthenticated`.
+
+### Authentication Flow
+
+1. `useLogin` → calls `authApi.login` → stores token + extracts `sub` claim as `user_id` → pushes to `/dashboard`.
+2. `useAuthGuard` (in `AppShell`) → checks `isAuthenticated()` on mount → redirects to `/login` if false.
+3. `useSessionTimeout` (in `AppShell`) → resets a 5-minute inactivity timer on user events → calls `logout()` on expiry.
+4. `useLogout` → removes token + userId → pushes to `/login`.
+
+### Theming
+
+- Dark/light theme toggled via `data-theme` attribute on `<html>`.
+- CSS custom properties (e.g. `--bg`, `--surface`, `--accent`) defined in `globals.css` for both themes.
+- Theme preference persisted in `localStorage` under key `theme`. Default is `dark`.
+- `ThemeToggle` is rendered in the root layout (fixed top-right), visible on all pages.
+
+---
+
+## Backend Dependency Flow
 
 ```
 app  →  [all modules]
@@ -71,6 +187,20 @@ auth  →  user-profile (via CreateUserProfilePort)
 ```
 
 Modules never depend on each other's infrastructure layer — only on application-layer use cases or through defined ports.
+
+---
+
+## Frontend ↔ Backend API Mapping
+
+| Frontend Feature | API Endpoints Used |
+|---|---|
+| Auth | `POST /api/auth/login`, `POST /api/auth/register`, `POST /api/auth/password-reset/request`, `POST /api/auth/password-reset/confirm` |
+| User Profile | `GET /api/users/me`, `PUT /api/users/me/preferences` |
+| Accounts | `GET /api/accounts`, `GET /api/accounts/:id`, `POST /api/accounts`, `DELETE /api/accounts/:id` |
+| Transactions | `GET /api/transactions?accountId=...`, `GET /api/transactions/:id`, `POST /api/transactions` |
+| Analytics | `GET /api/analytics/portfolio-value`, `GET /api/analytics/performance`, `GET /api/analytics/performance-after-fees`, `GET /api/analytics/performance-after-inflation` |
+
+---
 
 ## Database Schema Layout
 
@@ -91,6 +221,8 @@ Each module owns a dedicated PostgreSQL schema, managed independently via Flyway
 
 Migration filenames follow the pattern `V<major>_<minor>__<description>.sql`. Schema versions are numbered 1–10 in module order.
 
+---
+
 ## Security Architecture
 
 - Stateless JWT authentication via `JwtAuthenticationFilter` (placed before `UsernamePasswordAuthenticationFilter`)
@@ -98,6 +230,9 @@ Migration filenames follow the pattern `V<major>_<minor>__<description>.sql`. Sc
 - Public endpoints: `/api/auth/**`, `/actuator/health`, `/actuator/info`, Swagger UI
 - Rate limiting on auth endpoints via `RateLimitingFilter` (Bucket4j, 10 req/min per IP)
 - `X-Correlation-Id` header propagated through MDC via `CorrelationIdFilter`
+- Frontend: JWT stored in `localStorage`; checked for expiry on every request; auto-logout on 401 or 5-min inactivity
+
+---
 
 ## Profiles
 
