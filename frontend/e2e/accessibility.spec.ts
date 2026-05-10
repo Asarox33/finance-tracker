@@ -30,6 +30,6 @@ test.describe("Navigation accessibility", () => {
     await page.goto("/login/reset");
     await page.getByLabel("Email address").fill("test@example.com");
     await page.getByRole("button", { name: "Send reset code" }).click();
-    await expect(page.getByRole("heading", { name: "Check your email" })).toBeVisible({ timeout: 3000 });
+    await expect(page.getByRole("heading", { name: "Enter reset code" })).toBeVisible({ timeout: 3000 });
   });
 });

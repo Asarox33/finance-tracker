@@ -1,5 +1,54 @@
 # Finance Tracker — AI Development Guide
 
+---
+
+## Execution Model
+
+### Modes (strict — select before acting)
+
+| Mode | When | Rule |
+|---|---|---|
+| **FULL GENERATION** | New module / new architecture | Generate complete new structure |
+| **PATCH** | Bug fix / compilation issue / file-level change | Output modified files/sections only — never regenerate full project |
+| **INSTRUCTION** | Small change < 50 lines | Line-level or textual diff only |
+
+### Scope discipline (absolute)
+
+- Never expand scope beyond the current request
+- Never add features not explicitly asked for
+- Never anticipate future steps
+- Execute only the current step, then stop
+- Prefer minimal change over full rewrite
+- If unclear → choose simplest correct solution, or ask
+
+### Step pipeline (follow strictly, one step at a time)
+
+```
+STEP 0  → Context definition
+STEP 1  → Architecture design (NO CODE)
+STEP 2  → Backend bootstrap only
+STEP 3  → Shared module
+STEP 4  → Business modules (one by one)
+STEP 5  → FX module
+STEP 6  → Inflation module
+STEP 7  → Analytics module
+STEP 8  → Frontend skeleton
+STEP 9  → Frontend integration
+STEP 10 → Test completion (missing coverage only)
+STEP 11 → Docker setup
+STEP 12 → CI/CD pipeline
+```
+
+Each step must end completely before the next begins. No forward implementation.
+
+---
+
+## Language Rule
+
+All code, comments, logs, error messages, variable names, and test method names must be in **English only**. No French anywhere in the codebase.
+
+---
+
 ## Repository Shape
 
 Monorepo with two top-level directories:
@@ -19,15 +68,52 @@ finance-tracker/
 
 ---
 
+## Docker Structure
+
+```
+docker/
+├── docker-compose.yml           # Production baseline
+├── docker-compose.override.yml  # Dev overrides (dev seeds, ports, hot reload)
+├── backend.Dockerfile
+└── frontend.Dockerfile
+```
+
+**Run production:** `docker compose up -d`
+**Run development:** `docker compose -f docker-compose.yml up -d` (override applied automatically)
+
+---
+
 ## Tech Stack at a Glance
 
 | Side | Key Technologies |
 |---|---|
 | Backend | Kotlin, Spring Boot 4, Spring Data JPA, PostgreSQL 16, Flyway 12, JWT, Bucket4j |
 | Frontend | Next.js 16 App Router, TypeScript 6 strict, SWR, CSS Modules, clsx |
-| Testing (BE) | JUnit 6, Testcontainers 2, Kover |
+| Testing (BE) | JUnit 5 (Jupiter 6.x), Testcontainers 2, Kover |
 | Testing (FE) | Jest 30, React Testing Library 16, Playwright 1.59 |
 | Build | Gradle 9.4.1 (BE), npm (FE) |
+
+---
+
+## Environment Model
+
+| Rule | Detail |
+|---|---|
+| DEV/PROD parity | Identical codebase — no environment-specific business logic |
+| Environment switching | Docker Compose only (override file for dev) |
+| Seeds | DEV only, injected via `docker-compose.override.yml` — never in PROD |
+| Spring config | `application.yml` (shared) · `application-dev.yml` · `application-prod.yml` · `application-test.yml` (CI only) |
+
+No `if (env == "dev")` logic in application code. Ever.
+
+---
+
+## Version Locking (Critical)
+
+- **No version ranges** — `^`, `~`, `latest` are forbidden everywhere
+- All versions must be explicit and pinned
+- Backend: Gradle dependency locking enabled (`./gradlew dependencies --write-locks`)
+- Frontend: `package-lock.json` is mandatory; CI uses `npm ci` only (never `npm install`)
 
 ---
 
@@ -49,6 +135,9 @@ infrastructure/← Spring config, JPA entities, REST controllers, repository ada
 - Business logic lives in use cases, never in controllers or config classes
 - `shared/` is framework-free; do not add Spring deps or feature logic there
 - Currency conversion logic only in `fx` module; pricing logic only in `price` module; transaction logic only in `transaction` module
+- **No cross-module database access** — each module owns its PostgreSQL schema exclusively
+- **No implicit FX conversion** — all currency conversion must go through the `fx` module explicitly, using historical rates only
+- `analytics` module: read-only computed layer, no persistence of any kind
 
 **Current backend modules:**
 `shared` · `auth` · `user-profile` · `institution` · `asset` · `account` · `transaction` · `fees` · `price` · `fx` · `inflation` · `analytics` · `app`
@@ -177,13 +266,36 @@ Start frontend: `cd frontend && npm run dev`
 
 ---
 
+## CI/CD Rules
+
+CI is the source of truth for dependency resolution. No "works on my machine" assumptions.
+
+### Backend CI
+```bash
+./gradlew clean build    # runs unit + integration tests (skipIT defaults to false)
+```
+
+### Frontend CI
+```bash
+npm ci          # never npm install
+npm run lint
+npm run build
+```
+
+No implicit installs. No environment-specific workarounds.
+
+---
+
 ## Testing
 
 ### Backend
 ```bash
-./gradlew test               # unit tests only
-./gradlew integrationTest    # integration tests (Testcontainers, needs Docker)
-./gradlew -PskipIT=true test # skip integration tests
+./gradlew build                          # unit + integration tests (default, needs Docker)
+./gradlew build -PskipIT=true            # unit tests only (local dev, no Docker)
+./gradlew testAggregateReport            # unit + integration + coverage report (needs Docker)
+
+./gradlew.bat build -PskipIT=true        # Windows equivalent, unit tests only
+./gradlew.bat testAggregateReport        # Windows equivalent, full report
 ```
 
 ### Frontend

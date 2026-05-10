@@ -13,7 +13,8 @@ test.describe("Auth flows", () => {
 
   test("login form is fully keyboard navigable", async ({ page }) => {
     await page.goto("/login");
-    await page.keyboard.press("Tab");
+    await page.keyboard.press("Tab"); // ThemeToggle (fixed, outside form)
+    await page.keyboard.press("Tab"); // Email input
     await expect(page.getByLabel("Email address")).toBeFocused();
     await page.keyboard.press("Tab");
     await expect(page.getByLabel("Password")).toBeFocused();
@@ -29,7 +30,7 @@ test.describe("Auth flows", () => {
     await page.getByLabel("Email address").fill("bad@example.com");
     await page.getByLabel("Password").fill("WrongPassword123!");
     await page.getByRole("button", { name: "Sign in" }).click();
-    await expect(page.getByRole("alert")).toContainText("Invalid credentials");
+    await expect(page.locator("[role='alert'][aria-live='assertive']:not(#__next-route-announcer__)")).toContainText("Invalid credentials");
   });
 
   test("login shows locked warning on locked account", async ({ page }) => {
@@ -40,7 +41,7 @@ test.describe("Auth flows", () => {
     await page.getByLabel("Email address").fill("locked@example.com");
     await page.getByLabel("Password").fill("Password123!");
     await page.getByRole("button", { name: "Sign in" }).click();
-    await expect(page.getByRole("alert")).toContainText("locked");
+    await expect(page.locator("[role='alert'][aria-live='assertive']:not(#__next-route-announcer__)")).toContainText("locked");
     await expect(page.getByRole("button", { name: "Sign in" })).toBeDisabled();
   });
 
@@ -80,7 +81,6 @@ test.describe("Auth flows", () => {
     await page.getByLabel("Email address").fill("test@example.com");
     await page.getByRole("button", { name: "Send reset code" }).click();
     await expect(page.getByRole("heading", { name: "Enter reset code" })).toBeVisible({ timeout: 3000 });
-    await expect(page.getByLabel("User ID")).toBeVisible();
     await expect(page.getByLabel("6-digit code")).toBeVisible();
   });
 
@@ -94,8 +94,7 @@ test.describe("Auth flows", () => {
     await page.goto("/login/reset");
     await page.getByLabel("Email address").fill("test@example.com");
     await page.getByRole("button", { name: "Send reset code" }).click();
-    await expect(page.getByLabel("User ID")).toBeVisible({ timeout: 3000 });
-    await page.getByLabel("User ID").fill("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
+    await expect(page.getByLabel("6-digit code")).toBeVisible({ timeout: 3000 });
     await page.getByLabel("6-digit code").fill("123456");
     await page.getByLabel(/New password/).fill("NewPassword123!");
     await page.getByLabel("Confirm new password").fill("NewPassword123!");

@@ -69,7 +69,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 
   const res = await fetch(`${BASE_URL}${path}`, { ...options, headers });
 
-  if (res.status === 401) {
+  if (res.status === 401 && !path.startsWith("/auth/")) {
     removeToken();
     removeUserId();
     if (typeof window !== "undefined") window.location.href = "/login";

@@ -161,6 +161,27 @@ All code lives under `com.finance.<module>`. Sub-packages are always exactly `do
 
 ---
 
+## Version & Dependency Rules
+
+### Backend
+- Gradle dependency locking enabled — no dynamic versions
+- No version ranges in `libs.versions.toml` or `build.gradle.kts`
+- Run `./gradlew dependencies --write-locks` when adding/updating dependencies
+
+### Frontend
+- `package-lock.json` is mandatory and must be committed
+- Only `npm` allowed (no yarn, no pnpm)
+- CI uses `npm ci` exclusively — `npm install` is forbidden in CI
+- No `^` or `~` version ranges in `package.json`
+
+---
+
+## Language Rule
+
+All code, comments, log messages, error strings, variable names, and test method names must be in **English only**. No French in the codebase.
+
+---
+
 ## Testing Conventions
 
 ### Backend Unit Tests (`*Test.kt`)
@@ -169,7 +190,10 @@ All code lives under `com.finance.<module>`. Sub-packages are always exactly `do
 - Use `InMemory<Entity>Repository` stubs defined in `TestFixtures.kt`
 - Helper `test<Entity>(...)` factory functions with all-defaulted parameters
 - No Spring context, no mocks — plain Kotlin instantiation
-- Naming: `<className>Test`, test methods describe behavior (`closesAccountSuccessfully`, `rejectsBlankName`)
+- **JUnit 5 (Jupiter) only** — Kotest is forbidden
+- **No Kotest backtick test names** — use readable camelCase method names: `fun closesAccountSuccessfully()`, not `` fun `closes account successfully`() ``
+- All test method names in **English only**
+- Naming: `<className>Test`; test methods describe behavior (`closesAccountSuccessfully`, `rejectsBlankName`)
 
 ### Backend Integration Tests (`*IT.kt`)
 
