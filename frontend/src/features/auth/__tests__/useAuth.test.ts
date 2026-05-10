@@ -146,3 +146,91 @@ describe("useLogout", () => {
     expect(httpModule.removeUserId).toHaveBeenCalled();
   });
 });
+
+describe("extractUserId edge cases", () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it("handles token with non-extractable sub gracefully", async () => {
+    const malformedPayload = btoa("not-json");
+    const badToken = `header.${malformedPayload}.sig`;
+    (authApiModule.authApi.login as jest.Mock).mockResolvedValue({ token: badToken });
+    const { result } = renderHook(() => useLogin());
+    await act(async () => { await result.current.login("test@example.com", "Password123!"); });
+    expect(httpModule.setToken).toHaveBeenCalledWith(badToken);
+    expect(httpModule.setUserId).not.toHaveBeenCalled();
+  });
+
+  it("handles token with wrong number of parts", async () => {
+    (authApiModule.authApi.login as jest.Mock).mockResolvedValue({ token: "onlytwoparts.x" });
+    const { result } = renderHook(() => useLogin());
+    await act(async () => { await result.current.login("test@example.com", "Password123!"); });
+    expect(httpModule.setUserId).not.toHaveBeenCalled();
+  });
+});
+
+describe("useRegister redirect", () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it("redirects to login with registered param on success", async () => {
+    (authApiModule.authApi.register as jest.Mock).mockResolvedValue({ userId: "u-1" });
+    const { result } = renderHook(() => useRegister());
+    await act(async () => { await result.current.register("test@example.com", "Password123!"); });
+    expect(mockPush).toHaveBeenCalledWith("/login?registered=1");
+  });
+});
+
+describe("usePasswordReset error handling", () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it("sets error when requestReset fails", async () => {
+    (authApiModule.authApi.requestPasswordReset as jest.Mock).mockRejectedValue({ message: "Email not found" });
+    const { result } = renderHook(() => usePasswordReset());
+    await act(async () => { await result.current.requestReset("unknown@example.com"); });
+    expect(result.current.error).toBe("Email not found");
+    expect(result.current.step).toBe("request");
+  });
+
+  it("sets error when confirmReset fails", async () => {
+    (authApiModule.authApi.requestPasswordReset as jest.Mock).mockResolvedValue(undefined);
+    (authApiModule.authApi.confirmPasswordReset as jest.Mock).mockRejectedValue({ message: "Invalid OTP" });
+    const { result } = renderHook(() => usePasswordReset());
+    await act(async () => { await result.current.requestReset("test@example.com"); });
+    await act(async () => { await result.current.confirmReset("test@example.com", "000000", "NewPassword123!"); });
+    expect(result.current.error).toBe("Invalid OTP");
+    expect(result.current.step).toBe("confirm");
+  });
+});
+
+describe("fallback error messages", () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it("useLogin uses fallback message when error has no message", async () => {
+    (authApiModule.authApi.login as jest.Mock).mockRejectedValue({});
+    const { result } = renderHook(() => useLogin());
+    await act(async () => { await result.current.login("test@example.com", "Password123!"); });
+    expect(result.current.error?.message).toBe("Login failed");
+  });
+
+  it("useRegister uses fallback message when error has no message", async () => {
+    (authApiModule.authApi.register as jest.Mock).mockRejectedValue({});
+    const { result } = renderHook(() => useRegister());
+    await act(async () => { await result.current.register("test@example.com", "Password123!"); });
+    expect(result.current.error).toBe("Registration failed");
+  });
+
+  it("usePasswordReset requestReset uses fallback message when error has no message", async () => {
+    (authApiModule.authApi.requestPasswordReset as jest.Mock).mockRejectedValue({});
+    const { result } = renderHook(() => usePasswordReset());
+    await act(async () => { await result.current.requestReset("test@example.com"); });
+    expect(result.current.error).toBe("Request failed");
+  });
+
+  it("usePasswordReset confirmReset uses fallback message when error has no message", async () => {
+    (authApiModule.authApi.requestPasswordReset as jest.Mock).mockResolvedValue(undefined);
+    (authApiModule.authApi.confirmPasswordReset as jest.Mock).mockRejectedValue({});
+    const { result } = renderHook(() => usePasswordReset());
+    await act(async () => { await result.current.requestReset("test@example.com"); });
+    await act(async () => { await result.current.confirmReset("test@example.com", "123456", "NewPassword123!"); });
+    expect(result.current.error).toBe("Reset failed");
+  });
+});

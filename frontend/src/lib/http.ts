@@ -11,6 +11,7 @@ function isTokenExpired(token: string): boolean {
 }
 
 export function getToken(): string | null {
+  /* istanbul ignore next */
   if (typeof window === "undefined") return null;
   try {
     const token = localStorage.getItem("auth_token");
@@ -27,16 +28,19 @@ export function getToken(): string | null {
 }
 
 export function setToken(token: string): void {
+  /* istanbul ignore next */
   if (typeof window === "undefined") return;
   localStorage.setItem("auth_token", token);
 }
 
 export function removeToken(): void {
+  /* istanbul ignore next */
   if (typeof window === "undefined") return;
   localStorage.removeItem("auth_token");
 }
 
 export function getUserId(): string | null {
+  /* istanbul ignore next */
   if (typeof window === "undefined") return null;
   try {
     return localStorage.getItem("user_id");
@@ -46,11 +50,13 @@ export function getUserId(): string | null {
 }
 
 export function setUserId(id: string): void {
+  /* istanbul ignore next */
   if (typeof window === "undefined") return;
   localStorage.setItem("user_id", id);
 }
 
 export function removeUserId(): void {
+  /* istanbul ignore next */
   if (typeof window === "undefined") return;
   localStorage.removeItem("user_id");
 }

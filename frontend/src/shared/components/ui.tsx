@@ -7,8 +7,8 @@ export function Card({ children, className }: { children: React.ReactNode; class
   return <div className={clsx(styles.card, className)}>{children}</div>;
 }
 
-export function Skeleton({ className }: { className?: string }) {
-  return <div className={clsx(styles.skeleton, className)} aria-hidden="true" />;
+export function Skeleton({ className, style }: { className?: string; style?: React.CSSProperties }) {
+  return <div className={clsx(styles.skeleton, className)} style={style} aria-hidden="true" />;
 }
 
 export function Badge({

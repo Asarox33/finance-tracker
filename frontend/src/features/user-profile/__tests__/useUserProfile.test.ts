@@ -1,6 +1,7 @@
 import { renderHook, act } from "@testing-library/react";
 import { useUpdatePreferences } from "@/features/user-profile/hooks/useUserProfile";
 import * as apiModule from "@/features/user-profile/api/userProfileApi";
+import { useUserProfile } from "@/features/user-profile/hooks/useUserProfile";
 
 jest.mock("swr", () => ({
     __esModule: true,
@@ -88,5 +89,29 @@ describe("useUpdatePreferences", () => {
             await result.current.update(mockPreferences, onSuccess);
         });
         expect(onSuccess).toHaveBeenCalled();
+    });
+
+    it("succeeds without onSuccess callback", async () => {
+        (apiModule.userProfileApi.updatePreferences as jest.Mock).mockResolvedValue(mockPreferences);
+        const { result } = renderHook(() => useUpdatePreferences());
+        await act(async () => { await result.current.update(mockPreferences); });
+        expect(result.current.success).toBe(true);
+    });
+});
+
+describe("useUserProfile", () => {
+    it("returns profile data from SWR", () => {
+        const { result } = renderHook(() => useUserProfile());
+        expect(result.current.profile).toEqual({
+            id: "user-123",
+            firstName: "John",
+            lastName: "Doe",
+            displayName: "johndoe",
+            preferredCurrency: "EUR",
+            birthDate: null,
+        });
+        expect(result.current.isLoading).toBe(false);
+        expect(result.current.error).toBeNull();
+        expect(typeof result.current.mutate).toBe("function");
     });
 });

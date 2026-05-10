@@ -304,16 +304,37 @@ npm test              # Jest unit + integration tests
 npm run test:watch    # watch mode
 npm run test:e2e      # Playwright E2E (requires dev server running)
 npm run lint          # ESLint
+npm run test:coverage # Code coverage
 ```
 
 **Frontend test patterns:**
 - Mock `global.fetch` for API module tests
 - Mock `jest.mock("next/navigation", ...)` for hooks that use `useRouter`
-- Mock `jest.mock("swr", ...)` for hooks tests that don't need real SWR
-- Seed `localStorage` via `jest.spyOn(Storage.prototype, "getItem")`
+- Mock `jest.mock("swr", ...)` with a null-key guard: skip fetcher when key is falsy
+- Mock `jest.mock("<feature>/api/<feature>Api", ...)` for hook tests
+- Seed `localStorage` via `jest.spyOn(Storage.prototype, "getItem")` or `localStorage.setItem`
 - Build test JWTs inline: `btoa(JSON.stringify({ sub, exp }))` as the payload segment
+- SWR mock pattern (always use this form):
+```ts
+  jest.mock("swr", () => ({
+    __esModule: true,
+    default: jest.fn((key, fetcher) => {
+      if (!key || !fetcher) return { data: undefined, error: undefined, isLoading: false, mutate: jest.fn() };
+      try { fetcher(); } catch {}
+      return { data: undefined, error: undefined, isLoading: false, mutate: jest.fn() };
+    }),
+  }));
+```
 
----
+**What to unit test:**
+- `src/features/**/api/` — all API modules
+- `src/features/**/hooks/` — all hooks with business logic
+- `src/lib/` — http client, format utilities (exclude currencies.ts — static data, no logic)
+
+**What NOT to unit test (covered by E2E instead):**
+- `src/app/` — page components (too much mocking, covered by Playwright)
+- `src/shared/components/` — UI primitives and AppShell (covered by Playwright)
+- `src/shared/hooks/` — auth guard, session timeout, theme (depend on window/router)
 
 ## Known Gaps (Things Not Yet Built)
 

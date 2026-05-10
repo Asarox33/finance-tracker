@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "test": "jest --passWithNoTests",
     "test:watch": "jest --watch",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:coverage": "jest --coverage"
   },
   "dependencies": {
     "clsx": "2.1.1",
