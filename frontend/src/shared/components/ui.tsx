@@ -3,18 +3,18 @@
 import clsx from "clsx";
 import styles from "./ui.module.css";
 
-export function Card({children, className}: { children: React.ReactNode; className?: string }) {
+export function Card({ children, className }: { children: React.ReactNode; className?: string }) {
     return <div className={clsx(styles.card, className)}>{children}</div>;
 }
 
-export function Skeleton({className, style}: { className?: string; style?: React.CSSProperties }) {
-    return <div className={clsx(styles.skeleton, className)} style={style} aria-hidden="true"/>;
+export function Skeleton({ className, style }: { className?: string; style?: React.CSSProperties }) {
+    return <div className={clsx(styles.skeleton, className)} style={style} aria-hidden="true" />;
 }
 
 export function Badge({
-                          children,
-                          variant = "default",
-                      }: {
+    children,
+    variant = "default",
+}: {
     children: React.ReactNode;
     variant?: "default" | "success" | "danger" | "warning";
 }) {
@@ -22,12 +22,12 @@ export function Badge({
 }
 
 export function Button({
-                           children,
-                           variant = "primary",
-                           size = "md",
-                           loading,
-                           ...props
-                       }: React.ButtonHTMLAttributes<HTMLButtonElement> & {
+    children,
+    variant = "primary",
+    size = "md",
+    loading,
+    ...props
+}: React.ButtonHTMLAttributes<HTMLButtonElement> & {
     variant?: "primary" | "secondary" | "danger" | "ghost";
     size?: "sm" | "md";
     loading?: boolean;
@@ -39,17 +39,17 @@ export function Button({
             aria-busy={loading}
             className={clsx(styles.btn, styles[variant], styles[`size_${size}`], props.className)}
         >
-            {loading && <span className={styles.btnSpinner} aria-hidden="true"/>}
+            {loading && <span className={styles.btnSpinner} aria-hidden="true" />}
             {children}
         </button>
     );
 }
 
 export function PageHeader({
-                               title,
-                               description,
-                               action,
-                           }: {
+    title,
+    description,
+    action,
+}: {
     title: string;
     description?: string;
     action?: React.ReactNode;
@@ -65,17 +65,19 @@ export function PageHeader({
     );
 }
 
-export function EmptyState({title, description}: { title: string; description?: string }) {
+export function EmptyState({ title, description }: { title: string; description?: string }) {
     return (
         <div className={styles.empty} role="status">
-            <span className={styles.emptyIcon} aria-hidden="true">◌</span>
+            <span className={styles.emptyIcon} aria-hidden="true">
+                ◌
+            </span>
             <p className={styles.emptyTitle}>{title}</p>
             {description && <p className={styles.emptyDesc}>{description}</p>}
         </div>
     );
 }
 
-export function ErrorState({message}: { message?: string }) {
+export function ErrorState({ message }: { message?: string }) {
     return (
         <div className={styles.errorState} role="alert">
             <span aria-hidden="true">⚠</span>

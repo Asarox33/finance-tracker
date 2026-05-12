@@ -1,13 +1,13 @@
 "use client";
 
-import {type FormEvent, Suspense, useState} from "react";
+import { type FormEvent, Suspense, useState } from "react";
 import Link from "next/link";
-import {useSearchParams} from "next/navigation";
-import {useLogin} from "@/features/auth/hooks/useAuth";
+import { useSearchParams } from "next/navigation";
+import { useLogin } from "@/features/auth/hooks/useAuth";
 import styles from "./page.module.css";
 
 function LoginForm() {
-    const {login, loading, error} = useLogin();
+    const { login, loading, error } = useLogin();
     const searchParams = useSearchParams();
     const registered = searchParams.get("registered") === "1";
     const [email, setEmail] = useState("");
@@ -20,10 +20,12 @@ function LoginForm() {
 
     return (
         <main className={styles.main}>
-            <div className={styles.bg} aria-hidden="true"/>
+            <div className={styles.bg} aria-hidden="true" />
             <div className={styles.card}>
                 <header className={styles.header}>
-                    <span className={styles.logo} aria-hidden="true">◈</span>
+                    <span className={styles.logo} aria-hidden="true">
+                        ◈
+                    </span>
                     <h1 className={styles.title}>Finance Tracker</h1>
                     <p className={styles.subtitle}>Sign in to your account</p>
                 </header>
@@ -35,9 +37,16 @@ function LoginForm() {
                         </div>
                     )}
                     {error && (
-                        <div role="alert" aria-live="assertive"
-                             className={error.locked ? styles.errorLocked : styles.error}>
-                            {error.locked && <span className={styles.lockIcon} aria-hidden="true">⊘</span>}
+                        <div
+                            role="alert"
+                            aria-live="assertive"
+                            className={error.locked ? styles.errorLocked : styles.error}
+                        >
+                            {error.locked && (
+                                <span className={styles.lockIcon} aria-hidden="true">
+                                    ⊘
+                                </span>
+                            )}
                             <span>{error.message}</span>
                         </div>
                     )}
@@ -45,9 +54,13 @@ function LoginForm() {
                     <div className={styles.field}>
                         <label htmlFor="email">Email address</label>
                         <input
-                            id="email" type="email" autoComplete="email"
-                            required aria-required="true"
-                            value={email} onChange={e => setEmail(e.target.value)}
+                            id="email"
+                            type="email"
+                            autoComplete="email"
+                            required
+                            aria-required="true"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
                             placeholder="you@example.com"
                             disabled={loading || !!error?.locked}
                         />
@@ -56,24 +69,32 @@ function LoginForm() {
                     <div className={styles.field}>
                         <label htmlFor="password">Password</label>
                         <input
-                            id="password" type="password" autoComplete="current-password"
-                            required aria-required="true"
-                            value={password} onChange={e => setPassword(e.target.value)}
+                            id="password"
+                            type="password"
+                            autoComplete="current-password"
+                            required
+                            aria-required="true"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
                             placeholder="••••••••••••"
                             disabled={loading || !!error?.locked}
                         />
                     </div>
 
-                    <button type="submit" className={styles.submit}
-                            disabled={loading || !!error?.locked} aria-busy={loading}>
-                        {loading && <span className={styles.spinner} aria-hidden="true"/>}
+                    <button
+                        type="submit"
+                        className={styles.submit}
+                        disabled={loading || !!error?.locked}
+                        aria-busy={loading}
+                    >
+                        {loading && <span className={styles.spinner} aria-hidden="true" />}
                         {loading ? "Signing in…" : "Sign in"}
                     </button>
                 </form>
 
                 <footer className={styles.footer}>
                     <Link href="/login/reset">Forgot password?</Link>
-                    <span style={{color: "var(--text-dim)"}}>·</span>
+                    <span style={{ color: "var(--text-dim)" }}>·</span>
                     <Link href="/login/register">Create account</Link>
                 </footer>
             </div>
@@ -84,7 +105,7 @@ function LoginForm() {
 export default function LoginPage() {
     return (
         <Suspense>
-            <LoginForm/>
+            <LoginForm />
         </Suspense>
     );
 }

@@ -1,0 +1,12 @@
+node_modules
+.next
+.swc
+coverage
+playwright-report
+test-results
+.env.local
+next-env.d.ts
+build
+.gradle
+.env
+.idea

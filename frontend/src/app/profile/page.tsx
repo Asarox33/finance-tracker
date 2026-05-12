@@ -1,14 +1,14 @@
 "use client";
 
-import {type FormEvent, useEffect, useState} from "react";
-import {useUpdatePreferences, useUserProfile} from "@/features/user-profile/hooks/useUserProfile";
-import {Button, Card, ErrorState, PageHeader, Skeleton} from "@/shared/components/ui";
-import {CURRENCIES} from "@/lib/currencies";
+import { type FormEvent, useEffect, useState } from "react";
+import { useUpdatePreferences, useUserProfile } from "@/features/user-profile/hooks/useUserProfile";
+import { Button, Card, ErrorState, PageHeader, Skeleton } from "@/shared/components/ui";
+import { CURRENCIES } from "@/lib/currencies";
 import styles from "./page.module.css";
 
 export default function ProfilePage() {
-    const {profile, isLoading, error, mutate} = useUserProfile();
-    const {update, loading: saving, error: saveError, success} = useUpdatePreferences();
+    const { profile, isLoading, error, mutate } = useUserProfile();
+    const { update, loading: saving, error: saveError, success } = useUpdatePreferences();
 
     const [firstName, setFirstName] = useState("");
     const [lastName, setLastName] = useState("");
@@ -42,26 +42,27 @@ export default function ProfilePage() {
 
     return (
         <div className={styles.page}>
-            <PageHeader
-                title="Profile"
-                description="Manage your personal information and preferences"
-            />
+            <PageHeader title="Profile" description="Manage your personal information and preferences" />
             <div className={styles.body}>
                 {isLoading && (
                     <Card>
                         <div className={styles.skels}>
-                            {[1, 2, 3, 4].map(i => <Skeleton key={i} className={styles.skel}/>)}
+                            {[1, 2, 3, 4].map((i) => (
+                                <Skeleton key={i} className={styles.skel} />
+                            ))}
                         </div>
                     </Card>
                 )}
 
-                {error && <ErrorState message="Could not load your profile"/>}
+                {error && <ErrorState message="Could not load your profile" />}
 
                 {profile && (
                     <Card>
                         <form onSubmit={handleSubmit} noValidate aria-label="Edit profile form">
                             {saveError && (
-                                <div role="alert" className={styles.error}>{saveError}</div>
+                                <div role="alert" className={styles.error}>
+                                    {saveError}
+                                </div>
                             )}
                             {success && (
                                 <div role="status" className={styles.success}>
@@ -76,18 +77,28 @@ export default function ProfilePage() {
                                     <div className={styles.field}>
                                         <label htmlFor="firstName">First name</label>
                                         <input
-                                            id="firstName" type="text" required aria-required="true"
-                                            value={firstName} onChange={e => setFirstName(e.target.value)}
-                                            disabled={saving} autoComplete="given-name"
+                                            id="firstName"
+                                            type="text"
+                                            required
+                                            aria-required="true"
+                                            value={firstName}
+                                            onChange={(e) => setFirstName(e.target.value)}
+                                            disabled={saving}
+                                            autoComplete="given-name"
                                         />
                                     </div>
 
                                     <div className={styles.field}>
                                         <label htmlFor="lastName">Last name</label>
                                         <input
-                                            id="lastName" type="text" required aria-required="true"
-                                            value={lastName} onChange={e => setLastName(e.target.value)}
-                                            disabled={saving} autoComplete="family-name"
+                                            id="lastName"
+                                            type="text"
+                                            required
+                                            aria-required="true"
+                                            value={lastName}
+                                            onChange={(e) => setLastName(e.target.value)}
+                                            disabled={saving}
+                                            autoComplete="family-name"
                                         />
                                     </div>
                                 </div>
@@ -95,28 +106,38 @@ export default function ProfilePage() {
                                 <div className={styles.field}>
                                     <label htmlFor="displayName">Display name</label>
                                     <input
-                                        id="displayName" type="text" required aria-required="true"
-                                        value={displayName} onChange={e => setDisplayName(e.target.value)}
-                                        disabled={saving} autoComplete="nickname"
+                                        id="displayName"
+                                        type="text"
+                                        required
+                                        aria-required="true"
+                                        value={displayName}
+                                        onChange={(e) => setDisplayName(e.target.value)}
+                                        disabled={saving}
+                                        autoComplete="nickname"
                                     />
                                 </div>
 
                                 <div className={styles.field}>
                                     <label htmlFor="birthDate">
                                         Date of birth
-                                        <span style={{
-                                            fontWeight: 400,
-                                            color: "var(--text-dim)",
-                                            marginLeft: "0.5rem",
-                                            textTransform: "none"
-                                        }}>
-                      (optional)
-                    </span>
+                                        <span
+                                            style={{
+                                                fontWeight: 400,
+                                                color: "var(--text-dim)",
+                                                marginLeft: "0.5rem",
+                                                textTransform: "none",
+                                            }}
+                                        >
+                                            (optional)
+                                        </span>
                                     </label>
                                     <input
-                                        id="birthDate" type="date"
-                                        value={birthDate} onChange={e => setBirthDate(e.target.value)}
-                                        disabled={saving} autoComplete="bdate"
+                                        id="birthDate"
+                                        type="date"
+                                        value={birthDate}
+                                        onChange={(e) => setBirthDate(e.target.value)}
+                                        disabled={saving}
+                                        autoComplete="bdate"
                                         max={new Date().toISOString().split("T")[0]}
                                     />
                                 </div>
@@ -130,12 +151,14 @@ export default function ProfilePage() {
                                     <select
                                         id="currency"
                                         value={currency}
-                                        onChange={e => setCurrency(e.target.value)}
+                                        onChange={(e) => setCurrency(e.target.value)}
                                         disabled={saving}
                                         aria-describedby="currency-hint"
                                     >
-                                        {CURRENCIES.map(c => (
-                                            <option key={c} value={c}>{c}</option>
+                                        {CURRENCIES.map((c) => (
+                                            <option key={c} value={c}>
+                                                {c}
+                                            </option>
                                         ))}
                                     </select>
                                     <p id="currency-hint" className={styles.hint}>

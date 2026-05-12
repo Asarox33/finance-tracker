@@ -1,4 +1,4 @@
-import {formatBasisPoints, formatDate, formatMoney, monthsAgo, today} from "@/lib/format";
+import { formatBasisPoints, formatDate, formatMoney, monthsAgo, today } from "@/lib/format";
 
 describe("formatMoney", () => {
     it("formats EUR with 2 decimal places", () => {

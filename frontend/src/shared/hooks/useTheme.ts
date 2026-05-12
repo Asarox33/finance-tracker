@@ -1,6 +1,6 @@
 "use client";
 
-import {useEffect, useState} from "react";
+import { useEffect, useState } from "react";
 
 type Theme = "dark" | "light";
 
@@ -21,5 +21,5 @@ export function useTheme() {
         document.documentElement.setAttribute("data-theme", next);
     }
 
-    return {theme, toggle};
+    return { theme, toggle };
 }

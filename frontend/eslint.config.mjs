@@ -1,4 +1,4 @@
-import {defineConfig} from "eslint/config";
+import { defineConfig } from "eslint/config";
 import tseslint from "typescript-eslint";
 
 export default defineConfig([
@@ -20,7 +20,7 @@ export default defineConfig([
         files: ["**/*.{js,mjs,cjs,jsx,ts,tsx}"],
         languageOptions: {
             parserOptions: {
-                ecmaFeatures: {jsx: true},
+                ecmaFeatures: { jsx: true },
             },
         },
     },

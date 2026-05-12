@@ -1,12 +1,12 @@
 "use client";
 
-import {type FormEvent, useState} from "react";
+import { type FormEvent, useState } from "react";
 import Link from "next/link";
-import {useRegister} from "@/features/auth/hooks/useAuth";
+import { useRegister } from "@/features/auth/hooks/useAuth";
 import styles from "../page.module.css";
 
 export default function RegisterPage() {
-    const {register, loading, error} = useRegister();
+    const { register, loading, error } = useRegister();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [confirm, setConfirm] = useState("");
@@ -26,61 +26,83 @@ export default function RegisterPage() {
 
     return (
         <main className={styles.main}>
-            <div className={styles.bg} aria-hidden="true"/>
+            <div className={styles.bg} aria-hidden="true" />
             <div className={styles.card}>
                 <header className={styles.header}>
-                    <span className={styles.logo} aria-hidden="true">◈</span>
+                    <span className={styles.logo} aria-hidden="true">
+                        ◈
+                    </span>
                     <h1 className={styles.title}>Create account</h1>
                     <p className={styles.subtitle}>Start tracking your finances</p>
                 </header>
 
                 <form onSubmit={handleSubmit} noValidate aria-label="Registration form">
                     {displayError && (
-                        <div role="alert" className={styles.error}>{displayError}</div>
+                        <div role="alert" className={styles.error}>
+                            {displayError}
+                        </div>
                     )}
 
                     <div className={styles.field}>
                         <label htmlFor="email">Email address</label>
                         <input
-                            id="email" type="email" autoComplete="email"
-                            required aria-required="true"
-                            value={email} onChange={e => setEmail(e.target.value)}
-                            placeholder="you@example.com" disabled={loading}
+                            id="email"
+                            type="email"
+                            autoComplete="email"
+                            required
+                            aria-required="true"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder="you@example.com"
+                            disabled={loading}
                         />
                     </div>
 
                     <div className={styles.field}>
                         <label htmlFor="password">
                             Password
-                            <span style={{
-                                fontWeight: 400,
-                                color: "var(--text-dim)",
-                                marginLeft: "0.5rem",
-                                textTransform: "none"
-                            }}>
-                min 12 chars · upper · lower · digit · special
-              </span>
+                            <span
+                                style={{
+                                    fontWeight: 400,
+                                    color: "var(--text-dim)",
+                                    marginLeft: "0.5rem",
+                                    textTransform: "none",
+                                }}
+                            >
+                                min 12 chars · upper · lower · digit · special
+                            </span>
                         </label>
                         <input
-                            id="password" type="password" autoComplete="new-password"
-                            required aria-required="true" minLength={12}
-                            value={password} onChange={e => setPassword(e.target.value)}
-                            placeholder="••••••••••••" disabled={loading}
+                            id="password"
+                            type="password"
+                            autoComplete="new-password"
+                            required
+                            aria-required="true"
+                            minLength={12}
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder="••••••••••••"
+                            disabled={loading}
                         />
                     </div>
 
                     <div className={styles.field}>
                         <label htmlFor="confirm">Confirm password</label>
                         <input
-                            id="confirm" type="password" autoComplete="new-password"
-                            required aria-required="true"
-                            value={confirm} onChange={e => setConfirm(e.target.value)}
-                            placeholder="••••••••••••" disabled={loading}
+                            id="confirm"
+                            type="password"
+                            autoComplete="new-password"
+                            required
+                            aria-required="true"
+                            value={confirm}
+                            onChange={(e) => setConfirm(e.target.value)}
+                            placeholder="••••••••••••"
+                            disabled={loading}
                         />
                     </div>
 
                     <button type="submit" className={styles.submit} disabled={loading} aria-busy={loading}>
-                        {loading && <span className={styles.spinner} aria-hidden="true"/>}
+                        {loading && <span className={styles.spinner} aria-hidden="true" />}
                         {loading ? "Creating account…" : "Create account"}
                     </button>
                 </form>

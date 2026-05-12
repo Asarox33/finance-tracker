@@ -1,19 +1,25 @@
 "use client";
 
-import {useState} from "react";
-import {useAccounts} from "@/features/accounts/hooks/useAccounts";
-import {accountsApi} from "@/features/accounts/api/accountsApi";
-import {Badge, Button, Card, EmptyState, ErrorState, PageHeader, Skeleton} from "@/shared/components/ui";
-import type {Account, AccountType} from "@/shared/types";
+import { useState } from "react";
+import { useAccounts } from "@/features/accounts/hooks/useAccounts";
+import { accountsApi } from "@/features/accounts/api/accountsApi";
+import { Badge, Button, Card, EmptyState, ErrorState, PageHeader, Skeleton } from "@/shared/components/ui";
+import type { Account, AccountType } from "@/shared/types";
 import styles from "./page.module.css";
-import {CURRENCIES} from "@/lib/currencies";
+import { CURRENCIES } from "@/lib/currencies";
 
 const ACCOUNT_TYPES: AccountType[] = [
-    "CHECKING", "SAVINGS", "BROKERAGE", "CRYPTO", "REAL_ESTATE", "RETIREMENT", "OTHER"
+    "CHECKING",
+    "SAVINGS",
+    "BROKERAGE",
+    "CRYPTO",
+    "REAL_ESTATE",
+    "RETIREMENT",
+    "OTHER",
 ];
 
 export default function AccountsPage() {
-    const {data, isLoading, error, mutate} = useAccounts();
+    const { data, isLoading, error, mutate } = useAccounts();
     const [closing, setClosing] = useState<string | null>(null);
     const [showForm, setShowForm] = useState(false);
 
@@ -54,18 +60,17 @@ export default function AccountsPage() {
 
                 {isLoading && (
                     <div className={styles.skels}>
-                        {[1, 2, 3].map(i => <Skeleton key={i} className={styles.cardSkel}/>)}
+                        {[1, 2, 3].map((i) => (
+                            <Skeleton key={i} className={styles.cardSkel} />
+                        ))}
                     </div>
                 )}
-                {error && <ErrorState/>}
+                {error && <ErrorState />}
                 {!isLoading && data?.items.length === 0 && !showForm && (
-                    <EmptyState
-                        title="No accounts yet"
-                        description="Add your first account to start tracking"
-                    />
+                    <EmptyState title="No accounts yet" description="Add your first account to start tracking" />
                 )}
                 <div className={styles.grid}>
-                    {data?.items.map(account => (
+                    {data?.items.map((account) => (
                         <AccountCard
                             key={account.id}
                             account={account}
@@ -79,7 +84,7 @@ export default function AccountsPage() {
     );
 }
 
-function AddAccountForm({onSuccess, onCancel}: { onSuccess: () => void; onCancel: () => void }) {
+function AddAccountForm({ onSuccess, onCancel }: { onSuccess: () => void; onCancel: () => void }) {
     const [name, setName] = useState("");
     const [type, setType] = useState<AccountType>("CHECKING");
     const [currency, setCurrency] = useState("EUR");
@@ -92,7 +97,12 @@ function AddAccountForm({onSuccess, onCancel}: { onSuccess: () => void; onCancel
         setLoading(true);
         setError(null);
         try {
-            await accountsApi.create({institutionId, name, type, currency: currency.toUpperCase()});
+            await accountsApi.create({
+                institutionId,
+                name,
+                type,
+                currency: currency.toUpperCase(),
+            });
             onSuccess();
         } catch (err) {
             setError((err as { message?: string }).message ?? "Failed to create account");
@@ -105,27 +115,39 @@ function AddAccountForm({onSuccess, onCancel}: { onSuccess: () => void; onCancel
         <Card className={styles.formCard}>
             <h2 className={styles.formTitle}>New account</h2>
             <form onSubmit={handleSubmit} noValidate aria-label="Add account form">
-                {error && <div role="alert" className={styles.formError}>{error}</div>}
+                {error && (
+                    <div role="alert" className={styles.formError}>
+                        {error}
+                    </div>
+                )}
 
                 <div className={styles.formGrid}>
                     <div className={styles.field}>
                         <label htmlFor="acc-name">Account name</label>
                         <input
-                            id="acc-name" type="text" required aria-required="true"
-                            value={name} onChange={e => setName(e.target.value)}
-                            placeholder="e.g. Main Checking" disabled={loading}
+                            id="acc-name"
+                            type="text"
+                            required
+                            aria-required="true"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            placeholder="e.g. Main Checking"
+                            disabled={loading}
                         />
                     </div>
 
                     <div className={styles.field}>
                         <label htmlFor="acc-type">Type</label>
                         <select
-                            id="acc-type" value={type}
-                            onChange={e => setType(e.target.value as AccountType)}
+                            id="acc-type"
+                            value={type}
+                            onChange={(e) => setType(e.target.value as AccountType)}
                             disabled={loading}
                         >
-                            {ACCOUNT_TYPES.map(t => (
-                                <option key={t} value={t}>{t.replace("_", " ")}</option>
+                            {ACCOUNT_TYPES.map((t) => (
+                                <option key={t} value={t}>
+                                    {t.replace("_", " ")}
+                                </option>
                             ))}
                         </select>
                     </div>
@@ -135,11 +157,13 @@ function AddAccountForm({onSuccess, onCancel}: { onSuccess: () => void; onCancel
                         <select
                             id="acc-currency"
                             value={currency}
-                            onChange={e => setCurrency(e.target.value)}
+                            onChange={(e) => setCurrency(e.target.value)}
                             disabled={loading}
                         >
-                            {CURRENCIES.map(c => (
-                                <option key={c} value={c}>{c}</option>
+                            {CURRENCIES.map((c) => (
+                                <option key={c} value={c}>
+                                    {c}
+                                </option>
                             ))}
                         </select>
                     </div>
@@ -147,11 +171,18 @@ function AddAccountForm({onSuccess, onCancel}: { onSuccess: () => void; onCancel
                     <div className={styles.field}>
                         <label htmlFor="acc-institution">Institution ID</label>
                         <input
-                            id="acc-institution" type="text" required aria-required="true"
-                            value={institutionId} onChange={e => setInstitutionId(e.target.value)}
+                            id="acc-institution"
+                            type="text"
+                            required
+                            aria-required="true"
+                            value={institutionId}
+                            onChange={(e) => setInstitutionId(e.target.value)}
                             placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
                             disabled={loading}
-                            style={{fontFamily: "var(--font-mono)", fontSize: "0.8125rem"}}
+                            style={{
+                                fontFamily: "var(--font-mono)",
+                                fontSize: "0.8125rem",
+                            }}
                         />
                     </div>
                 </div>
@@ -170,8 +201,10 @@ function AddAccountForm({onSuccess, onCancel}: { onSuccess: () => void; onCancel
 }
 
 function AccountCard({
-                         account, onClose, closing,
-                     }: {
+    account,
+    onClose,
+    closing,
+}: {
     account: Account;
     onClose: (id: string) => void;
     closing: boolean;
@@ -183,9 +216,7 @@ function AccountCard({
                     <p className={styles.accountName}>{account.name}</p>
                     <p className={styles.accountType}>{account.type.replace("_", " ")}</p>
                 </div>
-                <Badge variant={account.status === "ACTIVE" ? "success" : "default"}>
-                    {account.status}
-                </Badge>
+                <Badge variant={account.status === "ACTIVE" ? "success" : "default"}>{account.status}</Badge>
             </div>
             <div className={styles.accountMeta}>
                 <span className={styles.currency}>{account.currency}</span>
@@ -194,7 +225,9 @@ function AccountCard({
             {account.status === "ACTIVE" && (
                 <div className={styles.accountActions}>
                     <Button
-                        variant="danger" size="sm" loading={closing}
+                        variant="danger"
+                        size="sm"
+                        loading={closing}
                         onClick={() => onClose(account.id)}
                         aria-label={`Close account ${account.name}`}
                     >

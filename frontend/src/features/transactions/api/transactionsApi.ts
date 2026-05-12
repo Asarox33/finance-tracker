@@ -1,5 +1,5 @@
-import {http} from "@/lib/http";
-import type {PageResult, Transaction} from "@/shared/types";
+import { http } from "@/lib/http";
+import type { PageResult, Transaction } from "@/shared/types";
 
 export const transactionsApi = {
     list: (accountId: string, page = 0, pageSize = 20, from?: string, to?: string) => {
@@ -13,8 +13,7 @@ export const transactionsApi = {
         return http.get<PageResult<Transaction>>(`/transactions?${params}`);
     },
 
-    get: (id: string) =>
-        http.get<Transaction>(`/transactions/${id}`),
+    get: (id: string) => http.get<Transaction>(`/transactions/${id}`),
 
     create: (body: {
         accountId: string;

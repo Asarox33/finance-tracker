@@ -1,4 +1,4 @@
-import {accountsApi} from "@/features/accounts/api/accountsApi";
+import { accountsApi } from "@/features/accounts/api/accountsApi";
 
 const mockFetch = jest.fn();
 global.fetch = mockFetch;
@@ -7,17 +7,19 @@ function mockResponse(body: unknown, status = 200) {
     mockFetch.mockResolvedValueOnce({
         ok: status >= 200 && status < 300,
         status,
-        headers: {get: () => null},
+        headers: { get: () => null },
         json: async () => body,
     });
 }
 
 function makeValidToken(): string {
-    const header = btoa(JSON.stringify({alg: "HS256"}));
-    const payload = btoa(JSON.stringify({
-        sub: "user-123",
-        exp: Math.floor(Date.now() / 1000) + 3600,
-    }));
+    const header = btoa(JSON.stringify({ alg: "HS256" }));
+    const payload = btoa(
+        JSON.stringify({
+            sub: "user-123",
+            exp: Math.floor(Date.now() / 1000) + 3600,
+        })
+    );
     return `${header}.${payload}.signature`;
 }
 
@@ -39,7 +41,7 @@ describe("accountsApi", () => {
             pageSize: 20,
             isEmpty: true,
             isFirst: true,
-            isLast: true
+            isLast: true,
         });
         await accountsApi.list();
         expect(mockFetch).toHaveBeenCalledWith(
@@ -61,14 +63,11 @@ describe("accountsApi", () => {
             currency: "EUR",
             status: "ACTIVE",
             userId: "u1",
-            institutionId: "i1"
+            institutionId: "i1",
         });
         const result = await accountsApi.get(id);
         expect(result.id).toBe(id);
-        expect(mockFetch).toHaveBeenCalledWith(
-            expect.stringContaining(`/accounts/${id}`),
-            expect.anything()
-        );
+        expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining(`/accounts/${id}`), expect.anything());
     });
 
     it("closes an account with DELETE", async () => {
@@ -76,17 +75,22 @@ describe("accountsApi", () => {
         await accountsApi.close("acc-1");
         expect(mockFetch).toHaveBeenCalledWith(
             expect.stringContaining("/accounts/acc-1"),
-            expect.objectContaining({method: "DELETE"})
+            expect.objectContaining({ method: "DELETE" })
         );
     });
 
     it("creates an account with POST", async () => {
-        const body = {institutionId: "i1", name: "Savings", type: "SAVINGS", currency: "EUR"};
-        mockResponse({...body, id: "new-id", userId: "u1", status: "ACTIVE"});
+        const body = {
+            institutionId: "i1",
+            name: "Savings",
+            type: "SAVINGS",
+            currency: "EUR",
+        };
+        mockResponse({ ...body, id: "new-id", userId: "u1", status: "ACTIVE" });
         await accountsApi.create(body);
         expect(mockFetch).toHaveBeenCalledWith(
             expect.stringContaining("/accounts"),
-            expect.objectContaining({method: "POST"})
+            expect.objectContaining({ method: "POST" })
         );
     });
 });

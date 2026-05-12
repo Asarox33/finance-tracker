@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap");
 
 :root {
     --bg: #0a0a0f;
@@ -23,9 +23,9 @@
     --radius-lg: 16px;
     --shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
     --shadow-lg: 0 8px 48px rgba(0, 0, 0, 0.6);
-    --font-display: 'DM Serif Display', Georgia, serif;
-    --font-body: 'DM Sans', system-ui, sans-serif;
-    --font-mono: 'DM Mono', 'Courier New', monospace;
+    --font-display: "DM Serif Display", Georgia, serif;
+    --font-body: "DM Sans", system-ui, sans-serif;
+    --font-mono: "DM Mono", "Courier New", monospace;
     --transition: 150ms ease;
 }
 
@@ -51,7 +51,9 @@
     --shadow-lg: 0 8px 48px rgba(0, 0, 0, 0.12);
 }
 
-*, *::before, *::after {
+*,
+*::before,
+*::after {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
@@ -70,10 +72,14 @@ body {
     font-size: 0.9375rem;
     line-height: 1.6;
     min-height: 100vh;
-    transition: background var(--transition), color var(--transition);
+    transition:
+        background var(--transition),
+        color var(--transition);
 }
 
-h1, h2, h3 {
+h1,
+h2,
+h3 {
     font-family: var(--font-display), serif;
     font-weight: 400;
     line-height: 1.2;
@@ -120,7 +126,9 @@ button:focus-visible {
     outline-offset: 3px;
 }
 
-input, select, textarea {
+input,
+select,
+textarea {
     font-family: var(--font-body), sans-serif;
     font-size: 0.9375rem;
     background: var(--surface-2);
@@ -129,10 +137,14 @@ input, select, textarea {
     color: var(--text);
     padding: 0.625rem 0.875rem;
     width: 100%;
-    transition: border-color var(--transition), box-shadow var(--transition);
+    transition:
+        border-color var(--transition),
+        box-shadow var(--transition);
 }
 
-input:focus, select:focus, textarea:focus {
+input:focus,
+select:focus,
+textarea:focus {
     outline: none;
     border-color: var(--accent);
     box-shadow: 0 0 0 3px var(--accent-dim);
@@ -234,7 +246,8 @@ tbody tr:hover {
 }
 
 @keyframes pulse {
-    0%, 100% {
+    0%,
+    100% {
         opacity: 1;
     }
     50% {

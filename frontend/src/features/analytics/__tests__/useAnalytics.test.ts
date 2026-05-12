@@ -1,4 +1,4 @@
-import {renderHook} from "@testing-library/react";
+import { renderHook } from "@testing-library/react";
 import {
     usePerformance,
     usePerformanceAfterFees,
@@ -19,12 +19,22 @@ jest.mock("@/features/analytics/api/analyticsApi", () => ({
 jest.mock("swr", () => ({
     __esModule: true,
     default: jest.fn((key: unknown, fetcher: (() => unknown) | null) => {
-        if (!key || !fetcher) return {data: undefined, error: undefined, isLoading: false, mutate: jest.fn()};
+        if (!key || !fetcher)
+            return {
+                data: undefined,
+                error: undefined,
+                isLoading: false,
+                mutate: jest.fn(),
+            };
         try {
             fetcher();
-        } catch {
-        }
-        return {data: undefined, error: undefined, isLoading: false, mutate: jest.fn()};
+        } catch {}
+        return {
+            data: undefined,
+            error: undefined,
+            isLoading: false,
+            mutate: jest.fn(),
+        };
     }),
 }));
 
@@ -60,10 +70,7 @@ describe("usePortfolioValue", () => {
     it("calls portfolioValue with provided currency", () => {
         (apiModule.analyticsApi.portfolioValue as jest.Mock).mockResolvedValue(mockPortfolioValue);
         renderHook(() => usePortfolioValue("USD"));
-        expect(apiModule.analyticsApi.portfolioValue).toHaveBeenCalledWith(
-            expect.any(String),
-            "USD"
-        );
+        expect(apiModule.analyticsApi.portfolioValue).toHaveBeenCalledWith(expect.any(String), "USD");
     });
 });
 

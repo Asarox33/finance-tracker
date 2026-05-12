@@ -1,10 +1,10 @@
 "use client";
 
-import {useState} from "react";
-import {useRouter} from "next/navigation";
-import {authApi} from "../api/authApi";
-import {removeToken, removeUserId, setToken, setUserId} from "@/lib/http";
-import type {ApiError} from "@/shared/types";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { authApi } from "../api/authApi";
+import { setToken, setUserId } from "@/lib/http";
+import type { ApiError } from "@/shared/types";
 
 export interface LoginError {
     message: string;
@@ -30,7 +30,7 @@ export function useLogin() {
         setLoading(true);
         setError(null);
         try {
-            const {token} = await authApi.login({email, password});
+            const { token } = await authApi.login({ email, password });
             setToken(token);
             const userId = extractUserId(token);
             if (userId) setUserId(userId);
@@ -41,7 +41,7 @@ export function useLogin() {
             setError({
                 message: locked
                     ? "Account locked — too many failed attempts. Please try again later."
-                    : apiErr.message ?? "Login failed",
+                    : (apiErr.message ?? "Login failed"),
                 locked,
             });
         } finally {
@@ -49,7 +49,7 @@ export function useLogin() {
         }
     }
 
-    return {login, loading, error};
+    return { login, loading, error };
 }
 
 export function useRegister() {
@@ -61,7 +61,7 @@ export function useRegister() {
         setLoading(true);
         setError(null);
         try {
-            await authApi.register({email, password});
+            await authApi.register({ email, password });
             router.push("/login?registered=1");
         } catch (err) {
             setError((err as ApiError).message ?? "Registration failed");
@@ -70,7 +70,7 @@ export function useRegister() {
         }
     }
 
-    return {register, loading, error};
+    return { register, loading, error };
 }
 
 export function usePasswordReset() {
@@ -82,7 +82,7 @@ export function usePasswordReset() {
         setLoading(true);
         setError(null);
         try {
-            await authApi.requestPasswordReset({email});
+            await authApi.requestPasswordReset({ email });
             setStep("confirm");
         } catch (err) {
             setError((err as ApiError).message ?? "Request failed");
@@ -95,7 +95,7 @@ export function usePasswordReset() {
         setLoading(true);
         setError(null);
         try {
-            await authApi.confirmPasswordReset({email, otp, newPassword});
+            await authApi.confirmPasswordReset({ email, otp, newPassword });
             setStep("done");
         } catch (err) {
             setError((err as ApiError).message ?? "Reset failed");
@@ -109,17 +109,18 @@ export function usePasswordReset() {
         setError(null);
     }
 
-    return {step, loading, error, requestReset, confirmReset, backToRequest};
+    return { step, loading, error, requestReset, confirmReset, backToRequest };
 }
 
 export function useLogout() {
     const router = useRouter();
 
-    function logout() {
-        removeToken();
-        removeUserId();
-        router.push("/login");
-    }
+    const logout = () => {
+        localStorage.removeItem("token");
 
-    return {logout};
+        // 🚨 important : force reload ou reset state global
+        router.replace("/login");
+    };
+
+    return { logout };
 }

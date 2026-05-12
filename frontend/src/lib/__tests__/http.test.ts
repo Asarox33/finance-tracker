@@ -1,20 +1,24 @@
-import {getToken, getUserId, isAuthenticated, removeToken, removeUserId, setToken, setUserId,} from "@/lib/http";
+import { getToken, getUserId, isAuthenticated, removeToken, removeUserId, setToken, setUserId } from "@/lib/http";
 
 function makeValidToken(): string {
-    const header = btoa(JSON.stringify({alg: "HS256"}));
-    const payload = btoa(JSON.stringify({
-        sub: "user-123",
-        exp: Math.floor(Date.now() / 1000) + 3600,
-    }));
+    const header = btoa(JSON.stringify({ alg: "HS256" }));
+    const payload = btoa(
+        JSON.stringify({
+            sub: "user-123",
+            exp: Math.floor(Date.now() / 1000) + 3600,
+        })
+    );
     return `${header}.${payload}.signature`;
 }
 
 function makeExpiredToken(): string {
-    const header = btoa(JSON.stringify({alg: "HS256"}));
-    const payload = btoa(JSON.stringify({
-        sub: "user-123",
-        exp: Math.floor(Date.now() / 1000) - 3600,
-    }));
+    const header = btoa(JSON.stringify({ alg: "HS256" }));
+    const payload = btoa(
+        JSON.stringify({
+            sub: "user-123",
+            exp: Math.floor(Date.now() / 1000) - 3600,
+        })
+    );
     return `${header}.${payload}.signature`;
 }
 
@@ -111,12 +115,12 @@ describe("http requests", () => {
         mockFetch.mockResolvedValueOnce({
             ok: true,
             status: 200,
-            headers: {get: () => null},
-            json: async () => ({data: "ok"}),
+            headers: { get: () => null },
+            json: async () => ({ data: "ok" }),
         });
-        const {http} = await import("@/lib/http");
+        const { http } = await import("@/lib/http");
         const result = await http.get("/test");
-        expect(result).toEqual({data: "ok"});
+        expect(result).toEqual({ data: "ok" });
         expect(mockFetch).toHaveBeenCalledWith(
             "/api/test",
             expect.objectContaining({
@@ -132,11 +136,13 @@ describe("http requests", () => {
         mockFetch.mockResolvedValueOnce({
             ok: false,
             status: 400,
-            headers: {get: () => null},
-            json: async () => ({message: "Bad request"}),
+            headers: { get: () => null },
+            json: async () => ({ message: "Bad request" }),
         });
-        const {http} = await import("@/lib/http");
-        await expect(http.get("/test")).rejects.toEqual({message: "Bad request"});
+        const { http } = await import("@/lib/http");
+        await expect(http.get("/test")).rejects.toEqual({
+            message: "Bad request",
+        });
     });
 
     it("returns undefined on 204 response", async () => {
@@ -144,10 +150,10 @@ describe("http requests", () => {
         mockFetch.mockResolvedValueOnce({
             ok: true,
             status: 204,
-            headers: {get: () => null},
+            headers: { get: () => null },
             json: async () => null,
         });
-        const {http} = await import("@/lib/http");
+        const { http } = await import("@/lib/http");
         const result = await http.delete("/test");
         expect(result).toBeUndefined();
     });
@@ -157,16 +163,16 @@ describe("http requests", () => {
         mockFetch.mockResolvedValueOnce({
             ok: true,
             status: 200,
-            headers: {get: () => null},
-            json: async () => ({id: "1"}),
+            headers: { get: () => null },
+            json: async () => ({ id: "1" }),
         });
-        const {http} = await import("@/lib/http");
-        await http.post("/test", {name: "test"});
+        const { http } = await import("@/lib/http");
+        await http.post("/test", { name: "test" });
         expect(mockFetch).toHaveBeenCalledWith(
             "/api/test",
             expect.objectContaining({
                 method: "POST",
-                body: JSON.stringify({name: "test"}),
+                body: JSON.stringify({ name: "test" }),
             })
         );
     });
@@ -176,15 +182,12 @@ describe("http requests", () => {
         mockFetch.mockResolvedValueOnce({
             ok: true,
             status: 200,
-            headers: {get: () => null},
-            json: async () => ({id: "1"}),
+            headers: { get: () => null },
+            json: async () => ({ id: "1" }),
         });
-        const {http} = await import("@/lib/http");
-        await http.put("/test", {name: "updated"});
-        expect(mockFetch).toHaveBeenCalledWith(
-            "/api/test",
-            expect.objectContaining({method: "PUT"})
-        );
+        const { http } = await import("@/lib/http");
+        await http.put("/test", { name: "updated" });
+        expect(mockFetch).toHaveBeenCalledWith("/api/test", expect.objectContaining({ method: "PUT" }));
     });
 });
 
@@ -197,8 +200,8 @@ describe("isTokenExpired via getToken", () => {
     });
 
     it("returns null for token with no exp claim", () => {
-        const header = btoa(JSON.stringify({alg: "HS256"}));
-        const payload = btoa(JSON.stringify({sub: "user-123"}));
+        const header = btoa(JSON.stringify({ alg: "HS256" }));
+        const payload = btoa(JSON.stringify({ sub: "user-123" }));
         localStorage.setItem("auth_token", `${header}.${payload}.sig`);
         // no exp → isTokenExpired returns false → token is valid
         expect(getToken()).not.toBeNull();
@@ -225,8 +228,8 @@ describe("isTokenExpired via getToken", () => {
     });
 
     it("returns null for token with no exp claim", () => {
-        const header = btoa(JSON.stringify({alg: "HS256"}));
-        const payload = btoa(JSON.stringify({sub: "user-123"}));
+        const header = btoa(JSON.stringify({ alg: "HS256" }));
+        const payload = btoa(JSON.stringify({ sub: "user-123" }));
         localStorage.setItem("auth_token", `${header}.${payload}.sig`);
         // no exp → isTokenExpired returns false → token is valid
         expect(getToken()).not.toBeNull();
@@ -258,12 +261,11 @@ describe("http 401 handling", () => {
         mockFetch.mockResolvedValueOnce({
             ok: false,
             status: 401,
-            headers: {get: () => null},
-            json: async () => ({message: "Unauthorized"}),
+            headers: { get: () => null },
+            json: async () => ({ message: "Unauthorized" }),
         });
-        const consoleError = jest.spyOn(console, "error").mockImplementation(() => {
-        });
-        const {http} = await import("@/lib/http");
+        const consoleError = jest.spyOn(console, "error").mockImplementation(() => {});
+        const { http } = await import("@/lib/http");
         await expect(http.get("/protected")).rejects.toThrow("Unauthorized");
         expect(getToken()).toBeNull();
         consoleError.mockRestore();
@@ -274,11 +276,13 @@ describe("http 401 handling", () => {
         mockFetch.mockResolvedValueOnce({
             ok: false,
             status: 401,
-            headers: {get: () => null},
-            json: async () => ({message: "Invalid credentials"}),
+            headers: { get: () => null },
+            json: async () => ({ message: "Invalid credentials" }),
         });
-        const {http} = jest.requireActual("@/lib/http") as typeof import("@/lib/http");
-        await expect(http.post("/auth/login", {})).rejects.toEqual({message: "Invalid credentials"});
+        const { http } = jest.requireActual("@/lib/http") as typeof import("@/lib/http");
+        await expect(http.post("/auth/login", {})).rejects.toEqual({
+            message: "Invalid credentials",
+        });
         expect(getToken()).not.toBeNull();
     });
 });

@@ -1,12 +1,12 @@
 "use client";
 
-import {type FormEvent, useState} from "react";
+import { type FormEvent, useState } from "react";
 import Link from "next/link";
-import {usePasswordReset} from "@/features/auth/hooks/useAuth";
+import { usePasswordReset } from "@/features/auth/hooks/useAuth";
 import styles from "../page.module.css";
 
 export default function ResetPage() {
-    const {step, loading, error, requestReset, confirmReset, backToRequest} = usePasswordReset();
+    const { step, loading, error, requestReset, confirmReset, backToRequest } = usePasswordReset();
     const [email, setEmail] = useState("");
     const [otp, setOtp] = useState("");
     const [newPassword, setNewPassword] = useState("");
@@ -33,10 +33,12 @@ export default function ResetPage() {
     if (step === "done") {
         return (
             <main className={styles.main}>
-                <div className={styles.bg} aria-hidden="true"/>
+                <div className={styles.bg} aria-hidden="true" />
                 <div className={styles.card}>
                     <header className={styles.header}>
-                        <span className={styles.logo} aria-hidden="true">◈</span>
+                        <span className={styles.logo} aria-hidden="true">
+                            ◈
+                        </span>
                         <h1 className={styles.title}>Password updated</h1>
                         <p className={styles.subtitle}>Your password has been reset successfully.</p>
                     </header>
@@ -51,10 +53,12 @@ export default function ResetPage() {
     if (step === "confirm") {
         return (
             <main className={styles.main}>
-                <div className={styles.bg} aria-hidden="true"/>
+                <div className={styles.bg} aria-hidden="true" />
                 <div className={styles.card}>
                     <header className={styles.header}>
-                        <span className={styles.logo} aria-hidden="true">◈</span>
+                        <span className={styles.logo} aria-hidden="true">
+                            ◈
+                        </span>
                         <h1 className={styles.title}>Enter reset code</h1>
                         <p className={styles.subtitle}>
                             Enter the 6-digit code sent to <strong>{email}</strong>
@@ -62,21 +66,31 @@ export default function ResetPage() {
                     </header>
 
                     <form onSubmit={handleConfirm} noValidate aria-label="Password reset confirmation form">
-                        {displayError && <div role="alert" className={styles.error}>{displayError}</div>}
+                        {displayError && (
+                            <div role="alert" className={styles.error}>
+                                {displayError}
+                            </div>
+                        )}
 
                         <div className={styles.field}>
                             <label htmlFor="otp">6-digit code</label>
                             <input
-                                id="otp" type="text" inputMode="numeric"
-                                pattern="[0-9]{6}" maxLength={6}
-                                required aria-required="true"
-                                value={otp} onChange={e => setOtp(e.target.value.replace(/\D/g, ""))}
-                                placeholder="123456" disabled={loading}
+                                id="otp"
+                                type="text"
+                                inputMode="numeric"
+                                pattern="[0-9]{6}"
+                                maxLength={6}
+                                required
+                                aria-required="true"
+                                value={otp}
+                                onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
+                                placeholder="123456"
+                                disabled={loading}
                                 autoComplete="one-time-code"
                                 style={{
                                     fontFamily: "var(--font-mono), monospace",
                                     letterSpacing: "0.3em",
-                                    fontSize: "1.25rem"
+                                    fontSize: "1.25rem",
                                 }}
                             />
                         </div>
@@ -84,45 +98,65 @@ export default function ResetPage() {
                         <div className={styles.field}>
                             <label htmlFor="newPassword">
                                 New password
-                                <span style={{
-                                    fontWeight: 400,
-                                    color: "var(--text-dim)",
-                                    marginLeft: "0.5rem",
-                                    textTransform: "none"
-                                }}>
-                  min 12 chars
-                </span>
+                                <span
+                                    style={{
+                                        fontWeight: 400,
+                                        color: "var(--text-dim)",
+                                        marginLeft: "0.5rem",
+                                        textTransform: "none",
+                                    }}
+                                >
+                                    min 12 chars
+                                </span>
                             </label>
                             <input
-                                id="newPassword" type="password" autoComplete="new-password"
-                                required aria-required="true" minLength={12}
-                                value={newPassword} onChange={e => setNewPassword(e.target.value)}
-                                placeholder="••••••••••••" disabled={loading}
+                                id="newPassword"
+                                type="password"
+                                autoComplete="new-password"
+                                required
+                                aria-required="true"
+                                minLength={12}
+                                value={newPassword}
+                                onChange={(e) => setNewPassword(e.target.value)}
+                                placeholder="••••••••••••"
+                                disabled={loading}
                             />
                         </div>
 
                         <div className={styles.field}>
                             <label htmlFor="confirmPassword">Confirm new password</label>
                             <input
-                                id="confirmPassword" type="password" autoComplete="new-password"
-                                required aria-required="true"
-                                value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)}
-                                placeholder="••••••••••••" disabled={loading}
+                                id="confirmPassword"
+                                type="password"
+                                autoComplete="new-password"
+                                required
+                                aria-required="true"
+                                value={confirmPassword}
+                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                placeholder="••••••••••••"
+                                disabled={loading}
                             />
                         </div>
 
                         <button type="submit" className={styles.submit} disabled={loading} aria-busy={loading}>
-                            {loading && <span className={styles.spinner} aria-hidden="true"/>}
+                            {loading && <span className={styles.spinner} aria-hidden="true" />}
                             {loading ? "Resetting…" : "Reset password"}
                         </button>
                     </form>
 
                     <footer className={styles.footer}>
-                        <button type="button" onClick={backToRequest}
-                                style={{color: "var(--accent)", background: "none", fontSize: "0.875rem"}}>
+                        <button
+                            type="button"
+                            onClick={backToRequest}
+                            style={{
+                                color: "var(--accent)",
+                                background: "none",
+                                fontSize: "0.875rem",
+                            }}
+                        >
                             Resend code
                         </button>
-                        <span style={{color: "var(--text-dim)"}}>·</span>
+                        <span style={{ color: "var(--text-dim)" }}>·</span>
                         <Link href="/login">Back to sign in</Link>
                     </footer>
                 </div>
@@ -132,27 +166,38 @@ export default function ResetPage() {
 
     return (
         <main className={styles.main}>
-            <div className={styles.bg} aria-hidden="true"/>
+            <div className={styles.bg} aria-hidden="true" />
             <div className={styles.card}>
                 <header className={styles.header}>
-                    <span className={styles.logo} aria-hidden="true">◈</span>
+                    <span className={styles.logo} aria-hidden="true">
+                        ◈
+                    </span>
                     <h1 className={styles.title}>Reset password</h1>
                     <p className={styles.subtitle}>Enter your email to receive a reset code</p>
                 </header>
 
                 <form onSubmit={handleRequest} noValidate aria-label="Password reset request form">
-                    {displayError && <div role="alert" className={styles.error}>{displayError}</div>}
+                    {displayError && (
+                        <div role="alert" className={styles.error}>
+                            {displayError}
+                        </div>
+                    )}
                     <div className={styles.field}>
                         <label htmlFor="email">Email address</label>
                         <input
-                            id="email" type="email" autoComplete="email"
-                            required aria-required="true"
-                            value={email} onChange={e => setEmail(e.target.value)}
-                            placeholder="you@example.com" disabled={loading}
+                            id="email"
+                            type="email"
+                            autoComplete="email"
+                            required
+                            aria-required="true"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder="you@example.com"
+                            disabled={loading}
                         />
                     </div>
                     <button type="submit" className={styles.submit} disabled={loading} aria-busy={loading}>
-                        {loading && <span className={styles.spinner} aria-hidden="true"/>}
+                        {loading && <span className={styles.spinner} aria-hidden="true" />}
                         {loading ? "Sending…" : "Send reset code"}
                     </button>
                 </form>

@@ -1,4 +1,4 @@
-import {http} from "@/lib/http";
+import { http } from "@/lib/http";
 
 export interface LoginRequest {
     email: string;
@@ -29,15 +29,11 @@ export interface PasswordResetConfirmRequest {
 }
 
 export const authApi = {
-    login: (body: LoginRequest) =>
-        http.post<LoginResponse>("/auth/login", body),
+    login: (body: LoginRequest) => http.post<LoginResponse>("/auth/login", body),
 
-    register: (body: RegisterRequest) =>
-        http.post<RegisterResponse>("/auth/register", body),
+    register: (body: RegisterRequest) => http.post<RegisterResponse>("/auth/register", body),
 
-    requestPasswordReset: (body: PasswordResetRequest) =>
-        http.post<void>("/auth/password-reset/request", body),
+    requestPasswordReset: (body: PasswordResetRequest) => http.post<void>("/auth/password-reset/request", body),
 
-    confirmPasswordReset: (body: PasswordResetConfirmRequest) =>
-        http.post<void>("/auth/password-reset/confirm", body),
+    confirmPasswordReset: (body: PasswordResetConfirmRequest) => http.post<void>("/auth/password-reset/confirm", body),
 };

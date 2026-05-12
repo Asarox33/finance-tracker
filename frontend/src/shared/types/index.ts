@@ -39,9 +39,7 @@ export interface Account {
     status: "ACTIVE" | "CLOSED";
 }
 
-export type AccountType =
-    | "CHECKING" | "SAVINGS" | "BROKERAGE"
-    | "CRYPTO" | "REAL_ESTATE" | "RETIREMENT" | "OTHER";
+export type AccountType = "CHECKING" | "SAVINGS" | "BROKERAGE" | "CRYPTO" | "REAL_ESTATE" | "RETIREMENT" | "OTHER";
 
 export interface Transaction {
     id: string;
@@ -61,8 +59,15 @@ export interface Transaction {
 }
 
 export type TransactionType =
-    | "DEPOSIT" | "WITHDRAWAL" | "TRANSFER"
-    | "BUY" | "SELL" | "DIVIDEND" | "FEE" | "TAX" | "OTHER";
+    | "DEPOSIT"
+    | "WITHDRAWAL"
+    | "TRANSFER"
+    | "BUY"
+    | "SELL"
+    | "DIVIDEND"
+    | "FEE"
+    | "TAX"
+    | "OTHER";
 
 export interface PortfolioValue {
     totalValue: number;

@@ -1,5 +1,5 @@
-import {renderHook} from "@testing-library/react";
-import {useInstitution, useInstitutions} from "@/features/institutions/hooks/useInstitutions";
+import { renderHook } from "@testing-library/react";
+import { useInstitution, useInstitutions } from "@/features/institutions/hooks/useInstitutions";
 import * as apiModule from "@/features/institutions/api/institutionsApi";
 
 jest.mock("@/features/institutions/api/institutionsApi", () => ({
@@ -12,17 +12,27 @@ jest.mock("@/features/institutions/api/institutionsApi", () => ({
 jest.mock("swr", () => ({
     __esModule: true,
     default: jest.fn((key: unknown, fetcher: (() => unknown) | null) => {
-        if (!key || !fetcher) return {data: undefined, error: undefined, isLoading: false, mutate: jest.fn()};
+        if (!key || !fetcher)
+            return {
+                data: undefined,
+                error: undefined,
+                isLoading: false,
+                mutate: jest.fn(),
+            };
         try {
             fetcher();
-        } catch {
-        }
-        return {data: undefined, error: undefined, isLoading: false, mutate: jest.fn()};
+        } catch {}
+        return {
+            data: undefined,
+            error: undefined,
+            isLoading: false,
+            mutate: jest.fn(),
+        };
     }),
 }));
 
 const mockPageResult = {
-    items: [{id: "inst-1", name: "BNP Paribas", country: "FR", bic: "BNPAFRPP"}],
+    items: [{ id: "inst-1", name: "BNP Paribas", country: "FR", bic: "BNPAFRPP" }],
     totalItems: 1,
     totalPages: 1,
     page: 0,

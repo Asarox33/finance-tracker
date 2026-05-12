@@ -1,11 +1,11 @@
 "use client";
 
-import {useState} from "react";
-import {useInstitutions} from "@/features/institutions/hooks/useInstitutions";
-import {INSTITUTION_TYPES, institutionsApi, type InstitutionType} from "@/features/institutions/api/institutionsApi";
-import {Button, Card, EmptyState, ErrorState, PageHeader, Skeleton,} from "@/shared/components/ui";
-import type {Institution} from "@/shared/types";
-import {COUNTRIES} from "@/lib/countries";
+import { useState } from "react";
+import { useInstitutions } from "@/features/institutions/hooks/useInstitutions";
+import { INSTITUTION_TYPES, institutionsApi, type InstitutionType } from "@/features/institutions/api/institutionsApi";
+import { Button, Card, EmptyState, ErrorState, PageHeader, Skeleton } from "@/shared/components/ui";
+import type { Institution } from "@/shared/types";
+import { COUNTRIES } from "@/lib/countries";
 import styles from "./page.module.css";
 import "flag-icons/css/flag-icons.min.css";
 
@@ -15,7 +15,7 @@ export default function InstitutionsPage() {
     const [countryFilter, setCountryFilter] = useState("");
     const [showForm, setShowForm] = useState(false);
 
-    const {data, isLoading, error, mutate} = useInstitutions(
+    const { data, isLoading, error, mutate } = useInstitutions(
         page,
         nameFilter || undefined,
         countryFilter || undefined
@@ -65,7 +65,9 @@ export default function InstitutionsPage() {
                         >
                             <option value="">All countries</option>
                             {COUNTRIES.map((c) => (
-                                <option key={c.code} value={c.code}>{c.name}</option>
+                                <option key={c.code} value={c.code}>
+                                    {c.name}
+                                </option>
                             ))}
                         </select>
                     </div>
@@ -83,11 +85,13 @@ export default function InstitutionsPage() {
 
                 {isLoading && (
                     <div className={styles.skels} aria-busy="true" aria-label="Loading institutions">
-                        {[1, 2, 3].map((i) => <Skeleton key={i} className={styles.cardSkel}/>)}
+                        {[1, 2, 3].map((i) => (
+                            <Skeleton key={i} className={styles.cardSkel} />
+                        ))}
                     </div>
                 )}
 
-                {error && <ErrorState message="Could not load institutions. Please try again."/>}
+                {error && <ErrorState message="Could not load institutions. Please try again." />}
 
                 {!isLoading && !error && data?.items.length === 0 && !showForm && (
                     <EmptyState
@@ -97,14 +101,10 @@ export default function InstitutionsPage() {
                 )}
 
                 {!isLoading && !error && data && data.items.length > 0 && (
-                    <div
-                        className={styles.grid}
-                        role="list"
-                        aria-label="Institution list"
-                    >
+                    <div className={styles.grid} role="list" aria-label="Institution list">
                         {data.items.map((institution) => (
                             <div key={institution.id} role="listitem">
-                                <InstitutionCard institution={institution}/>
+                                <InstitutionCard institution={institution} />
                             </div>
                         ))}
                     </div>
@@ -121,8 +121,8 @@ export default function InstitutionsPage() {
                             ←
                         </button>
                         <span className={styles.pageInfo} aria-live="polite">
-              Page {page + 1} of {data.totalPages}
-            </span>
+                            Page {page + 1} of {data.totalPages}
+                        </span>
                         <button
                             className={styles.pageBtn}
                             onClick={() => setPage((p) => p + 1)}
@@ -138,13 +138,7 @@ export default function InstitutionsPage() {
     );
 }
 
-function AddInstitutionForm({
-                                onSuccess,
-                                onCancel,
-                            }: {
-    onSuccess: () => void;
-    onCancel: () => void;
-}) {
+function AddInstitutionForm({ onSuccess, onCancel }: { onSuccess: () => void; onCancel: () => void }) {
     const [name, setName] = useState("");
     const [country, setCountry] = useState("");
     const [type, setType] = useState<InstitutionType>("BANK");
@@ -161,7 +155,7 @@ function AddInstitutionForm({
                 name,
                 country,
                 type,
-                ...(bic ? {bic: bic.toUpperCase()} : {}),
+                ...(bic ? { bic: bic.toUpperCase() } : {}),
             });
             onSuccess();
         } catch (err) {
@@ -176,7 +170,9 @@ function AddInstitutionForm({
             <h2 className={styles.formTitle}>New institution</h2>
             <form onSubmit={handleSubmit} noValidate aria-label="Add institution form">
                 {error && (
-                    <div role="alert" className={styles.formError}>{error}</div>
+                    <div role="alert" className={styles.formError}>
+                        {error}
+                    </div>
                 )}
                 <div className={styles.formGrid}>
                     <div className={styles.field}>
@@ -204,7 +200,9 @@ function AddInstitutionForm({
                             disabled={loading}
                         >
                             {INSTITUTION_TYPES.map((t) => (
-                                <option key={t.value} value={t.value}>{t.label}</option>
+                                <option key={t.value} value={t.value}>
+                                    {t.label}
+                                </option>
                             ))}
                         </select>
                     </div>
@@ -221,7 +219,9 @@ function AddInstitutionForm({
                         >
                             <option value="">Select a country…</option>
                             {COUNTRIES.map((c) => (
-                                <option key={c.code} value={c.code}>{c.name}</option>
+                                <option key={c.code} value={c.code}>
+                                    {c.name}
+                                </option>
                             ))}
                         </select>
                     </div>
@@ -229,14 +229,16 @@ function AddInstitutionForm({
                     <div className={styles.field}>
                         <label htmlFor="inst-bic">
                             BIC / SWIFT
-                            <span style={{
-                                fontWeight: 400,
-                                color: "var(--text-dim)",
-                                marginLeft: "0.5rem",
-                                textTransform: "none"
-                            }}>
-                (optional)
-              </span>
+                            <span
+                                style={{
+                                    fontWeight: 400,
+                                    color: "var(--text-dim)",
+                                    marginLeft: "0.5rem",
+                                    textTransform: "none",
+                                }}
+                            >
+                                (optional)
+                            </span>
                         </label>
                         <input
                             id="inst-bic"
@@ -247,7 +249,10 @@ function AddInstitutionForm({
                             disabled={loading}
                             aria-describedby="bic-hint"
                             maxLength={11}
-                            style={{fontFamily: "var(--font-mono)", letterSpacing: "0.05em"}}
+                            style={{
+                                fontFamily: "var(--font-mono)",
+                                letterSpacing: "0.05em",
+                            }}
                         />
                         <p id="bic-hint" className={styles.hint}>
                             8 or 11 uppercase characters (e.g. BNPAFRPP or BNPAFRPPXXX)
@@ -268,23 +273,16 @@ function AddInstitutionForm({
     );
 }
 
-function InstitutionCard({institution}: { institution: Institution }) {
+function InstitutionCard({ institution }: { institution: Institution }) {
     return (
         <Card className={styles.institutionCard}>
             <div className={styles.cardHeader}>
                 <p className={styles.cardName}>{institution.name}</p>
-                <span
-                    className={`fi fi-${institution.country.toLowerCase()}`}
-                    title={institution.country}
-                />
+                <span className={`fi fi-${institution.country.toLowerCase()}`} title={institution.country} />
             </div>
 
             <div className={styles.cardMeta}>
-                {institution.bic && (
-                    <span className={styles.bic}>
-                        {institution.bic}
-                    </span>
-                )}
+                {institution.bic && <span className={styles.bic}>{institution.bic}</span>}
             </div>
         </Card>
     );

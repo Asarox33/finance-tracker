@@ -1,13 +1,13 @@
-import {act, renderHook} from "@testing-library/react";
-import {useLogin, useLogout, usePasswordReset, useRegister} from "@/features/auth/hooks/useAuth";
+import { act, renderHook } from "@testing-library/react";
+import { useLogin, useLogout, usePasswordReset, useRegister } from "@/features/auth/hooks/useAuth";
 import * as httpModule from "@/lib/http";
 import * as authApiModule from "@/features/auth/api/authApi";
 
 const mockPush = jest.fn();
 
 jest.mock("next/navigation", () => ({
-    useRouter: () => ({push: mockPush}),
-    useSearchParams: () => ({get: () => null}),
+    useRouter: () => ({ push: mockPush }),
+    useSearchParams: () => ({ get: () => null }),
 }));
 
 jest.mock("@/lib/http", () => ({
@@ -17,7 +17,7 @@ jest.mock("@/lib/http", () => ({
     removeToken: jest.fn(),
     removeUserId: jest.fn(),
     isAuthenticated: jest.fn(() => false),
-    http: {post: jest.fn(), get: jest.fn()},
+    http: { post: jest.fn(), get: jest.fn() },
 }));
 
 jest.mock("@/features/auth/api/authApi", () => ({
@@ -29,15 +29,17 @@ jest.mock("@/features/auth/api/authApi", () => ({
     },
 }));
 
-const mockPayload = btoa(JSON.stringify({sub: "user-123"}));
+const mockPayload = btoa(JSON.stringify({ sub: "user-123" }));
 const mockToken = `header.${mockPayload}.signature`;
 
 describe("useLogin", () => {
     beforeEach(() => jest.clearAllMocks());
 
     it("calls authApi.login with credentials", async () => {
-        (authApiModule.authApi.login as jest.Mock).mockResolvedValue({token: mockToken});
-        const {result} = renderHook(() => useLogin());
+        (authApiModule.authApi.login as jest.Mock).mockResolvedValue({
+            token: mockToken,
+        });
+        const { result } = renderHook(() => useLogin());
         await act(async () => {
             await result.current.login("test@example.com", "Password123!");
         });
@@ -48,27 +50,28 @@ describe("useLogin", () => {
     });
 
     it("sets loading during login", async () => {
-        let resolve: (v: { token: string }) => void = () => {
-        };
+        let resolve: (v: { token: string }) => void = () => {};
         (authApiModule.authApi.login as jest.Mock).mockReturnValue(
-            new Promise(r => {
+            new Promise((r) => {
                 resolve = r;
             })
         );
-        const {result} = renderHook(() => useLogin());
+        const { result } = renderHook(() => useLogin());
         act(() => {
             result.current.login("test@example.com", "Password123!");
         });
         expect(result.current.loading).toBe(true);
         await act(async () => {
-            resolve({token: mockToken});
+            resolve({ token: mockToken });
         });
         expect(result.current.loading).toBe(false);
     });
 
     it("sets error on failure", async () => {
-        (authApiModule.authApi.login as jest.Mock).mockRejectedValue({message: "Invalid credentials"});
-        const {result} = renderHook(() => useLogin());
+        (authApiModule.authApi.login as jest.Mock).mockRejectedValue({
+            message: "Invalid credentials",
+        });
+        const { result } = renderHook(() => useLogin());
         await act(async () => {
             await result.current.login("test@example.com", "wrong");
         });
@@ -80,7 +83,7 @@ describe("useLogin", () => {
         (authApiModule.authApi.login as jest.Mock).mockRejectedValue({
             message: "Account is temporarily locked",
         });
-        const {result} = renderHook(() => useLogin());
+        const { result } = renderHook(() => useLogin());
         await act(async () => {
             await result.current.login("test@example.com", "wrong");
         });
@@ -88,8 +91,10 @@ describe("useLogin", () => {
     });
 
     it("sets token and userId on success", async () => {
-        (authApiModule.authApi.login as jest.Mock).mockResolvedValue({token: mockToken});
-        const {result} = renderHook(() => useLogin());
+        (authApiModule.authApi.login as jest.Mock).mockResolvedValue({
+            token: mockToken,
+        });
+        const { result } = renderHook(() => useLogin());
         await act(async () => {
             await result.current.login("test@example.com", "Password123!");
         });
@@ -102,8 +107,10 @@ describe("useRegister", () => {
     beforeEach(() => jest.clearAllMocks());
 
     it("calls authApi.register with credentials", async () => {
-        (authApiModule.authApi.register as jest.Mock).mockResolvedValue({userId: "u-1"});
-        const {result} = renderHook(() => useRegister());
+        (authApiModule.authApi.register as jest.Mock).mockResolvedValue({
+            userId: "u-1",
+        });
+        const { result } = renderHook(() => useRegister());
         await act(async () => {
             await result.current.register("test@example.com", "Password123!");
         });
@@ -117,7 +124,7 @@ describe("useRegister", () => {
         (authApiModule.authApi.register as jest.Mock).mockRejectedValue({
             message: "Email already registered",
         });
-        const {result} = renderHook(() => useRegister());
+        const { result } = renderHook(() => useRegister());
         await act(async () => {
             await result.current.register("test@example.com", "Password123!");
         });
@@ -130,7 +137,7 @@ describe("usePasswordReset", () => {
 
     it("moves to confirm step after successful request", async () => {
         (authApiModule.authApi.requestPasswordReset as jest.Mock).mockResolvedValue(undefined);
-        const {result} = renderHook(() => usePasswordReset());
+        const { result } = renderHook(() => usePasswordReset());
         expect(result.current.step).toBe("request");
         await act(async () => {
             await result.current.requestReset("test@example.com");
@@ -141,7 +148,7 @@ describe("usePasswordReset", () => {
     it("moves to done step after successful confirm", async () => {
         (authApiModule.authApi.requestPasswordReset as jest.Mock).mockResolvedValue(undefined);
         (authApiModule.authApi.confirmPasswordReset as jest.Mock).mockResolvedValue(undefined);
-        const {result} = renderHook(() => usePasswordReset());
+        const { result } = renderHook(() => usePasswordReset());
         await act(async () => {
             await result.current.requestReset("test@example.com");
         });
@@ -153,7 +160,7 @@ describe("usePasswordReset", () => {
 
     it("backToRequest resets step and error", async () => {
         (authApiModule.authApi.requestPasswordReset as jest.Mock).mockResolvedValue(undefined);
-        const {result} = renderHook(() => usePasswordReset());
+        const { result } = renderHook(() => usePasswordReset());
         await act(async () => {
             await result.current.requestReset("test@example.com");
         });
@@ -167,7 +174,7 @@ describe("usePasswordReset", () => {
 
 describe("useLogout", () => {
     it("removes token and userId", () => {
-        const {result} = renderHook(() => useLogout());
+        const { result } = renderHook(() => useLogout());
         act(() => {
             result.current.logout();
         });
@@ -182,8 +189,10 @@ describe("extractUserId edge cases", () => {
     it("handles token with non-extractable sub gracefully", async () => {
         const malformedPayload = btoa("not-json");
         const badToken = `header.${malformedPayload}.sig`;
-        (authApiModule.authApi.login as jest.Mock).mockResolvedValue({token: badToken});
-        const {result} = renderHook(() => useLogin());
+        (authApiModule.authApi.login as jest.Mock).mockResolvedValue({
+            token: badToken,
+        });
+        const { result } = renderHook(() => useLogin());
         await act(async () => {
             await result.current.login("test@example.com", "Password123!");
         });
@@ -192,8 +201,10 @@ describe("extractUserId edge cases", () => {
     });
 
     it("handles token with wrong number of parts", async () => {
-        (authApiModule.authApi.login as jest.Mock).mockResolvedValue({token: "onlytwoparts.x"});
-        const {result} = renderHook(() => useLogin());
+        (authApiModule.authApi.login as jest.Mock).mockResolvedValue({
+            token: "onlytwoparts.x",
+        });
+        const { result } = renderHook(() => useLogin());
         await act(async () => {
             await result.current.login("test@example.com", "Password123!");
         });
@@ -205,8 +216,10 @@ describe("useRegister redirect", () => {
     beforeEach(() => jest.clearAllMocks());
 
     it("redirects to login with registered param on success", async () => {
-        (authApiModule.authApi.register as jest.Mock).mockResolvedValue({userId: "u-1"});
-        const {result} = renderHook(() => useRegister());
+        (authApiModule.authApi.register as jest.Mock).mockResolvedValue({
+            userId: "u-1",
+        });
+        const { result } = renderHook(() => useRegister());
         await act(async () => {
             await result.current.register("test@example.com", "Password123!");
         });
@@ -218,8 +231,8 @@ describe("usePasswordReset error handling", () => {
     beforeEach(() => jest.clearAllMocks());
 
     it("sets error when requestReset fails", async () => {
-        (authApiModule.authApi.requestPasswordReset as jest.Mock).mockRejectedValue({message: "Email not found"});
-        const {result} = renderHook(() => usePasswordReset());
+        (authApiModule.authApi.requestPasswordReset as jest.Mock).mockRejectedValue({ message: "Email not found" });
+        const { result } = renderHook(() => usePasswordReset());
         await act(async () => {
             await result.current.requestReset("unknown@example.com");
         });
@@ -229,8 +242,8 @@ describe("usePasswordReset error handling", () => {
 
     it("sets error when confirmReset fails", async () => {
         (authApiModule.authApi.requestPasswordReset as jest.Mock).mockResolvedValue(undefined);
-        (authApiModule.authApi.confirmPasswordReset as jest.Mock).mockRejectedValue({message: "Invalid OTP"});
-        const {result} = renderHook(() => usePasswordReset());
+        (authApiModule.authApi.confirmPasswordReset as jest.Mock).mockRejectedValue({ message: "Invalid OTP" });
+        const { result } = renderHook(() => usePasswordReset());
         await act(async () => {
             await result.current.requestReset("test@example.com");
         });
@@ -247,7 +260,7 @@ describe("fallback error messages", () => {
 
     it("useLogin uses fallback message when error has no message", async () => {
         (authApiModule.authApi.login as jest.Mock).mockRejectedValue({});
-        const {result} = renderHook(() => useLogin());
+        const { result } = renderHook(() => useLogin());
         await act(async () => {
             await result.current.login("test@example.com", "Password123!");
         });
@@ -256,7 +269,7 @@ describe("fallback error messages", () => {
 
     it("useRegister uses fallback message when error has no message", async () => {
         (authApiModule.authApi.register as jest.Mock).mockRejectedValue({});
-        const {result} = renderHook(() => useRegister());
+        const { result } = renderHook(() => useRegister());
         await act(async () => {
             await result.current.register("test@example.com", "Password123!");
         });
@@ -265,7 +278,7 @@ describe("fallback error messages", () => {
 
     it("usePasswordReset requestReset uses fallback message when error has no message", async () => {
         (authApiModule.authApi.requestPasswordReset as jest.Mock).mockRejectedValue({});
-        const {result} = renderHook(() => usePasswordReset());
+        const { result } = renderHook(() => usePasswordReset());
         await act(async () => {
             await result.current.requestReset("test@example.com");
         });
@@ -275,7 +288,7 @@ describe("fallback error messages", () => {
     it("usePasswordReset confirmReset uses fallback message when error has no message", async () => {
         (authApiModule.authApi.requestPasswordReset as jest.Mock).mockResolvedValue(undefined);
         (authApiModule.authApi.confirmPasswordReset as jest.Mock).mockRejectedValue({});
-        const {result} = renderHook(() => usePasswordReset());
+        const { result } = renderHook(() => usePasswordReset());
         await act(async () => {
             await result.current.requestReset("test@example.com");
         });
