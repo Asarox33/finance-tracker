@@ -1,5 +1,5 @@
-import { http } from "@/lib/http";
-import type { UserProfile } from "@/shared/types";
+import {http} from "@/lib/http";
+import type {UserProfile} from "@/shared/types";
 
 export interface UpdatePreferencesRequest {
     firstName: string;

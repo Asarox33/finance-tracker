@@ -1,4 +1,4 @@
-import { transactionsApi } from "@/features/transactions/api/transactionsApi";
+import {transactionsApi} from "@/features/transactions/api/transactionsApi";
 
 const mockFetch = jest.fn();
 global.fetch = mockFetch;
@@ -7,13 +7,13 @@ function mockResponse(body: unknown, status = 200) {
     mockFetch.mockResolvedValueOnce({
         ok: status >= 200 && status < 300,
         status,
-        headers: { get: () => null },
+        headers: {get: () => null},
         json: async () => body,
     });
 }
 
 function makeValidToken(): string {
-    const header = btoa(JSON.stringify({ alg: "HS256" }));
+    const header = btoa(JSON.stringify({alg: "HS256"}));
     const payload = btoa(JSON.stringify({
         sub: "user-123",
         exp: Math.floor(Date.now() / 1000) + 3600,
@@ -48,7 +48,16 @@ describe("transactionsApi", () => {
     });
 
     it("lists transactions with accountId query param", async () => {
-        mockResponse({ items: [mockTransaction], totalItems: 1, totalPages: 1, page: 0, pageSize: 20, isEmpty: false, isFirst: true, isLast: true });
+        mockResponse({
+            items: [mockTransaction],
+            totalItems: 1,
+            totalPages: 1,
+            page: 0,
+            pageSize: 20,
+            isEmpty: false,
+            isFirst: true,
+            isLast: true
+        });
         await transactionsApi.list("acc-1");
         expect(mockFetch).toHaveBeenCalledWith(
             expect.stringContaining("accountId=acc-1"),
@@ -57,7 +66,16 @@ describe("transactionsApi", () => {
     });
 
     it("lists transactions with pagination params", async () => {
-        mockResponse({ items: [], totalItems: 0, totalPages: 0, page: 1, pageSize: 20, isEmpty: true, isFirst: false, isLast: true });
+        mockResponse({
+            items: [],
+            totalItems: 0,
+            totalPages: 0,
+            page: 1,
+            pageSize: 20,
+            isEmpty: true,
+            isFirst: false,
+            isLast: true
+        });
         await transactionsApi.list("acc-1", 1, 20);
         expect(mockFetch).toHaveBeenCalledWith(
             expect.stringContaining("page=1"),
@@ -66,7 +84,16 @@ describe("transactionsApi", () => {
     });
 
     it("lists transactions with optional date range", async () => {
-        mockResponse({ items: [], totalItems: 0, totalPages: 0, page: 0, pageSize: 20, isEmpty: true, isFirst: true, isLast: true });
+        mockResponse({
+            items: [],
+            totalItems: 0,
+            totalPages: 0,
+            page: 0,
+            pageSize: 20,
+            isEmpty: true,
+            isFirst: true,
+            isLast: true
+        });
         await transactionsApi.list("acc-1", 0, 20, "2024-01-01", "2024-12-31");
         const url = mockFetch.mock.calls[0][0] as string;
         expect(url).toContain("from=2024-01-01");
@@ -95,7 +122,7 @@ describe("transactionsApi", () => {
         });
         expect(mockFetch).toHaveBeenCalledWith(
             expect.stringContaining("/transactions"),
-            expect.objectContaining({ method: "POST" })
+            expect.objectContaining({method: "POST"})
         );
     });
 

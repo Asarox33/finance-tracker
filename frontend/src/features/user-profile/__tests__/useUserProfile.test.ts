@@ -1,7 +1,6 @@
-import { renderHook, act } from "@testing-library/react";
-import { useUpdatePreferences } from "@/features/user-profile/hooks/useUserProfile";
+import {act, renderHook} from "@testing-library/react";
+import {useUpdatePreferences, useUserProfile} from "@/features/user-profile/hooks/useUserProfile";
 import * as apiModule from "@/features/user-profile/api/userProfileApi";
-import { useUserProfile } from "@/features/user-profile/hooks/useUserProfile";
 
 jest.mock("swr", () => ({
     __esModule: true,
@@ -40,7 +39,7 @@ describe("useUpdatePreferences", () => {
 
     it("calls updatePreferences with data", async () => {
         (apiModule.userProfileApi.updatePreferences as jest.Mock).mockResolvedValue(mockPreferences);
-        const { result } = renderHook(() => useUpdatePreferences());
+        const {result} = renderHook(() => useUpdatePreferences());
         await act(async () => {
             await result.current.update(mockPreferences);
         });
@@ -49,7 +48,7 @@ describe("useUpdatePreferences", () => {
 
     it("sets success on successful update", async () => {
         (apiModule.userProfileApi.updatePreferences as jest.Mock).mockResolvedValue(mockPreferences);
-        const { result } = renderHook(() => useUpdatePreferences());
+        const {result} = renderHook(() => useUpdatePreferences());
         await act(async () => {
             await result.current.update(mockPreferences);
         });
@@ -61,7 +60,7 @@ describe("useUpdatePreferences", () => {
         (apiModule.userProfileApi.updatePreferences as jest.Mock).mockRejectedValue({
             message: "Validation failed",
         });
-        const { result } = renderHook(() => useUpdatePreferences());
+        const {result} = renderHook(() => useUpdatePreferences());
         await act(async () => {
             await result.current.update(mockPreferences);
         });
@@ -70,21 +69,28 @@ describe("useUpdatePreferences", () => {
     });
 
     it("sets loading during update", async () => {
-        let resolve: (v: unknown) => void = () => {};
+        let resolve: (v: unknown) => void = () => {
+        };
         (apiModule.userProfileApi.updatePreferences as jest.Mock).mockReturnValue(
-            new Promise(r => { resolve = r; })
+            new Promise(r => {
+                resolve = r;
+            })
         );
-        const { result } = renderHook(() => useUpdatePreferences());
-        act(() => { result.current.update(mockPreferences); });
+        const {result} = renderHook(() => useUpdatePreferences());
+        act(() => {
+            result.current.update(mockPreferences);
+        });
         expect(result.current.loading).toBe(true);
-        await act(async () => { resolve(mockPreferences); });
+        await act(async () => {
+            resolve(mockPreferences);
+        });
         expect(result.current.loading).toBe(false);
     });
 
     it("calls onSuccess callback after update", async () => {
         (apiModule.userProfileApi.updatePreferences as jest.Mock).mockResolvedValue(mockPreferences);
         const onSuccess = jest.fn();
-        const { result } = renderHook(() => useUpdatePreferences());
+        const {result} = renderHook(() => useUpdatePreferences());
         await act(async () => {
             await result.current.update(mockPreferences, onSuccess);
         });
@@ -93,15 +99,17 @@ describe("useUpdatePreferences", () => {
 
     it("succeeds without onSuccess callback", async () => {
         (apiModule.userProfileApi.updatePreferences as jest.Mock).mockResolvedValue(mockPreferences);
-        const { result } = renderHook(() => useUpdatePreferences());
-        await act(async () => { await result.current.update(mockPreferences); });
+        const {result} = renderHook(() => useUpdatePreferences());
+        await act(async () => {
+            await result.current.update(mockPreferences);
+        });
         expect(result.current.success).toBe(true);
     });
 });
 
 describe("useUserProfile", () => {
     it("returns profile data from SWR", () => {
-        const { result } = renderHook(() => useUserProfile());
+        const {result} = renderHook(() => useUserProfile());
         expect(result.current.profile).toEqual({
             id: "user-123",
             firstName: "John",

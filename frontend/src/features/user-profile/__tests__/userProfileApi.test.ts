@@ -1,4 +1,4 @@
-import { userProfileApi } from "@/features/user-profile/api/userProfileApi";
+import {userProfileApi} from "@/features/user-profile/api/userProfileApi";
 
 const mockFetch = jest.fn();
 global.fetch = mockFetch;
@@ -7,7 +7,7 @@ function mockResponse(body: unknown, status = 200) {
     mockFetch.mockResolvedValueOnce({
         ok: status >= 200 && status < 300,
         status,
-        headers: { get: () => null },
+        headers: {get: () => null},
         json: async () => body,
     });
 }
@@ -22,7 +22,7 @@ const mockProfile = {
 };
 
 function makeValidToken(): string {
-    const header = btoa(JSON.stringify({ alg: "HS256" }));
+    const header = btoa(JSON.stringify({alg: "HS256"}));
     const payload = btoa(JSON.stringify({
         sub: "user-123",
         exp: Math.floor(Date.now() / 1000) + 3600,
@@ -64,7 +64,7 @@ describe("userProfileApi", () => {
         });
         expect(mockFetch).toHaveBeenCalledWith(
             expect.stringContaining("/users/me/preferences"),
-            expect.objectContaining({ method: "PUT" })
+            expect.objectContaining({method: "PUT"})
         );
     });
 

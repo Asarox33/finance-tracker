@@ -1,4 +1,4 @@
-import { authApi } from "@/features/auth/api/authApi";
+import {authApi} from "@/features/auth/api/authApi";
 
 const mockFetch = jest.fn();
 global.fetch = mockFetch;
@@ -7,13 +7,13 @@ function mockResponse(body: unknown, status = 200) {
     mockFetch.mockResolvedValueOnce({
         ok: status >= 200 && status < 300,
         status,
-        headers: { get: () => null },
+        headers: {get: () => null},
         json: async () => body,
     });
 }
 
 function makeValidToken(): string {
-    const header = btoa(JSON.stringify({ alg: "HS256" }));
+    const header = btoa(JSON.stringify({alg: "HS256"}));
     const payload = btoa(JSON.stringify({
         sub: "user-123",
         exp: Math.floor(Date.now() / 1000) + 3600,
@@ -32,39 +32,39 @@ describe("authApi", () => {
 
     it("calls login endpoint with credentials", async () => {
         const token = makeValidToken();
-        mockResponse({ token });
-        const result = await authApi.login({ email: "test@example.com", password: "Password123!" });
+        mockResponse({token});
+        const result = await authApi.login({email: "test@example.com", password: "Password123!"});
         expect(result.token).toBe(token);
         expect(mockFetch).toHaveBeenCalledWith(
             expect.stringContaining("/auth/login"),
-            expect.objectContaining({ method: "POST" })
+            expect.objectContaining({method: "POST"})
         );
     });
 
     it("sends correct body on login", async () => {
-        mockResponse({ token: makeValidToken() });
-        await authApi.login({ email: "test@example.com", password: "Password123!" });
+        mockResponse({token: makeValidToken()});
+        await authApi.login({email: "test@example.com", password: "Password123!"});
         const body = JSON.parse(mockFetch.mock.calls[0][1].body);
         expect(body.email).toBe("test@example.com");
         expect(body.password).toBe("Password123!");
     });
 
     it("calls register endpoint with credentials", async () => {
-        mockResponse({ userId: "user-123" }, 201);
-        const result = await authApi.register({ email: "new@example.com", password: "Password123!" });
+        mockResponse({userId: "user-123"}, 201);
+        const result = await authApi.register({email: "new@example.com", password: "Password123!"});
         expect(result.userId).toBe("user-123");
         expect(mockFetch).toHaveBeenCalledWith(
             expect.stringContaining("/auth/register"),
-            expect.objectContaining({ method: "POST" })
+            expect.objectContaining({method: "POST"})
         );
     });
 
     it("calls password reset request endpoint", async () => {
         mockResponse(null, 204);
-        await authApi.requestPasswordReset({ email: "test@example.com" });
+        await authApi.requestPasswordReset({email: "test@example.com"});
         expect(mockFetch).toHaveBeenCalledWith(
             expect.stringContaining("/auth/password-reset/request"),
-            expect.objectContaining({ method: "POST" })
+            expect.objectContaining({method: "POST"})
         );
     });
 
@@ -77,7 +77,7 @@ describe("authApi", () => {
         });
         expect(mockFetch).toHaveBeenCalledWith(
             expect.stringContaining("/auth/password-reset/confirm"),
-            expect.objectContaining({ method: "POST" })
+            expect.objectContaining({method: "POST"})
         );
     });
 

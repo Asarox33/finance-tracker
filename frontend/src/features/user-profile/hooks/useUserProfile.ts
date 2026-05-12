@@ -1,16 +1,16 @@
 "use client";
 
 import useSWR from "swr";
-import { useState } from "react";
-import { userProfileApi, type UpdatePreferencesRequest } from "../api/userProfileApi";
-import type { ApiError } from "@/shared/types";
+import {useState} from "react";
+import {type UpdatePreferencesRequest, userProfileApi} from "../api/userProfileApi";
+import type {ApiError} from "@/shared/types";
 
 export function useUserProfile() {
-    const { data, error, isLoading, mutate } = useSWR(
+    const {data, error, isLoading, mutate} = useSWR(
         "user-profile-me",
         () => userProfileApi.getMe()
     );
-    return { profile: data, error, isLoading, mutate };
+    return {profile: data, error, isLoading, mutate};
 }
 
 export function useUpdatePreferences() {
@@ -33,5 +33,5 @@ export function useUpdatePreferences() {
         }
     }
 
-    return { update, loading, error, success };
+    return {update, loading, error, success};
 }

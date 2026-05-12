@@ -1,47 +1,119 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useLogout } from "@/features/auth/hooks/useAuth";
-import { useSessionTimeout } from "@/shared/hooks/useSessionTimeout";
-import { useAuthGuard } from "@/shared/hooks/useAuthGuard";
-import { useUserProfile } from "@/features/user-profile/hooks/useUserProfile";
+import {usePathname, useRouter} from "next/navigation";
+import {useLogout} from "@/features/auth/hooks/useAuth";
+import {useSessionTimeout} from "@/shared/hooks/useSessionTimeout";
+import {useAuthGuard} from "@/shared/hooks/useAuthGuard";
+import {useUserProfile} from "@/features/user-profile/hooks/useUserProfile";
 import styles from "./AppShell.module.css";
 import clsx from "clsx";
+import {useEffect} from "react";
 
 const NAV = [
-    { href: "/dashboard", label: "Dashboard", icon: "⬡" },
-    { href: "/accounts", label: "Accounts", icon: "◫" },
-    { href: "/transactions", label: "Transactions", icon: "⇌" },
-    { href: "/analytics", label: "Analytics", icon: "◈" },
+    {href: "/dashboard", label: "Dashboard", icon: "⬡"},
+    {href: "/accounts", label: "Accounts", icon: "◫"},
+    {href: "/institutions", label: "Institutions", icon: "⊞"},
+    {href: "/transactions", label: "Transactions", icon: "⇌"},
+    {href: "/analytics", label: "Analytics", icon: "◈"},
 ];
 
-export default function AppShell({ children }: { children: React.ReactNode }) {
+export default function AppShell({
+                                     children,
+                                 }: {
+    children: React.ReactNode;
+}) {
     const pathname = usePathname();
-    const { logout } = useLogout();
-    const { profile } = useUserProfile();
-    const { isAuthenticated } = useAuthGuard();
+    const {logout} = useLogout();
+    const {profile} = useUserProfile();
+    const router = useRouter();
+
+    const {
+        isAuthenticated,
+        isLoading,
+    } = useAuthGuard();
+
     useSessionTimeout();
 
-    if (!isAuthenticated) return null;
+    useEffect(() => {
+        if (!isLoading && !isAuthenticated) {
+            router.replace("/login");
+        }
+    }, [isAuthenticated, isLoading, router]);
+
+    if (isLoading) {
+        return (
+            <div className={styles.loadingShell}>
+                <div className={styles.loadingCard}>
+                    <div className={styles.spinner} aria-hidden="true"/>
+                    <p className={styles.loadingText}>
+                        Loading your workspace...
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
+    if (isLoading || !isAuthenticated) {
+        return (
+            <div className={styles.loadingShell}>
+                <div className={styles.loadingCard}>
+                    <div className={styles.spinner}/>
+                    <p>Loading...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (!isAuthenticated) {
+        return null;
+    }
 
     return (
         <div className={styles.shell}>
-            <nav className={styles.sidebar} aria-label="Main navigation">
-                <div className={styles.brand} aria-label="Finance Tracker">
-                    <span className={styles.brandIcon} aria-hidden="true">◈</span>
-                    <span className={styles.brandName}>Finance</span>
+            <nav
+                className={styles.sidebar}
+                aria-label="Main navigation"
+            >
+                <div
+                    className={styles.brand}
+                    aria-label="Finance Tracker"
+                >
+                    <span
+                        className={styles.brandIcon}
+                        aria-hidden="true"
+                    >
+                        ◈
+                    </span>
+
+                    <span className={styles.brandName}>
+                        Finance
+                    </span>
                 </div>
 
                 <ul className={styles.nav} role="list">
-                    {NAV.map(({ href, label, icon }) => (
+                    {NAV.map(({href, label, icon}) => (
                         <li key={href}>
                             <Link
                                 href={href}
-                                className={clsx(styles.navLink, pathname.startsWith(href) && styles.active)}
-                                aria-current={pathname.startsWith(href) ? "page" : undefined}
+                                className={clsx(
+                                    styles.navLink,
+                                    pathname.startsWith(href) &&
+                                    styles.active
+                                )}
+                                aria-current={
+                                    pathname.startsWith(href)
+                                        ? "page"
+                                        : undefined
+                                }
                             >
-                                <span className={styles.navIcon} aria-hidden="true">{icon}</span>
+                                <span
+                                    className={styles.navIcon}
+                                    aria-hidden="true"
+                                >
+                                    {icon}
+                                </span>
+
                                 <span>{label}</span>
                             </Link>
                         </li>
@@ -49,25 +121,50 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 </ul>
 
                 <div className={styles.bottomSection}>
-                    <hr className={styles.separator} aria-hidden="true" />
+                    <hr
+                        className={styles.separator}
+                        aria-hidden="true"
+                    />
 
                     {profile && (
-                        <p className={styles.displayName} aria-label="Logged in as">
+                        <p
+                            className={styles.displayName}
+                            aria-label="Logged in as"
+                        >
                             {profile.displayName}
                         </p>
                     )}
 
                     <Link
                         href="/profile"
-                        className={clsx(styles.navLink, pathname.startsWith("/profile") && styles.active)}
-                        aria-current={pathname.startsWith("/profile") ? "page" : undefined}
+                        className={clsx(
+                            styles.navLink,
+                            pathname.startsWith("/profile") &&
+                            styles.active
+                        )}
+                        aria-current={
+                            pathname.startsWith("/profile")
+                                ? "page"
+                                : undefined
+                        }
                     >
-                        <span className={styles.navIcon} aria-hidden="true">◉</span>
+                        <span
+                            className={styles.navIcon}
+                            aria-hidden="true"
+                        >
+                            ◉
+                        </span>
+
                         <span>Profile</span>
                     </Link>
 
-                    <button onClick={logout} className={styles.logout} aria-label="Sign out">
+                    <button
+                        onClick={logout}
+                        className={styles.logout}
+                        aria-label="Sign out"
+                    >
                         <span aria-hidden="true">⊗</span>
+
                         <span>Sign out</span>
                     </button>
                 </div>

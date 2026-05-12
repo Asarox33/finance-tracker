@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import {type FormEvent, useState} from "react";
 import Link from "next/link";
-import { useRegister } from "@/features/auth/hooks/useAuth";
+import {useRegister} from "@/features/auth/hooks/useAuth";
 import styles from "../page.module.css";
 
 export default function RegisterPage() {
-    const { register, loading, error } = useRegister();
+    const {register, loading, error} = useRegister();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [confirm, setConfirm] = useState("");
@@ -26,7 +26,7 @@ export default function RegisterPage() {
 
     return (
         <main className={styles.main}>
-            <div className={styles.bg} aria-hidden="true" />
+            <div className={styles.bg} aria-hidden="true"/>
             <div className={styles.card}>
                 <header className={styles.header}>
                     <span className={styles.logo} aria-hidden="true">◈</span>
@@ -52,7 +52,12 @@ export default function RegisterPage() {
                     <div className={styles.field}>
                         <label htmlFor="password">
                             Password
-                            <span style={{ fontWeight: 400, color: "var(--text-dim)", marginLeft: "0.5rem", textTransform: "none" }}>
+                            <span style={{
+                                fontWeight: 400,
+                                color: "var(--text-dim)",
+                                marginLeft: "0.5rem",
+                                textTransform: "none"
+                            }}>
                 min 12 chars · upper · lower · digit · special
               </span>
                         </label>
@@ -75,7 +80,7 @@ export default function RegisterPage() {
                     </div>
 
                     <button type="submit" className={styles.submit} disabled={loading} aria-busy={loading}>
-                        {loading && <span className={styles.spinner} aria-hidden="true" />}
+                        {loading && <span className={styles.spinner} aria-hidden="true"/>}
                         {loading ? "Creating account…" : "Create account"}
                     </button>
                 </form>

@@ -1,14 +1,12 @@
 "use client";
 
-import { useState } from "react";
-import { useAccounts } from "@/features/accounts/hooks/useAccounts";
-import { useTransactions } from "@/features/transactions/hooks/useTransactions";
-import { transactionsApi } from "@/features/transactions/api/transactionsApi";
-import {
-    Card, Badge, Button, PageHeader, EmptyState, ErrorState, Skeleton
-} from "@/shared/components/ui";
-import { formatMoney, formatDate } from "@/lib/format";
-import type { Transaction, TransactionType } from "@/shared/types";
+import {useState} from "react";
+import {useAccounts} from "@/features/accounts/hooks/useAccounts";
+import {useTransactions} from "@/features/transactions/hooks/useTransactions";
+import {transactionsApi} from "@/features/transactions/api/transactionsApi";
+import {Badge, Button, Card, EmptyState, ErrorState, PageHeader, Skeleton} from "@/shared/components/ui";
+import {formatDate, formatMoney} from "@/lib/format";
+import type {Transaction, TransactionType} from "@/shared/types";
 import styles from "./page.module.css";
 
 const TRANSACTION_TYPES: TransactionType[] = [
@@ -23,11 +21,11 @@ const TYPE_VARIANTS: Record<string, "success" | "danger" | "warning" | "default"
 };
 
 export default function TransactionsPage() {
-    const { data: accounts } = useAccounts();
+    const {data: accounts} = useAccounts();
     const [selectedAccount, setSelectedAccount] = useState<string>("");
     const [page, setPage] = useState(0);
     const [showForm, setShowForm] = useState(false);
-    const { data, isLoading, error, mutate } = useTransactions(selectedAccount, page);
+    const {data, isLoading, error, mutate} = useTransactions(selectedAccount, page);
 
     return (
         <div className={styles.page}>
@@ -49,7 +47,11 @@ export default function TransactionsPage() {
                         <select
                             id="account-select"
                             value={selectedAccount}
-                            onChange={e => { setSelectedAccount(e.target.value); setPage(0); setShowForm(false); }}
+                            onChange={e => {
+                                setSelectedAccount(e.target.value);
+                                setPage(0);
+                                setShowForm(false);
+                            }}
                             aria-label="Select account to view transactions"
                         >
                             <option value="">Select an account…</option>
@@ -64,27 +66,32 @@ export default function TransactionsPage() {
                     <AddTransactionForm
                         accountId={selectedAccount}
                         currency={accounts?.items.find(a => a.id === selectedAccount)?.currency ?? "EUR"}
-                        onSuccess={() => { setShowForm(false); mutate(); }}
+                        onSuccess={() => {
+                            setShowForm(false);
+                            mutate();
+                        }}
                         onCancel={() => setShowForm(false)}
                     />
                 )}
 
                 {!selectedAccount && (
-                    <EmptyState title="Select an account" description="Choose an account above to view its transactions" />
+                    <EmptyState title="Select an account"
+                                description="Choose an account above to view its transactions"/>
                 )}
 
                 {selectedAccount && isLoading && (
                     <div className={styles.skels}>
-                        {[1,2,3,4,5].map(i => <Skeleton key={i} className={styles.rowSkel} />)}
+                        {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className={styles.rowSkel}/>)}
                     </div>
                 )}
 
-                {selectedAccount && error && <ErrorState />}
+                {selectedAccount && error && <ErrorState/>}
 
                 {selectedAccount && !isLoading && data && (
                     <>
                         {data.items.length === 0 && !showForm ? (
-                            <EmptyState title="No transactions" description="Record your first transaction for this account" />
+                            <EmptyState title="No transactions"
+                                        description="Record your first transaction for this account"/>
                         ) : (
                             <Card>
                                 <table aria-label="Transaction list">
@@ -93,11 +100,11 @@ export default function TransactionsPage() {
                                         <th scope="col">Date</th>
                                         <th scope="col">Label</th>
                                         <th scope="col">Type</th>
-                                        <th scope="col" style={{ textAlign: "right" }}>Amount</th>
+                                        <th scope="col" style={{textAlign: "right"}}>Amount</th>
                                     </tr>
                                     </thead>
                                     <tbody>
-                                    {data.items.map(tx => <TransactionRow key={tx.id} tx={tx} />)}
+                                    {data.items.map(tx => <TransactionRow key={tx.id} tx={tx}/>)}
                                     </tbody>
                                 </table>
                             </Card>
@@ -105,9 +112,14 @@ export default function TransactionsPage() {
 
                         {data.totalPages > 1 && (
                             <nav className={styles.pagination} aria-label="Transaction pages">
-                                <button className={styles.pageBtn} onClick={() => setPage(p => p - 1)} disabled={data.isFirst} aria-label="Previous page">←</button>
-                                <span className={styles.pageInfo} aria-live="polite">Page {page + 1} of {data.totalPages}</span>
-                                <button className={styles.pageBtn} onClick={() => setPage(p => p + 1)} disabled={data.isLast} aria-label="Next page">→</button>
+                                <button className={styles.pageBtn} onClick={() => setPage(p => p - 1)}
+                                        disabled={data.isFirst} aria-label="Previous page">←
+                                </button>
+                                <span className={styles.pageInfo}
+                                      aria-live="polite">Page {page + 1} of {data.totalPages}</span>
+                                <button className={styles.pageBtn} onClick={() => setPage(p => p + 1)}
+                                        disabled={data.isLast} aria-label="Next page">→
+                                </button>
                             </nav>
                         )}
                     </>
@@ -185,7 +197,7 @@ function AddTransactionForm({
                     <div className={styles.field}>
                         <label htmlFor="tx-amount">
                             Amount ({currency})
-                            <span style={{ fontWeight: 400, color: "var(--text-dim)", marginLeft: "0.5rem" }}>
+                            <span style={{fontWeight: 400, color: "var(--text-dim)", marginLeft: "0.5rem"}}>
                 use − for withdrawals
               </span>
                         </label>
@@ -193,7 +205,7 @@ function AddTransactionForm({
                             id="tx-amount" type="number" step="0.01" required aria-required="true"
                             value={amount} onChange={e => setAmount(e.target.value)}
                             placeholder="100.00" disabled={loading}
-                            style={{ fontFamily: "var(--font-mono)" }}
+                            style={{fontFamily: "var(--font-mono)"}}
                         />
                     </div>
 
@@ -215,8 +227,9 @@ function AddTransactionForm({
                         />
                     </div>
 
-                    <div className={styles.field} style={{ gridColumn: "1 / -1" }}>
-                        <label htmlFor="tx-notes">Notes <span style={{ color: "var(--text-dim)", fontWeight: 400 }}>(optional)</span></label>
+                    <div className={styles.field} style={{gridColumn: "1 / -1"}}>
+                        <label htmlFor="tx-notes">Notes <span
+                            style={{color: "var(--text-dim)", fontWeight: 400}}>(optional)</span></label>
                         <input
                             id="tx-notes" type="text"
                             value={notes} onChange={e => setNotes(e.target.value)}
@@ -238,25 +251,25 @@ function AddTransactionForm({
     );
 }
 
-function TransactionRow({ tx }: { tx: Transaction }) {
+function TransactionRow({tx}: { tx: Transaction }) {
     const positive = ["DEPOSIT", "DIVIDEND", "SELL"].includes(tx.type);
     return (
         <tr>
-            <td style={{ color: "var(--text-muted)", fontSize: "0.875rem", whiteSpace: "nowrap" }}>
+            <td style={{color: "var(--text-muted)", fontSize: "0.875rem", whiteSpace: "nowrap"}}>
                 {formatDate(tx.date)}
             </td>
             <td>
-                <p style={{ fontWeight: 500 }}>{tx.label}</p>
-                {tx.notes && <p style={{ fontSize: "0.8125rem", color: "var(--text-muted)" }}>{tx.notes}</p>}
+                <p style={{fontWeight: 500}}>{tx.label}</p>
+                {tx.notes && <p style={{fontSize: "0.8125rem", color: "var(--text-muted)"}}>{tx.notes}</p>}
             </td>
             <td>
                 <Badge variant={TYPE_VARIANTS[tx.type] ?? "default"}>{tx.type}</Badge>
                 {tx.appliedFxRate && (
-                    <span style={{ marginLeft: "0.5rem", fontSize: "0.75rem", color: "var(--text-muted)" }}>FX</span>
+                    <span style={{marginLeft: "0.5rem", fontSize: "0.75rem", color: "var(--text-muted)"}}>FX</span>
                 )}
             </td>
-            <td style={{ textAlign: "right", fontFamily: "var(--font-mono)", whiteSpace: "nowrap" }}>
-        <span style={{ color: positive ? "var(--success)" : "var(--danger)" }}>
+            <td style={{textAlign: "right", fontFamily: "var(--font-mono)", whiteSpace: "nowrap"}}>
+        <span style={{color: positive ? "var(--success)" : "var(--danger)"}}>
           {positive ? "+" : ""}{formatMoney(tx.amount, tx.currency)}
         </span>
             </td>

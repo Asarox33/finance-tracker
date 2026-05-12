@@ -1,10 +1,10 @@
 "use client";
 
-import { useTheme } from "@/shared/hooks/useTheme";
+import {useTheme} from "@/shared/hooks/useTheme";
 import styles from "./ThemeToggle.module.css";
 
 export default function ThemeToggle() {
-    const { theme, toggle } = useTheme();
+    const {theme, toggle} = useTheme();
     return (
         <button
             onClick={toggle}

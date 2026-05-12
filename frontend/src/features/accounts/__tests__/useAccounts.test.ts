@@ -1,5 +1,5 @@
-import { renderHook } from "@testing-library/react";
-import { useAccounts, useAccount } from "@/features/accounts/hooks/useAccounts";
+import {renderHook} from "@testing-library/react";
+import {useAccount, useAccounts} from "@/features/accounts/hooks/useAccounts";
 import * as apiModule from "@/features/accounts/api/accountsApi";
 
 jest.mock("@/features/accounts/api/accountsApi", () => ({
@@ -12,9 +12,12 @@ jest.mock("@/features/accounts/api/accountsApi", () => ({
 jest.mock("swr", () => ({
     __esModule: true,
     default: jest.fn((key: unknown, fetcher: (() => unknown) | null) => {
-        if (!key || !fetcher) return { data: undefined, error: undefined, isLoading: false, mutate: jest.fn() };
-        try { fetcher(); } catch {}
-        return { data: undefined, error: undefined, isLoading: false, mutate: jest.fn() };
+        if (!key || !fetcher) return {data: undefined, error: undefined, isLoading: false, mutate: jest.fn()};
+        try {
+            fetcher();
+        } catch {
+        }
+        return {data: undefined, error: undefined, isLoading: false, mutate: jest.fn()};
     }),
 }));
 

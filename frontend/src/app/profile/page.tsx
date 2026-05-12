@@ -1,14 +1,14 @@
 "use client";
 
-import { useState, type FormEvent, useEffect } from "react";
-import { useUserProfile, useUpdatePreferences } from "@/features/user-profile/hooks/useUserProfile";
-import { Card, Button, PageHeader, Skeleton, ErrorState } from "@/shared/components/ui";
-import { CURRENCIES } from "@/lib/currencies";
+import {type FormEvent, useEffect, useState} from "react";
+import {useUpdatePreferences, useUserProfile} from "@/features/user-profile/hooks/useUserProfile";
+import {Button, Card, ErrorState, PageHeader, Skeleton} from "@/shared/components/ui";
+import {CURRENCIES} from "@/lib/currencies";
 import styles from "./page.module.css";
 
 export default function ProfilePage() {
-    const { profile, isLoading, error, mutate } = useUserProfile();
-    const { update, loading: saving, error: saveError, success } = useUpdatePreferences();
+    const {profile, isLoading, error, mutate} = useUserProfile();
+    const {update, loading: saving, error: saveError, success} = useUpdatePreferences();
 
     const [firstName, setFirstName] = useState("");
     const [lastName, setLastName] = useState("");
@@ -50,12 +50,12 @@ export default function ProfilePage() {
                 {isLoading && (
                     <Card>
                         <div className={styles.skels}>
-                            {[1, 2, 3, 4].map(i => <Skeleton key={i} className={styles.skel} />)}
+                            {[1, 2, 3, 4].map(i => <Skeleton key={i} className={styles.skel}/>)}
                         </div>
                     </Card>
                 )}
 
-                {error && <ErrorState message="Could not load your profile" />}
+                {error && <ErrorState message="Could not load your profile"/>}
 
                 {profile && (
                     <Card>
@@ -104,7 +104,12 @@ export default function ProfilePage() {
                                 <div className={styles.field}>
                                     <label htmlFor="birthDate">
                                         Date of birth
-                                        <span style={{ fontWeight: 400, color: "var(--text-dim)", marginLeft: "0.5rem", textTransform: "none" }}>
+                                        <span style={{
+                                            fontWeight: 400,
+                                            color: "var(--text-dim)",
+                                            marginLeft: "0.5rem",
+                                            textTransform: "none"
+                                        }}>
                       (optional)
                     </span>
                                     </label>

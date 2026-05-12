@@ -16,5 +16,13 @@
     transition: all var(--transition);
     box-shadow: var(--shadow);
 }
-.btn:hover { color: var(--text); border-color: var(--accent); }
-.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+.btn:hover {
+    color: var(--text);
+    border-color: var(--accent);
+}
+
+.btn:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+}

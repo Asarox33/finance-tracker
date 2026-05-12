@@ -61,6 +61,6 @@ npm run lint         # ESLint
 
 ## Environment Variables
 
-| Variable              | Default                    | Description            |
-|-----------------------|----------------------------|------------------------|
-| NEXT_PUBLIC_API_URL   | http://localhost:8080      | Backend API base URL   |
+| Variable            | Default               | Description          |
+|---------------------|-----------------------|----------------------|
+| NEXT_PUBLIC_API_URL | http://localhost:8080 | Backend API base URL |

@@ -1,9 +1,9 @@
-import { renderHook } from "@testing-library/react";
+import {renderHook} from "@testing-library/react";
 import {
-    usePortfolioValue,
     usePerformance,
     usePerformanceAfterFees,
     usePerformanceAfterInflation,
+    usePortfolioValue,
 } from "@/features/analytics/hooks/useAnalytics";
 import * as apiModule from "@/features/analytics/api/analyticsApi";
 
@@ -19,9 +19,12 @@ jest.mock("@/features/analytics/api/analyticsApi", () => ({
 jest.mock("swr", () => ({
     __esModule: true,
     default: jest.fn((key: unknown, fetcher: (() => unknown) | null) => {
-        if (!key || !fetcher) return { data: undefined, error: undefined, isLoading: false, mutate: jest.fn() };
-        try { fetcher(); } catch {}
-        return { data: undefined, error: undefined, isLoading: false, mutate: jest.fn() };
+        if (!key || !fetcher) return {data: undefined, error: undefined, isLoading: false, mutate: jest.fn()};
+        try {
+            fetcher();
+        } catch {
+        }
+        return {data: undefined, error: undefined, isLoading: false, mutate: jest.fn()};
     }),
 }));
 
