@@ -55,7 +55,7 @@ test.describe("Institutions page", () => {
 
     test("shows country badge", async ({ page }) => {
         await page.goto("/institutions");
-        await expect(page.locator("[class*='badge']").filter({ hasText: "FR" }).first()).toBeVisible();
+        await expect(page.locator("span[title='FR']").first()).toBeVisible();
     });
 
     test("opens add institution form on button click", async ({ page }) => {

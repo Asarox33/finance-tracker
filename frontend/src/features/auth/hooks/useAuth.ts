@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { authApi } from "../api/authApi";
+import * as httpModule from "@/lib/http";
 import { setToken, setUserId } from "@/lib/http";
 import type { ApiError } from "@/shared/types";
+import { useRouter } from "next/navigation";
 
 export interface LoginError {
     message: string;
@@ -116,9 +117,8 @@ export function useLogout() {
     const router = useRouter();
 
     const logout = () => {
-        localStorage.removeItem("token");
-
-        // 🚨 important : force reload ou reset state global
+        httpModule.removeToken();
+        httpModule.removeUserId();
         router.replace("/login");
     };
 

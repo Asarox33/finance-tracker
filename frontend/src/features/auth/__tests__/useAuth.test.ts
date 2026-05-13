@@ -4,9 +4,13 @@ import * as httpModule from "@/lib/http";
 import * as authApiModule from "@/features/auth/api/authApi";
 
 const mockPush = jest.fn();
+const mockReplace = jest.fn();
 
 jest.mock("next/navigation", () => ({
-    useRouter: () => ({ push: mockPush }),
+    useRouter: () => ({
+        push: mockPush,
+        replace: mockReplace,
+    }),
     useSearchParams: () => ({ get: () => null }),
 }));
 
@@ -130,6 +134,15 @@ describe("useRegister", () => {
         });
         expect(result.current.error).toBe("Email already registered");
     });
+
+    it("redirects to login with registered param", async () => {
+        (authApiModule.authApi.register as jest.Mock).mockResolvedValue({ userId: "u-1" });
+        const { result } = renderHook(() => useRegister());
+        await act(async () => {
+            await result.current.register("test@example.com", "Password123!");
+        });
+        expect(mockPush).toHaveBeenCalledWith("/login?registered=1");
+    });
 });
 
 describe("usePasswordReset", () => {
@@ -169,6 +182,30 @@ describe("usePasswordReset", () => {
         });
         expect(result.current.step).toBe("request");
         expect(result.current.error).toBeNull();
+    });
+
+    it("sets error when confirmReset fails", async () => {
+        (authApiModule.authApi.requestPasswordReset as jest.Mock).mockResolvedValue(undefined);
+        (authApiModule.authApi.confirmPasswordReset as jest.Mock).mockRejectedValue({ message: "Invalid OTP" });
+        const { result } = renderHook(() => usePasswordReset());
+        await act(async () => {
+            await result.current.requestReset("test@example.com");
+        });
+        await act(async () => {
+            await result.current.confirmReset("test@example.com", "123456", "NewPassword123!");
+        });
+        expect(result.current.error).toBe("Invalid OTP");
+    });
+
+    it("sets error when requestReset fails", async () => {
+        (authApiModule.authApi.requestPasswordReset as jest.Mock).mockRejectedValue({
+            message: "Request failed server",
+        });
+        const { result } = renderHook(() => usePasswordReset());
+        await act(async () => {
+            await result.current.requestReset("test@example.com");
+        });
+        expect(result.current.error).toBe("Request failed server");
     });
 });
 
