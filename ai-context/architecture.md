@@ -1,5 +1,7 @@
 # Architecture
 
+**Scope:** **Structure** — monorepo layout, module trees, hexagonal pattern, routing/source trees, auth flow, API mapping, database schemas, security overview. **Not** pinned patch versions (see `current-state.md` § *Dependency Versions*). **Not** execution modes or STEP pipeline (see `CLAUDE.md`). See `ai-context/README.md` for the documentation map.
+
 ## Overview
 
 Finance Tracker is a **monorepo** with a Kotlin/Spring Boot backend and a Next.js frontend. The backend follows **Hexagonal Architecture (Ports & Adapters)** strictly, organized as a **multi-module Gradle project**. The frontend follows a **feature-oriented architecture** using Next.js App Router with CSS Modules.
@@ -8,32 +10,34 @@ Finance Tracker is a **monorepo** with a Kotlin/Spring Boot backend and a Next.j
 
 ## Technology Stack
 
+High level only — **exact versions** live in **`current-state.md`** (from `backend/gradle/libs.versions.toml`, `gradle-wrapper.properties`, and `frontend/package.json`).
+
 ### Backend
 
 | Layer | Technology |
 |---|---|
-| Language | Kotlin 2.3.20, JVM 25 |
-| Framework | Spring Boot 4.0.5 (WebMVC, Data JPA, Security) |
-| Database | PostgreSQL 16, Flyway 12 (schema migrations) |
-| Auth | JWT (JJWT 0.13), BCrypt |
-| API Docs | SpringDoc OpenAPI 3 |
+| Language | Kotlin (JVM toolchain 25) |
+| Framework | Spring Boot 4.x (WebMVC, Data JPA, Security) |
+| Database | PostgreSQL, Flyway (per-module schema migrations) |
+| Auth | JWT (JJWT), BCrypt |
+| API Docs | SpringDoc OpenAPI |
 | Email | Resend (prod), Console logger (dev) |
 | Rate Limiting | Bucket4j |
-| Build | Gradle 9.4.1 with version catalog (`libs.versions.toml`) |
-| Testing | JUnit 5 (Jupiter 6), Testcontainers 2 |
-| Coverage | Kover 0.9.8 |
+| Build | Gradle wrapper + version catalog (`libs.versions.toml`) |
+| Testing | JUnit Jupiter, Testcontainers |
+| Coverage | Kover |
 
 ### Frontend
 
 | Layer | Technology |
 |---|---|
-| Framework | Next.js 16 (App Router, Server Components) |
+| Framework | Next.js 16 (App Router) |
 | Language | TypeScript 6 (strict mode) |
-| Data Fetching | SWR 2.4 |
+| Data Fetching | SWR |
 | Styling | CSS Modules (no external UI library) |
-| Unit/Integration Tests | Jest 30 + React Testing Library 16 |
-| E2E Tests | Playwright 1.59 |
-| Utilities | clsx 2.1 |
+| Unit/Integration Tests | Jest + React Testing Library |
+| E2E Tests | Playwright |
+| Utilities | clsx |
 | Node Requirement | >=20.9.0 |
 
 ---
@@ -72,6 +76,7 @@ frontend/src/
 │   │   └── reset/page.tsx        # Password reset (3-step: request→confirm→done)
 │   ├── dashboard/                # Portfolio KPIs + account breakdown table
 │   ├── accounts/                 # Account list + create + close
+│   ├── institutions/             # Institution list, filters, create
 │   ├── transactions/             # Transaction list + create (per account)
 │   ├── analytics/                # Performance comparison + period details
 │   └── profile/                  # User profile edit form
@@ -84,20 +89,25 @@ frontend/src/
 │   │   ├── api/accountsApi.ts    # list, get, create, close
 │   │   ├── hooks/useAccounts.ts  # useAccounts, useAccount
 │   │   └── __tests__/
+│   ├── institutions/
+│   │   ├── api/institutionsApi.ts
+│   │   ├── hooks/useInstitutions.ts
+│   │   └── __tests__/
 │   ├── analytics/
 │   │   ├── api/analyticsApi.ts   # portfolioValue, performance, performanceAfterFees, performanceAfterInflation
 │   │   ├── hooks/useAnalytics.ts # usePortfolioValue, usePerformance, usePerformanceAfterFees, usePerformanceAfterInflation
 │   │   └── __tests__/
 │   ├── transactions/
 │   │   ├── api/transactionsApi.ts # list, get, create
-│   │   └── hooks/useTransactions.ts
+│   │   ├── hooks/useTransactions.ts
+│   │   └── __tests__/
 │   └── user-profile/
 │       ├── api/userProfileApi.ts  # getMe, updatePreferences
 │       ├── hooks/useUserProfile.ts # useUserProfile, useUpdatePreferences
 │       └── __tests__/
 ├── shared/
 │   ├── components/
-│   │   ├── AppShell.tsx          # Sidebar nav + auth guard wrapper
+│   │   ├── AppShell.tsx          # Sidebar nav + auth guard + loading shell
 │   │   ├── ThemeToggle.tsx       # Dark/light toggle (fixed position)
 │   │   └── ui.tsx                # Card, Skeleton, Badge, Button, PageHeader, EmptyState, ErrorState
 │   ├── hooks/
@@ -108,7 +118,8 @@ frontend/src/
 └── lib/
     ├── http.ts                   # Fetch wrapper, JWT token management, auth helpers
     ├── format.ts                 # formatMoney, formatDate, formatBasisPoints, today, monthsAgo
-    └── currencies.ts             # Full ISO 4217 currency list (const array + CurrencyCode type)
+    ├── currencies.ts             # Full ISO 4217 currency list (const array + CurrencyCode type)
+    └── countries.ts              # Country metadata (used by institutions UI)
 ```
 
 ---
@@ -196,6 +207,7 @@ Modules never depend on each other's infrastructure layer — only on applicatio
 |---|---|
 | Auth | `POST /api/auth/login`, `POST /api/auth/register`, `POST /api/auth/password-reset/request`, `POST /api/auth/password-reset/confirm` |
 | User Profile | `GET /api/users/me`, `PUT /api/users/me/preferences` |
+| Institutions | `GET /api/institutions`, `GET /api/institutions/:id`, `POST /api/institutions` |
 | Accounts | `GET /api/accounts`, `GET /api/accounts/:id`, `POST /api/accounts`, `DELETE /api/accounts/:id` |
 | Transactions | `GET /api/transactions?accountId=...`, `GET /api/transactions/:id`, `POST /api/transactions` |
 | Analytics | `GET /api/analytics/portfolio-value`, `GET /api/analytics/performance`, `GET /api/analytics/performance-after-fees`, `GET /api/analytics/performance-after-inflation` |

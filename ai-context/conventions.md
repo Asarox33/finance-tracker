@@ -1,5 +1,7 @@
 # Conventions
 
+**Scope:** **Naming**, layer rules, **test layout and patterns** (including mocks), HTTP error mapping, formatting, accessibility. Not product status — see `current-state.md`. Not directory trees — see `architecture.md`.
+
 ---
 
 ## Backend Naming
@@ -166,7 +168,7 @@ All code lives under `com.finance.<module>`. Sub-packages are always exactly `do
 ### Backend
 - Gradle dependency locking enabled — no dynamic versions
 - No version ranges in `libs.versions.toml` or `build.gradle.kts`
-- Run `./gradlew dependencies --write-locks` when adding/updating dependencies
+- Run `./gradlew dependencies --write-locks` from `backend/` when updating dependencies (on Windows PowerShell: `.\gradlew.bat dependencies --write-locks`)
 
 ### Frontend
 - `package-lock.json` is mandatory and must be committed
@@ -220,6 +222,22 @@ All code, comments, log messages, error strings, variable names, and test method
 - A valid JWT is constructed inline in tests: `btoa(JSON.stringify({ sub, exp }))` as the payload part
 - `localStorage` is mocked via `jest.spyOn(Storage.prototype, "getItem")`
 - Config: `jest.config.js` uses `nextJest({ dir: "./" })`, `moduleNameMapper: { "^@/(.*)$": "./src/$1" }`, `testMatch: ["**/__tests__/**/*.test.{ts,tsx}"]`
+- **SWR in hook tests** — use this mock shape so falsy SWR keys do not invoke the fetcher:
+
+```ts
+jest.mock("swr", () => ({
+  __esModule: true,
+  default: jest.fn((key, fetcher) => {
+    if (!key || !fetcher) return { data: undefined, error: undefined, isLoading: false, mutate: jest.fn() };
+    try {
+      fetcher();
+    } catch {
+      /* allow tests that expect fetcher throws */
+    }
+    return { data: undefined, error: undefined, isLoading: false, mutate: jest.fn() };
+  }),
+}));
+```
 
 ### Frontend E2E Tests (Playwright)
 
@@ -228,7 +246,7 @@ All code, comments, log messages, error strings, variable names, and test method
 - Uses `page.route(...)` to intercept and mock API calls
 - Uses `page.addInitScript(...)` to seed `localStorage` (auth tokens) before navigation
 - Config: `playwright.config.ts`, single project (`chromium`), `baseURL: "http://localhost:3000"`
-- Covered flows: login, register, password reset (all steps), profile view/edit, accessibility/ARIA
+- Covered flows: login, register, password reset (all steps), profile view/edit, institutions list (mocked API), accessibility/ARIA
 
 ---
 

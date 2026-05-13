@@ -5,8 +5,9 @@ alwaysApply: true
 
 # Finance Tracker — agent context
 
-1. Read **`AGENTS.md`** at the repository root first for shell, npm policy, and Gradle invocations.
-2. Follow **`CLAUDE.md`** for stack, modes, STEP pipeline, hexagonal rules, and English-only code.
+1. Read **`AGENTS.md`** at the repository root first for shell, npm policy, Gradle invocations, and quick start.
+2. Follow **`CLAUDE.md`** for modes, STEP pipeline, hexagonal rules, and English-only code.
+3. **`ai-context/README.md`** — which file owns each topic; **update those docs when code changes** require it.
 
 **Defaults**
 

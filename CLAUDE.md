@@ -1,6 +1,14 @@
 # Finance Tracker — AI Development Guide
 
-This file is a **team + AI reference**. In Cursor it is loaded as a **workspace rule**, so coding agents see it in context for this repo each session (it does not replace chat history, but restates stack, commands, and integration order). For **Windows + PowerShell** defaults and the **npm install (local) vs npm ci (CI)** rule, see [`AGENTS.md`](AGENTS.md).
+**Scope:** Non-negotiable **workflow and architecture rules** (modes, STEP pipeline, layering, money, auth, proxy, checklist). **Not** pinned versions, full command matrices, or product backlog — see [`AGENTS.md`](AGENTS.md) and [`ai-context/README.md`](ai-context/README.md).
+
+This file is a **team + AI reference**. In Cursor it is loaded as a **workspace rule**, so coding agents see it in context for this repo each session (it does not replace chat history, but restates rules and integration order). For **Windows + PowerShell** defaults and the **npm install (local) vs npm ci (CI)** rule, see [`AGENTS.md`](AGENTS.md).
+
+---
+
+## Documentation maintenance
+
+See [`ai-context/README.md`](ai-context/README.md) for the **ownership map** (single source of truth per topic). When a change affects **user-visible behaviour**, **public APIs**, **integration order**, **pinned versions**, or **known limitations**, update the **owning doc in the same PR**. At minimum: **`ai-context/current-state.md`** for facts and version pins; **`CLAUDE.md`** only for rules or STEP table changes.
 
 ---
 
@@ -81,18 +89,15 @@ Monorepo layout (primary code under `backend/` and `frontend/`; team editor conf
 
 ```
 finance-tracker/
-├── backend/      # Kotlin 2.3.20 + Spring Boot 4.0.5, Gradle 9.4.1, JVM 25
-├── frontend/     # Next.js 16, TypeScript 6, React 19, SWR 2.4
+├── backend/      # Kotlin / Spring Boot / Gradle — pin matrix: ai-context/current-state.md
+├── frontend/     # Next.js / TypeScript / React / SWR — pin matrix: ai-context/current-state.md
 ├── .vscode/      # Shared: extensions.json, settings.json (tasks.json / launch.json optional)
 ├── .idea/        # Shared (optional): codeStyles, inspectionProfiles, runConfigurations — see .gitignore
-└── ai-context/   # Architecture docs (read these for deep dives)
+├── AGENTS.md     # Windows PowerShell, npm policy, Gradle commands
+└── ai-context/   # See README.md for which file to open
 ```
 
-**Deep-reference docs** (read when the task needs it):
-- `/ai-context/architecture.md` — full stack overview, directory trees, auth flow, API mapping
-- `/ai-context/conventions.md` — naming rules, testing patterns, formatting, accessibility
-- `/ai-context/module-rules.md` — per-module responsibilities + frontend integration notes
-- `/ai-context/current-state.md` — what is built, known limitations, what is missing
+**Which doc to read:** [`ai-context/README.md`](ai-context/README.md) (single source of truth per topic).
 
 ---
 
@@ -120,11 +125,13 @@ docker/
 
 | Side | Key Technologies |
 |---|---|
-| Backend | Kotlin, Spring Boot 4, Spring Data JPA, PostgreSQL 16, Flyway 12, JWT, Bucket4j |
+| Backend | Kotlin, Spring Boot 4, Spring Data JPA, PostgreSQL, Flyway, JWT, Bucket4j |
 | Frontend | Next.js 16 App Router, TypeScript 6 strict, SWR, CSS Modules, clsx |
-| Testing (BE) | JUnit 5 (Jupiter 6.x), Testcontainers 2, Kover |
-| Testing (FE) | Jest 30, React Testing Library 16, Playwright 1.59 |
-| Build | Gradle 9.4.1 (BE), npm (FE) |
+| Testing (BE) | JUnit Jupiter, Testcontainers, Kover |
+| Testing (FE) | Jest, React Testing Library, Playwright |
+| Build | Gradle wrapper + catalog (BE), npm (FE) |
+
+**Exact pinned versions:** [`ai-context/current-state.md`](ai-context/current-state.md) § *Dependency Versions* (from `libs.versions.toml`, `gradle-wrapper.properties`, `frontend/package.json`).
 
 ---
 
@@ -145,7 +152,7 @@ No `if (env == "dev")` logic in application code. Ever.
 
 - **No version ranges** — `^`, `~`, `latest` are forbidden everywhere
 - All versions must be explicit and pinned
-- Backend: Gradle dependency locking enabled (`./gradlew dependencies --write-locks`)
+- Backend: Gradle dependency locking enabled — run `.\gradlew.bat dependencies --write-locks` from `backend/` when changing dependencies (PowerShell)
 - Frontend: `package-lock.json` is mandatory and committed. **Local dev:** `npm install` in `frontend/`. **CI/CD:** `npm ci` only (never `npm install` in pipelines)
 
 ---
@@ -286,16 +293,9 @@ This means frontend code always uses paths like `/accounts`, `/transactions`, et
 
 ---
 
-## Dev Credentials (seed data)
+## Local run & seed credentials
 
-| Field | Value |
-|---|---|
-| Email | `github@meraville.fr` |
-| Password | `MyStrongPassword123!` |
-| User ID | `a1b2c3d4-e5f6-7890-abcd-ef1234567890` |
-
-Start backend: `./gradlew :app:bootRun` (with `dev` profile active)
-Start frontend: `cd frontend && npm run dev`
+**Commands (PowerShell):** [`AGENTS.md`](AGENTS.md) § *Quick start*. **Seed user / env vars:** [`ai-context/current-state.md`](ai-context/current-state.md) § *Dev Seed Credentials* and *Environment Variables*.
 
 ---
 
@@ -332,78 +332,15 @@ No implicit installs in CI. No environment-specific workarounds in application c
 
 ## Testing
 
-### Backend (from `backend/` — Windows)
+- **Gradle and npm scripts (PowerShell):** [`AGENTS.md`](AGENTS.md).
+- **What exists today (suites, E2E gaps):** [`ai-context/current-state.md`](ai-context/current-state.md).
+- **Mock patterns, SWR guard, JWT in tests, file layout:** [`ai-context/conventions.md`](ai-context/conventions.md) § *Testing Conventions*.
 
-Integration tests use **Testcontainers**; **Docker must be running**. A local PostgreSQL in Docker for day-to-day `bootRun` is separate, but the same Docker daemon must be available when `skipIT` is false.
+**What to unit test (summary):** `src/features/**/api/`, `src/features/**/hooks/` with real logic, `src/lib/http.ts` and `format.ts` (not static data-only modules).
 
-```bat
-cd backend
-.\gradlew.bat build
-.\gradlew.bat build -PskipIT=true
-.\gradlew.bat integrationTest -PskipIT=false
-.\gradlew.bat testAggregateReport
-```
+**What not to unit test:** `src/app/` pages, `src/shared/components/`, `src/shared/hooks/` — prefer Playwright per `conventions.md`.
 
-| Command | Effect |
-|---------|--------|
-| `.\gradlew.bat build` | Unit tests + integration tests (default `skipIT=false`; needs Docker) |
-| `.\gradlew.bat build -PskipIT=true` | Unit tests only (integration tests skipped) |
-| `.\gradlew.bat integrationTest -PskipIT=false` | Integration tests only (needs Docker) |
-| `.\gradlew.bat testAggregateReport` | All tests + Kover coverage report (needs Docker) |
-
-On Unix, use `./gradlew` from `backend/` with the same tasks and properties. On Windows **cmd.exe**, `gradlew.bat` works when the current directory is `backend/`; **PowerShell** requires `.\gradlew.bat`.
-
-### Frontend (from `frontend/` — PowerShell examples)
-
-```powershell
-cd frontend
-npm install            # local development (default); commit package-lock.json when deps change
-# npm ci               # CI/CD and reproducible agents only — strict lockfile install
-
-npm test               # Jest unit + integration tests
-npm run test:watch     # Jest watch mode
-npm run test:e2e       # Playwright E2E — trace **on** (`--trace on`; requires dev server, e.g. npm run dev)
-npm run lint           # ESLint
-npm run test:coverage  # Jest with coverage
-npm run format         # Prettier, whole frontend tree (`prettier . --write`)
-npm run clean          # rimraf .next .swc coverage playwright-report test-results
-npm run reinstall      # local recovery: rimraf node_modules + lockfile then npm install — not for CI
-```
-
-**Frontend test patterns:**
-- Mock `global.fetch` for API module tests
-- Mock `jest.mock("next/navigation", ...)` for hooks that use `useRouter`
-- Mock `jest.mock("swr", ...)` with a null-key guard: skip fetcher when key is falsy
-- Mock `jest.mock("<feature>/api/<feature>Api", ...)` for hook tests
-- Seed `localStorage` via `jest.spyOn(Storage.prototype, "getItem")` or `localStorage.setItem`
-- Build test JWTs inline: `btoa(JSON.stringify({ sub, exp }))` as the payload segment
-- SWR mock pattern (always use this form):
-```ts
-  jest.mock("swr", () => ({
-    __esModule: true,
-    default: jest.fn((key, fetcher) => {
-      if (!key || !fetcher) return { data: undefined, error: undefined, isLoading: false, mutate: jest.fn() };
-      try { fetcher(); } catch {}
-      return { data: undefined, error: undefined, isLoading: false, mutate: jest.fn() };
-    }),
-  }));
-```
-
-**What to unit test:**
-- `src/features/**/api/` — all API modules
-- `src/features/**/hooks/` — all hooks with business logic
-- `src/lib/` — http client, format utilities (exclude currencies.ts — static data, no logic)
-
-**What NOT to unit test (covered by E2E instead):**
-- `src/app/` — page components (too much mocking, covered by Playwright)
-- `src/shared/components/` — UI primitives and AppShell (covered by Playwright)
-- `src/shared/hooks/` — auth guard, session timeout, theme (depend on window/router)
-
-## Known Gaps (Things Not Yet Built)
-
-**Backend:** refresh tokens, email verification, admin endpoints, asset holdings, budget tracking, notifications, import (CSV/OFX), audit log.
-
-**Frontend:** wire **account creation** to **institutions** (search/picker; avoid raw UUID where possible); asset selector in transaction form; fee/price/FX/inflation management UIs; date range filter on transactions page; E2E tests for accounts/transactions/analytics/institutions; user-preferred currency applied to analytics (where still hardcoded `EUR`); internationalised formatting (currently hardcoded `fr-FR`).
+**Product gaps and backlog:** [`ai-context/current-state.md`](ai-context/current-state.md) — do not duplicate here.
 
 ---
 
@@ -417,3 +354,4 @@ npm run reinstall      # local recovery: rimraf node_modules + lockfile then npm
 6. **Keep amounts in minor units** throughout; use `formatMoney` only at display time
 7. **Add tests** — unit test for use cases (BE) or API/hook modules (FE); E2E for new user flows
 8. **Keep frontend/backend naming aligned** — type names in `shared/types/index.ts` should match backend DTO field names (camelCase)
+9. **Update the owning doc** — see *Documentation maintenance* above and `ai-context/README.md`

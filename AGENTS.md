@@ -8,11 +8,35 @@ This repository targets **Windows** with **PowerShell** as the default shell for
 
 | Document | Role |
 |----------|------|
-| [`CLAUDE.md`](CLAUDE.md) | Stack, execution modes, STEP pipeline, architecture rules, CI/testing command tables |
-| [`ai-context/architecture.md`](ai-context/architecture.md) | Full-stack overview |
-| [`ai-context/conventions.md`](ai-context/conventions.md) | Naming, tests, formatting |
-| [`ai-context/module-rules.md`](ai-context/module-rules.md) | Per-module backend + frontend integration notes |
-| [`ai-context/current-state.md`](ai-context/current-state.md) | Built vs missing (may lag the repo; verify in code) |
+| [`CLAUDE.md`](CLAUDE.md) | Execution modes, STEP pipeline, hexagonal rules, monetary rules, checklist |
+| [`ai-context/README.md`](ai-context/README.md) | **Which doc owns which topic**; **mandatory doc updates with code** |
+| [`ai-context/current-state.md`](ai-context/current-state.md) | Pinned versions, built vs missing, backlog |
+| [`ai-context/architecture.md`](ai-context/architecture.md) | Trees, flows, API mapping |
+| [`ai-context/conventions.md`](ai-context/conventions.md) | Naming, tests, errors, formatting |
+| [`ai-context/module-rules.md`](ai-context/module-rules.md) | Per-module rules + integration notes |
+
+---
+
+## Quick start (local dev, PowerShell)
+
+```powershell
+# Backend — from backend/ (PostgreSQL reachable; Spring profiles per application*.yml)
+Set-Location backend
+.\gradlew.bat :app:bootRun
+
+# Frontend — from frontend/
+Set-Location ..\frontend
+npm install
+npm run dev
+```
+
+**Seed credentials:** [`ai-context/current-state.md`](ai-context/current-state.md) § *Dev Seed Credentials*.
+
+---
+
+## Documentation maintenance
+
+When your change alters **versions**, **features**, **APIs**, or **documented limitations**, update the **owning file** in the same PR — see [`ai-context/README.md`](ai-context/README.md).
 
 ---
 

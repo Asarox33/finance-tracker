@@ -1,6 +1,6 @@
 # Module Rules
 
-Per-module reference: responsibilities, key domain rules, and important behaviors.
+**Scope:** Per bounded context — **responsibilities, domain rules, REST behaviour, frontend integration notes** for that module only. For global trees and stack, see `architecture.md`. For “what is implemented today”, see `current-state.md`.
 
 ---
 
@@ -87,9 +87,8 @@ Per-module reference: responsibilities, key domain rules, and important behavior
 **Key use cases:** `CreateInstitution`, `GetInstitution`, `ListInstitutions`
 
 **Frontend integration:**
-- No institution management UI exists yet
-- The account creation form requires the user to manually type an `institutionId` UUID — a significant UX gap
-- Institutions must be created via the API directly (e.g. via Swagger UI in dev mode)
+- **`/institutions`** — list with name/country filters, pagination, create form; feature code in `src/features/institutions/` (API + hooks + tests); E2E in `e2e/institutions.spec.ts`
+- **Account creation (`/accounts`)** still uses a **manual `institutionId` UUID text field** — integrate a picker or deep-link from the institutions list (primary STEP 9 UX gap)
 
 ---
 
@@ -127,7 +126,8 @@ Per-module reference: responsibilities, key domain rules, and important behavior
 
 **Frontend integration:**
 - `GET /api/accounts?page=0&pageSize=20` → `PageResult<Account>`; displayed as a card grid on `/accounts`
-- `POST /api/accounts` → creates account; requires `institutionId`, `name`, `type`, `currency`
+- **`useAccounts(page)`** exists, but the **page UI always uses page 0** — no list pagination controls on `/accounts` yet
+- `POST /api/accounts` → creates account; requires `institutionId`, `name`, `type`, `currency` — **`institutionId` is still typed as a raw UUID** in the form (see institution module above)
 - `DELETE /api/accounts/:id` → closes account (204); requires browser `confirm()` dialog
 - Account types shown: `CHECKING`, `SAVINGS`, `BROKERAGE`, `CRYPTO`, `REAL_ESTATE`, `RETIREMENT`, `OTHER`
 - Currency picker uses full ISO 4217 list from `src/lib/currencies.ts`

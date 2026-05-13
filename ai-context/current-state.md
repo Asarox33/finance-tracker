@@ -1,6 +1,8 @@
 # Current State
 
-Last analysed: 2026-05-09
+**Scope:** Factual **inventory** of the repo: what is built, **pinned dependency versions**, test/E2E coverage, known limitations, backlog, and repo hygiene (CI files, docker folder). Do not copy long **how-to patterns** here — use `conventions.md` and `CLAUDE.md`.
+
+Last analysed: 2026-05-13 (repo scan + doc cross-check). **Update this file** when features or versions change (see `ai-context/README.md`).
 
 ---
 
@@ -27,6 +29,7 @@ All 13 modules are implemented end-to-end (domain → application → infrastruc
 | app (entry point) | — | — | ✅ | — | — |
 
 ### Cross-Cutting Infrastructure (app module)
+
 - ✅ JWT authentication (`JwtAuthenticationFilter`)
 - ✅ Global exception handler (`GlobalExceptionHandler`) with correlation ID
 - ✅ Correlation ID filter (`CorrelationIdFilter`, MDC-based)
@@ -37,61 +40,69 @@ All 13 modules are implemented end-to-end (domain → application → infrastruc
 - ✅ Multi-profile config (`dev`, `prod`, `test`)
 - ✅ Dev seed data (`V0_1__seed_dev_user.sql` with known credentials)
 
+**Build tooling:** Gradle wrapper **9.5.0** (`backend/gradle/wrapper/gradle-wrapper.properties`). Version catalog: Kotlin **2.3.20**, Spring Boot **4.0.6** (verify `gradle/libs.versions.toml` — root docs such as `CLAUDE.md` may lag by a patch).
+
 ---
 
-### Frontend — Fully Implemented
+### Frontend — Implementation Status
 
-All primary user-facing features are implemented end-to-end (UI → feature hook → API module → backend):
+Features are integrated as vertical slices. Status is **functional** where marked ✅; gaps are called out in the next column.
 
-| Feature | Pages | API Module | Hook | Unit Tests | E2E Tests |
+| Feature | Route(s) | API | Hooks | Unit tests | E2E |
 |---|---|---|---|---|---|
-| Auth (login/register/reset) | ✅ | ✅ | ✅ | ✅ | ✅ |
-| User Profile | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Accounts | ✅ | ✅ | ✅ | ✅ | — |
-| Transactions | ✅ | ✅ | ✅ | — | — |
-| Analytics | ✅ | ✅ | ✅ | ✅ | — |
-| Dashboard | ✅ | (reuses analytics + accounts) | — | — | — |
+| Auth (login / register / reset) | `/login`, `/login/register`, `/login/reset` | ✅ | ✅ | ✅ (`useAuth`, `authApi`, `format`) | ✅ `login.spec.ts` |
+| User profile | `/profile` | ✅ | ✅ | ✅ (`userProfileApi`, `useUserProfile`) | ✅ `profile.spec.ts` |
+| Institutions | `/institutions` | ✅ | ✅ | ✅ (`institutionsApi`, `useInstitutions`) | ✅ `institutions.spec.ts` |
+| Accounts | `/accounts` | ✅ | ✅ | ✅ (`accountsApi`, `useAccounts`) | — |
+| Transactions | `/transactions` | ✅ | ✅ | ✅ (`transactionsApi`, `useTransactions`) | — |
+| Analytics | `/analytics` | ✅ | ✅ | ✅ (`analyticsApi`, `useAnalytics`) | — |
+| Dashboard | `/dashboard` | — (composes hooks) | — | — | — |
 
-#### Frontend Pages Implemented
+**Shared / lib**
+
+- ✅ `AppShell` — nav includes Dashboard, Accounts, **Institutions**, Transactions, Analytics; auth guard; **loading shell** while auth is resolving; session timeout; responsive sidebar
+- ✅ `ThemeToggle`, shared UI primitives (`ui.tsx`)
+- ✅ `http.ts` with JWT handling; **unit tests:** `src/lib/__tests__/http.test.ts`
+- ✅ `format.ts`, `currencies.ts`, `countries.ts` (used by accounts / profile / institutions)
+- ✅ `fr-FR` hardcoded for money and dates in `format.ts`
+
+#### Routes (App Router)
 
 | Route | Description |
 |---|---|
 | `/` | Redirects to `/dashboard` |
-| `/login` | Email/password sign-in with locked-account detection |
-| `/login/register` | Registration with password strength hint |
-| `/login/reset` | 3-step password reset: request OTP → enter OTP + new password → success |
-| `/dashboard` | Portfolio value KPI, 12-month performance KPI, active account count KPI, account breakdown table |
-| `/accounts` | Paginated account list (card grid), create account form (inline), close account (with confirmation) |
-| `/transactions` | Account selector, paginated transaction table, create transaction form (inline) |
-| `/analytics` | Period selector (3M/6M/1Y/3Y), current portfolio value, gross/after-fees/after-inflation performance cards, detailed comparison table |
-| `/profile` | Edit first name, last name, display name, date of birth, preferred currency |
+| `/login` | Sign-in, locked-account handling |
+| `/login/register` | Registration |
+| `/login/reset` | Password reset (request → OTP + new password → success) |
+| `/dashboard` | Portfolio KPIs, 12-month performance, account breakdown (reference currency **EUR** in code) |
+| `/accounts` | Account cards, create form, close account; **`useAccounts()` fixed to page 0** — no pagination UI |
+| `/institutions` | List, filters, pagination, create institution (`flag-icons` for country flags) |
+| `/transactions` | Account selector, paginated table, create form; **no date-range UI**; **no asset selector** |
+| `/analytics` | Period presets, performance variants; **currency state fixed to `"EUR"`** (not profile-driven) |
+| `/profile` | Profile and preferences |
 
-#### Shared Infrastructure Implemented
+#### Frontend Test Coverage (Jest)
 
-- ✅ `AppShell` — sidebar navigation with active-link highlighting, display name from profile, sign-out button, responsive (collapses to top bar on mobile)
-- ✅ `ThemeToggle` — dark/light mode with `localStorage` persistence, fixed top-right
-- ✅ Shared UI primitives: `Card`, `Skeleton`, `Badge`, `Button`, `PageHeader`, `EmptyState`, `ErrorState`
-- ✅ `useAuthGuard` — client-side auth guard, redirects unauthenticated users to `/login`
-- ✅ `useSessionTimeout` — 5-minute inactivity auto-logout, resets on any user interaction event
-- ✅ `useTheme` — theme state management with `data-theme` attribute on `<html>`
-- ✅ HTTP client with JWT injection, expiry check, 401 auto-redirect
-- ✅ Full ISO 4217 currency list (`src/lib/currencies.ts`) — used in account creation and profile preferences
-- ✅ `fr-FR` locale formatting for money and dates throughout the UI
+| Area | File(s) |
+|---|---|
+| Auth | `features/auth/__tests__/useAuth.test.ts`, `authApi.test.ts`, `format.test.ts` |
+| User profile | `features/user-profile/__tests__/userProfileApi.test.ts`, `useUserProfile.test.ts` |
+| Institutions | `features/institutions/__tests__/institutionsApi.test.ts`, `useInstitutions.test.ts` |
+| Accounts | `features/accounts/__tests__/accountsApi.test.ts`, `useAccounts.test.ts` |
+| Transactions | `features/transactions/__tests__/transactionsApi.test.ts`, `useTransactions.test.ts` |
+| Analytics | `features/analytics/__tests__/analyticsApi.test.ts`, `useAnalytics.test.ts` |
+| HTTP client | `src/lib/__tests__/http.test.ts` |
 
-#### Frontend Test Coverage
+#### E2E (Playwright)
 
-| Test Suite | File | What Is Tested |
-|---|---|---|
-| `authApi` | — | (tested indirectly via `useAuth.test.ts`) |
-| `useAuth` | `features/auth/__tests__/useAuth.test.ts` | `useLogin` (credentials, loading, error, locked, token storage), `useRegister` (success redirect, error), `usePasswordReset` (step transitions, backToRequest), `useLogout` (token removal) |
-| `format` | `features/auth/__tests__/format.test.ts` | `formatMoney`, `formatBasisPoints`, `formatDate`, `today`, `monthsAgo` |
-| `accountsApi` | `features/accounts/__tests__/accountsApi.test.ts` | `list` (auth header), `get`, `close` (DELETE), `create` (POST) |
-| `analyticsApi` | `features/analytics/__tests__/analyticsApi.test.ts` | `portfolioValue` (query params), `performance`, `performanceAfterFees`, `performanceAfterInflation` |
-| `userProfileApi` | `features/user-profile/__tests__/userProfileApi.test.ts` | `getMe` (auth header), `updatePreferences` (PUT, body content) |
-| `useUserProfile` | `features/user-profile/__tests__/useUserProfile.test.ts` | `useUpdatePreferences` (success, error, loading, callback) |
-| E2E: login | `e2e/login.spec.ts` | Page render, keyboard nav, bad credentials error, locked account, register flow, register redirect, reset request, reset confirm step, reset success |
-| E2E: profile | `e2e/profile.spec.ts` | Profile form render with data, preferences submission, success message, keyboard nav, sidebar active link |
-| E2E: accessibility | `e2e/accessibility.spec.ts` | Landmark roles, ARIA attributes on inputs, skip-to-content, reset email confirmation |
+| Spec | Coverage (summary) |
+|---|---|
+| `e2e/login.spec.ts` | Login, register, reset flows, keyboard nav, errors |
+| `e2e/profile.spec.ts` | Profile form, preferences, sidebar |
+| `e2e/institutions.spec.ts` | Institutions list (mocked API), navigation |
+| `e2e/accessibility.spec.ts` | Landmarks, ARIA, skip link, reset step |
+
+`npm run test:e2e` uses **`--trace on`** (see `frontend/package.json`).
 
 ---
 
@@ -99,80 +110,122 @@ All primary user-facing features are implemented end-to-end (UI → feature hook
 
 ### Backend
 
-#### Analytics Scalability
-- `AccountPortAdapter` hard-caps at **1,000 accounts** per user query
-- `TransactionPortAdapter` and `FeePortAdapter` hard-cap at **10,000 items** per account
-- These are in-process calls through use case layers — no dedicated read model or caching
+#### Analytics scalability
 
-#### Analytics Port Adapters — In-Memory Date Filtering
-- `FeePortAdapter` fetches all fees for an account (up to 10,000) then **filters in memory** — not pushed to the DB query
-- `TransactionPortAdapter` relies on `ListAccountTransactions` which does push date filters to the DB, but only when `from` is not `LocalDate.MIN` (converted to `null`)
+- `AccountPortAdapter` hard-caps at **1,000 accounts** per user query.
+- `TransactionPortAdapter` and `FeePortAdapter` hard-cap at **10,000 items** per account.
+- In-process use-case calls — no dedicated read model or caching.
 
-#### `AssetPriceRepositoryAdapter` — Redundant Query
-In `findLatestByAssetIdOnOrBefore`, the JPA query is executed **twice** to compute `appliedPriceDate`. This is a bug / inefficiency.
+#### Analytics port adapters
 
-#### Password Reset — Security Note
-- `findByUserIdAndOtpHash` fetches **all tokens for the user** and checks the OTP via `passwordEncoder.matches()` in a loop. Intentional (OTP is hashed) but O(n) on token count.
+- `FeePortAdapter` may load up to 10,000 fees then **filter in memory** for date range.
+- `TransactionPortAdapter` uses `ListAccountTransactions`; DB date filters depend on non-sentinel `from` / `to`.
 
-#### Account Ownership Check
-- In `AccountController.get()`, ownership is checked manually after fetching. There is no ownership check in the `GetAccount` use case itself.
+#### `AssetPriceRepositoryAdapter`
 
-#### No Pagination on Analytics Accounts
-- `AccountPortAdapter` uses `pageSize=1000` with no loop; users with more than 1,000 accounts will have silently incomplete analytics.
+- `findLatestByAssetIdOnOrBefore` runs a JPA query **twice** to resolve `appliedPriceDate` — redundant / fix candidate.
 
-#### No `DELETE` / Update for Most Entities
-- Only `account` has a close (soft delete) operation
-- No update endpoints for `institution`, `asset`, `transaction`, `fees`, `price`, `fx`, `inflation`
+#### Password reset
 
-#### `RegisterUser` — Default Profile Values
-On registration, the user profile is created with hardcoded placeholder values (`firstName = "Unknown"`, etc.). The user must update via `PUT /api/users/me/preferences`.
+- OTP verification may scan multiple stored tokens per user (hashed compare loop) — intentional but O(n).
+
+#### Account ownership
+
+- `AccountController.get()` enforces ownership in the controller layer; not duplicated inside the `GetAccount` use case.
+
+#### CRUD surface
+
+- Only **account** has a user-facing close (soft delete). No general update/delete APIs for most other entities from the UI perspective.
+
+#### Registration profile
+
+- `RegisterUser` creates profile with placeholder names (`Unknown`, etc.) until `PUT /api/users/me/preferences`.
 
 ### Frontend
 
-#### No Transactions or Fees E2E Tests
-- `e2e/` only covers auth flows and profile. Accounts, transactions, and analytics pages have no E2E tests.
+#### Account creation UX
 
-#### No Dedicated Transaction or Account Unit Tests for Hooks
-- `useTransactions` and `useAccounts` hooks have no dedicated unit tests; `accountsApi` is tested at the API module level only.
+- Create-account form still uses a **plain text field for `institutionId` (UUID)** despite a full **Institutions** feature elsewhere — **picker / search integration is the main STEP 9 gap for accounts**.
 
-#### Hardcoded `fr-FR` Locale
-- `formatMoney` and `formatDate` use `fr-FR` locale unconditionally. This does not adapt to the user's browser locale or preferred currency locale.
+#### Accounts list pagination
 
-#### No Error Boundary
-- There is no React error boundary. Unexpected runtime errors in a page will propagate uncaught.
+- `useAccounts(page)` supports paging, but **`/accounts` always calls `useAccounts()` with default page 0** — no next/prev controls.
 
-#### `useSessionTimeout` — Always Active
-- The session timeout (5 minutes) is active even on public pages (e.g. `/login`) if a token exists. This is benign but may be surprising.
+#### Transactions
 
-#### `useAuthGuard` — Flash of Unauthenticated Content
-- `useAuthGuard` runs in a `useEffect` (client-side only), so there is a brief flash where the protected page renders before the redirect fires if the token is absent. There is no server-side auth check.
+- **No UI** for optional `from` / `to` on `transactionsApi.list` (API supports it).
+- **No `assetId`** in create form for BUY/SELL.
 
-#### No Optimistic Updates
-- All mutations (create account, create transaction, close account, update profile) wait for the server response before updating the UI. No optimistic UI patterns are used.
+#### Analytics / dashboard
 
-#### Institution ID Must Be Known
-- The "Create Account" form requires the user to manually enter an `institutionId` UUID. There is no institution search/picker UI. This is a friction point.
+- **Reference currency hardcoded `EUR`** in `dashboard/page.tsx`, `analytics/page.tsx`, and related hooks usage — not wired to `UserProfile.preferredCurrency`.
+
+#### Product polish
+
+- No React **error boundary**.
+- `useSessionTimeout` runs whenever `AppShell` mounts (including rare cases with token on public routes).
+- No optimistic mutations for creates/closes/updates.
+- `fr-FR` only in formatters.
+
+#### E2E gaps
+
+- No Playwright specs for **accounts**, **transactions**, **analytics**, or **dashboard** (only login, profile, institutions, a11y).
 
 ---
 
-## Dependency Versions (Notable)
+## Repository / Documentation Hygiene (audit notes)
 
-| Library | Version | Notes |
+| Item | State |
+|---|---|
+| **`AGENTS.md`** (repo root) | Present — Windows PowerShell, `npm install` (local) vs `npm ci` (CI), Gradle hints |
+| **`.cursor/rules/agents-context.mdc`** | Present — `alwaysApply: true`, points to `AGENTS.md` + `CLAUDE.md` |
+| **`.github/workflows`** | **Not present** in repo — CI/CD described in `CLAUDE.md` but **no GitHub Actions YAML** yet |
+| **`docker/`** directory | **Not present** — optional full-stack compose referenced in `CLAUDE.md` only when added |
+| **`.gitignore`** | Allows shared `.vscode/` files and selective `.idea/` (`codeStyles`, `inspectionProfiles`, `runConfigurations`) |
+| **`frontend/next-env.d.ts`** | Listed in `.gitignore` — intentional for generated types; do not commit |
+
+---
+
+## Things to Do or Fix (prioritised backlog)
+
+High value for the current **STEP 9** programme (`CLAUDE.md`):
+
+1. **Accounts ↔ Institutions** — Replace UUID text field with institution search/picker (reuse list API or compact autocomplete); align with row **5** in the STEP 9 table.
+2. **Accounts pagination UI** — Wire `page` state to `useAccounts(page)` with prev/next (pattern already on `/transactions` and `/institutions`).
+3. **Profile-driven currency** — Feed `preferredCurrency` into dashboard, analytics, and transaction display defaults where `EUR` is hardcoded.
+4. **Transactions** — Expose date-range filters; add optional asset selector when backend expects `assetId` for BUY/SELL.
+
+Quality / engineering:
+
+5. **E2E** — Add Playwright coverage for accounts, transactions, analytics, dashboard (start with mocked API routes like `institutions.spec.ts`).
+6. **Backend** — Fix double-query in `AssetPriceRepositoryAdapter`; consider pushing fee date filters to SQL; revisit analytics caps or document limits in product copy.
+7. **CI/CD** — Add `.github/workflows` using `npm ci` + `npm run lint` + `npm run build` for frontend; `cd backend && .\gradlew.bat clean build` (with Docker service for IT, or `-PskipIT=true` split jobs per team policy).
+8. **Versions** — After bumping dependencies, update **`current-state.md` § *Dependency Versions*** only (do not reintroduce pin matrices into `CLAUDE.md` or `architecture.md`).
+
+Not built (unchanged product backlog):
+
+- Backend: refresh tokens, email verification, admin, import (CSV/OFX), audit, notifications, holdings, budget, etc.
+- Frontend: fee / price / fx / inflation admin UIs (APIs exist), i18n beyond `fr-FR`, mobile-specific polish.
+
+---
+
+## Dependency Versions (Notable — from repo files)
+
+| Component | Version | Source |
 |---|---|---|
-| Kotlin | 2.3.20 | Very recent |
-| Spring Boot | 4.0.5 | Very recent (Spring Framework 7.x) |
-| JVM toolchain | 25 | Recent LTS |
-| Testcontainers | 2.0.4 | New major version |
-| JUnit Jupiter | 6.0.3 | New major version |
-| Gradle | 9.4.1 | Recent |
-| Next.js | 16.2.4 | Very recent |
-| TypeScript | 6.0.3 | Very recent |
-| React | 19.2.5 | Very recent |
-| SWR | 2.4.1 | Stable |
-| Jest | 30.3.0 | Very recent |
-| Playwright | 1.59.1 | Recent |
+| Kotlin | 2.3.20 | `backend/gradle/libs.versions.toml` |
+| Spring Boot | 4.0.6 | `backend/gradle/libs.versions.toml` |
+| Gradle (wrapper) | 9.5.0 | `backend/gradle/wrapper/gradle-wrapper.properties` |
+| JVM toolchain | 25 | `backend/build.gradle.kts` |
+| Testcontainers | 2.0.4 | `libs.versions.toml` |
+| JUnit Jupiter | 6.0.3 | `libs.versions.toml` |
+| Next.js | 16.2.6 | `frontend/package.json` |
+| React / React DOM | 19.2.6 | `frontend/package.json` |
+| TypeScript | 6.0.3 | `frontend/package.json` |
+| Playwright | 1.60.0 | `frontend/package.json` |
+| Jest | 30.4.2 | `frontend/package.json` |
 
-These are all very recent versions — confirm compatibility before upgrading any transitive dependencies.
+Pin versions remain policy; confirm compatibility before upgrading transitives.
 
 ---
 
@@ -184,51 +237,34 @@ File: `backend/auth/src/main/resources/db/seed/V0_1__seed_dev_user.sql`
 - **Password:** `MyStrongPassword123!`
 - **User ID:** `a1b2c3d4-e5f6-7890-abcd-ef1234567890`
 
-> This seed runs via Flyway. Ensure the `db/seed` location is NOT included in the production Flyway config (it is not — only `db/migration/*` paths are listed in `application.yml`).
+> Seed runs via Flyway dev configuration. Production Flyway must not include ad-hoc seed locations — verify `application.yml` migration paths for prod.
 
 ---
 
 ## Environment Variables
 
 ### Backend
-Configured via Spring profiles (`dev`, `prod`, `test`) — see application.yml.
+
+Configured via Spring profiles (`dev`, `prod`, `test`) — see `application*.yml` under `backend/app` (and modules).
 
 ### Frontend
 
 | Variable | Default | Description |
 |---|---|---|
-| `NEXT_PUBLIC_API_URL` | `http://localhost:8080` | Backend API base URL (used in Next.js rewrite proxy) |
-
-The frontend proxies all `/api/*` calls to `${NEXT_PUBLIC_API_URL}/api/*` via `next.config.ts` rewrites, so the browser never talks directly to the backend domain.
+| `NEXT_PUBLIC_API_URL` | `http://localhost:8080` | Backend base URL for Next.js rewrites (`/api/*`) |
 
 ---
 
 ## What Is Not Yet Built
 
 ### Backend
-- Portfolio rebalancing / allocation targets
-- Budget / spending tracking
-- Notifications / alerts
-- Multi-currency portfolio net worth over time (time-series)
-- Asset holdings tracking (position management)
-- Import from bank CSV / OFX / QIF
-- Audit log / change history
-- Multi-tenancy / team accounts
-- Refresh token / token revocation
-- Email verification on registration
-- Admin endpoints
+
+Portfolio rebalancing, budget tracking, notifications, multi-currency time-series net worth, asset holdings, CSV/OFX import, audit log, multi-tenancy, refresh tokens, email verification, admin APIs — see `module-rules.md` for module-specific gaps.
 
 ### Frontend
-- Institution search / picker (currently requires manual UUID entry)
-- Asset selector for BUY/SELL transactions
-- Fee recording UI (backend exists, no frontend)
-- Price recording UI (backend exists, no frontend)
-- FX rate recording UI (backend exists, no frontend)
-- Inflation index recording UI (backend exists, no frontend)
-- Pagination on account list (currently `pageSize=20`, no page navigation)
-- Date range filter on transactions (API supports it, UI does not expose it)
-- Mobile-optimised transaction and analytics views
-- Internationalised number/date formatting (currently hardcoded `fr-FR`)
-- Institution management UI
-- Asset management UI
-- E2E tests for accounts, transactions, analytics pages
+
+- **Asset** vertical (`features/assets/`, management UI) — not started.
+- **Fees / price / fx / inflation** management pages — not started (REST exists).
+- **Internationalised** formatting (replace hardcoded `fr-FR`).
+- **Error boundary** and optional optimistic UI patterns.
+- Broader **E2E** as listed above.
