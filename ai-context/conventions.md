@@ -171,7 +171,8 @@ All code lives under `com.finance.<module>`. Sub-packages are always exactly `do
 ### Frontend
 - `package-lock.json` is mandatory and must be committed
 - Only `npm` allowed (no yarn, no pnpm)
-- CI uses `npm ci` exclusively — `npm install` is forbidden in CI
+- **Local development:** use `npm install` in `frontend/`
+- **CI/CD:** use `npm ci` exclusively — `npm install` is forbidden in CI pipelines
 - No `^` or `~` version ranges in `package.json`
 
 ---

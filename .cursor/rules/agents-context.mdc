@@ -1,0 +1,17 @@
+---
+description: Windows PowerShell defaults, npm local vs CI, pointer to AGENTS.md
+alwaysApply: true
+---
+
+# Finance Tracker — agent context
+
+1. Read **`AGENTS.md`** at the repository root first for shell, npm policy, and Gradle invocations.
+2. Follow **`CLAUDE.md`** for stack, modes, STEP pipeline, hexagonal rules, and English-only code.
+
+**Defaults**
+
+- **OS / shell:** Windows, **PowerShell**. Use `.\gradlew.bat` from `backend/` (not bare `gradlew.bat` on PATH).
+- **Frontend npm:** **`npm install`** in `frontend/` for **local development**; **`npm ci` only** in **CI/CD** — never `npm install` in pipelines. **npm only** (no Yarn, no pnpm).
+- **Backend:** run Gradle from the `backend/` directory; see `AGENTS.md` for the command table.
+
+When proposing terminal steps, use **PowerShell**-friendly examples unless the user asks otherwise.

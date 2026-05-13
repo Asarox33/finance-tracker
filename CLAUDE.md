@@ -1,5 +1,7 @@
 # Finance Tracker — AI Development Guide
 
+This file is a **team + AI reference**. In Cursor it is loaded as a **workspace rule**, so coding agents see it in context for this repo each session (it does not replace chat history, but restates stack, commands, and integration order). For **Windows + PowerShell** defaults and the **npm install (local) vs npm ci (CI)** rule, see [`AGENTS.md`](AGENTS.md).
+
 ---
 
 ## Execution Model
@@ -25,21 +27,45 @@
 
 ```
 STEP 0  → Context definition
-STEP 1  → Architecture design (NO CODE)
+STEP 1  → Architecture design (NO CODE) — only when adding a new subsystem or major boundary change
 STEP 2  → Backend bootstrap only
 STEP 3  → Shared module
 STEP 4  → Business modules (one by one)
 STEP 5  → FX module
 STEP 6  → Inflation module
 STEP 7  → Analytics module
-STEP 8  → Frontend skeleton
-STEP 9  → Frontend integration
+STEP 8  → Frontend shell (App Router baseline, AppShell, http.ts, shared UI, auth routes)
+STEP 9  → Frontend feature integration (one feature at a time: api/ → hooks/ → page/ → tests)
 STEP 10 → Test completion (missing coverage only)
-STEP 11 → Docker setup
+STEP 11 → Docker setup (optional full-stack compose; see Environment Model)
 STEP 12 → CI/CD pipeline
 ```
 
 Each step must end completely before the next begins. No forward implementation.
+
+**Active focus:** **STEP 9** (frontend feature integration). **STEP 1** (architecture design, no code) runs only when introducing a new subsystem or changing major boundaries — then document decisions in `ai-context/` if needed.
+
+#### STEP 9 — Frontend feature integration (current programme)
+
+Integrate **one vertical slice at a time** (types in `shared/types`, `features/<name>/api`, `hooks`, `app/<route>`, `__tests__`; no cross-feature imports). Order below matches **backend bounded contexts** (do not skip ahead).
+
+| # | Backend module | Typical frontend feature dir | Status (baseline) |
+|---|----------------|------------------------------|-------------------|
+| 1 | `auth` | `features/auth/` | Done |
+| 2 | `user-profile` | `features/user-profile/` | Done |
+| 3 | `institution` | `features/institutions/` | Done |
+| 4 | `asset` | `features/assets/` (to create) | Not started |
+| 5 | `account` | `features/accounts/` | In progress — align UX with institutions (picker / search; drop raw UUID where possible) |
+| 6 | `transaction` | `features/transactions/` | In progress — date filters, asset linkage for BUY/SELL, tests as needed |
+| 7 | `fees` | `features/fees/` (to create) | Not started |
+| 8 | `price` | `features/price/` (to create) | Not started |
+| 9 | `fx` | `features/fx/` (to create) | Not started |
+| 10 | `inflation` | `features/inflation/` (to create) | Not started |
+| 11 | `analytics` | `features/analytics/` | In progress — preferred currency from profile, E2E |
+
+**Composite UI:** `/dashboard` combines data from **account** + **analytics**; refine it after rows **5** and **11** are in good shape.
+
+When resuming: pick the **next single row** by order (or the lowest-numbered row still “In progress” / “Not started”), finish it, then stop per scope discipline.
 
 ---
 
@@ -51,12 +77,14 @@ All code, comments, logs, error messages, variable names, and test method names 
 
 ## Repository Shape
 
-Monorepo with two top-level directories:
+Monorepo layout (primary code under `backend/` and `frontend/`; team editor configs at repo root — see `.gitignore`):
 
 ```
 finance-tracker/
 ├── backend/      # Kotlin 2.3.20 + Spring Boot 4.0.5, Gradle 9.4.1, JVM 25
 ├── frontend/     # Next.js 16, TypeScript 6, React 19, SWR 2.4
+├── .vscode/      # Shared: extensions.json, settings.json (tasks.json / launch.json optional)
+├── .idea/        # Shared (optional): codeStyles, inspectionProfiles, runConfigurations — see .gitignore
 └── ai-context/   # Architecture docs (read these for deep dives)
 ```
 
@@ -68,7 +96,12 @@ finance-tracker/
 
 ---
 
-## Docker Structure
+## Docker & local database
+
+- **Typical dev setup:** PostgreSQL runs **locally in Docker** (or any reachable host); Spring `dev` profile points to that instance. This is separate from the application containers below.
+- **Backend integration tests** use **Testcontainers** and require the **Docker daemon** running (containers are managed by the test runtime, not by manual `docker run` of the app).
+
+Optional full-stack layout (when present in the repo):
 
 ```
 docker/
@@ -78,8 +111,8 @@ docker/
 └── frontend.Dockerfile
 ```
 
-**Run production:** `docker compose up -d`
-**Run development:** `docker compose -f docker-compose.yml up -d` (override applied automatically)
+**Run production (if compose files exist):** `docker compose up -d`  
+**Run development (if compose files exist):** `docker compose -f docker-compose.yml up -d` (override applied automatically when named `docker-compose.override.yml`)
 
 ---
 
@@ -100,8 +133,8 @@ docker/
 | Rule | Detail |
 |---|---|
 | DEV/PROD parity | Identical codebase — no environment-specific business logic |
-| Environment switching | Docker Compose only (override file for dev) |
-| Seeds | DEV only, injected via `docker-compose.override.yml` — never in PROD |
+| Environment switching | Spring profiles (`dev`, `prod`, `test`); optional Docker Compose for full stack when files exist |
+| Seeds | DEV only (Flyway seed locations / compose overrides as configured) — never in PROD |
 | Spring config | `application.yml` (shared) · `application-dev.yml` · `application-prod.yml` · `application-test.yml` (CI only) |
 
 No `if (env == "dev")` logic in application code. Ever.
@@ -113,7 +146,7 @@ No `if (env == "dev")` logic in application code. Ever.
 - **No version ranges** — `^`, `~`, `latest` are forbidden everywhere
 - All versions must be explicit and pinned
 - Backend: Gradle dependency locking enabled (`./gradlew dependencies --write-locks`)
-- Frontend: `package-lock.json` is mandatory; CI uses `npm ci` only (never `npm install`)
+- Frontend: `package-lock.json` is mandatory and committed. **Local dev:** `npm install` in `frontend/`. **CI/CD:** `npm ci` only (never `npm install` in pipelines)
 
 ---
 
@@ -270,41 +303,71 @@ Start frontend: `cd frontend && npm run dev`
 
 CI is the source of truth for dependency resolution. No "works on my machine" assumptions.
 
-### Backend CI
-```bash
-./gradlew clean build    # runs unit + integration tests (skipIT defaults to false)
+### Backend CI (Windows — primary commands in this repo)
+
+```bat
+cd backend
+.\gradlew.bat clean build
 ```
 
-### Frontend CI
-```bash
-npm ci          # never npm install
+- Default `skipIT` is **false**: `build` runs **unit tests** and **integration tests** (Testcontainers — **Docker must be running**).
+- Use `-PskipIT=true` on agents or laptops **without** Docker when only unit tests should run.
+
+On Unix, use `./gradlew clean build` from `backend/`.
+
+### Frontend CI (GitHub Actions — reproducible install)
+
+**Package manager:** **npm only** — do **not** use Yarn or pnpm. In **CI/CD**, use **`npm ci` only** (never `npm install`). On **developer machines**, normal workflow is **`npm install`** in `frontend/`; see [`AGENTS.md`](AGENTS.md).
+
+```powershell
+cd frontend
+npm ci
 npm run lint
 npm run build
 ```
 
-No implicit installs. No environment-specific workarounds.
+No implicit installs in CI. No environment-specific workarounds in application code.
 
 ---
 
 ## Testing
 
-### Backend
-```bash
-./gradlew build                          # unit + integration tests (default, needs Docker)
-./gradlew build -PskipIT=true            # unit tests only (local dev, no Docker)
-./gradlew testAggregateReport            # unit + integration + coverage report (needs Docker)
+### Backend (from `backend/` — Windows)
 
-./gradlew.bat build -PskipIT=true        # Windows equivalent, unit tests only
-./gradlew.bat testAggregateReport        # Windows equivalent, full report
+Integration tests use **Testcontainers**; **Docker must be running**. A local PostgreSQL in Docker for day-to-day `bootRun` is separate, but the same Docker daemon must be available when `skipIT` is false.
+
+```bat
+cd backend
+.\gradlew.bat build
+.\gradlew.bat build -PskipIT=true
+.\gradlew.bat integrationTest -PskipIT=false
+.\gradlew.bat testAggregateReport
 ```
 
-### Frontend
-```bash
-npm test              # Jest unit + integration tests
-npm run test:watch    # watch mode
-npm run test:e2e      # Playwright E2E (requires dev server running)
-npm run lint          # ESLint
-npm run test:coverage # Code coverage
+| Command | Effect |
+|---------|--------|
+| `.\gradlew.bat build` | Unit tests + integration tests (default `skipIT=false`; needs Docker) |
+| `.\gradlew.bat build -PskipIT=true` | Unit tests only (integration tests skipped) |
+| `.\gradlew.bat integrationTest -PskipIT=false` | Integration tests only (needs Docker) |
+| `.\gradlew.bat testAggregateReport` | All tests + Kover coverage report (needs Docker) |
+
+On Unix, use `./gradlew` from `backend/` with the same tasks and properties. On Windows **cmd.exe**, `gradlew.bat` works when the current directory is `backend/`; **PowerShell** requires `.\gradlew.bat`.
+
+### Frontend (from `frontend/` — PowerShell examples)
+
+```powershell
+cd frontend
+npm install            # local development (default); commit package-lock.json when deps change
+# npm ci               # CI/CD and reproducible agents only — strict lockfile install
+
+npm test               # Jest unit + integration tests
+npm run test:watch     # Jest watch mode
+npm run test:e2e       # Playwright E2E — trace **on** (`--trace on`; requires dev server, e.g. npm run dev)
+npm run lint           # ESLint
+npm run test:coverage  # Jest with coverage
+npm run format         # Prettier, whole frontend tree (`prettier . --write`)
+npm run clean          # rimraf .next .swc coverage playwright-report test-results
+npm run reinstall      # local recovery: rimraf node_modules + lockfile then npm install — not for CI
 ```
 
 **Frontend test patterns:**
@@ -340,7 +403,7 @@ npm run test:coverage # Code coverage
 
 **Backend:** refresh tokens, email verification, admin endpoints, asset holdings, budget tracking, notifications, import (CSV/OFX), audit log.
 
-**Frontend:** institution picker UI (currently manual UUID entry), asset selector in transaction form, fee/price/FX/inflation management UIs, date range filter on transactions page, E2E tests for accounts/transactions/analytics, user-preferred currency applied to analytics (currently hardcoded `EUR`), internationalised formatting (currently hardcoded `fr-FR`).
+**Frontend:** wire **account creation** to **institutions** (search/picker; avoid raw UUID where possible); asset selector in transaction form; fee/price/FX/inflation management UIs; date range filter on transactions page; E2E tests for accounts/transactions/analytics/institutions; user-preferred currency applied to analytics (where still hardcoded `EUR`); internationalised formatting (currently hardcoded `fr-FR`).
 
 ---
 

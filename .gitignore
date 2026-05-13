@@ -9,8 +9,14 @@ out/
 *.nar
 !gradle/wrapper/gradle-wrapper.jar
 
-# IntelliJ
-.idea/
+# IntelliJ — ignore machine-local noise; allow shared code style & inspections
+.idea/*
+!.idea/codeStyles/
+!.idea/codeStyles/**
+!.idea/inspectionProfiles/
+!.idea/inspectionProfiles/**
+!.idea/runConfigurations/
+!.idea/runConfigurations/**
 *.iml
 *.iws
 *.ipr
@@ -46,6 +52,11 @@ frontend/next-env.d.ts
 **/.env*.local
 
 # ─── Editor ──────────────────────────────────────────────────────────────────
-.vscode/
+# VS Code — keep team recommendations & workspace settings; ignore local-only files
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
 *.swp
 *.swo
