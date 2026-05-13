@@ -1,6 +1,6 @@
 [versions]
 kotlin = "2.3.20"
-spring-boot = "4.0.5"
+spring-boot = "4.0.6"
 postgresql = "42.7.10"
 flyway = "12.4.0"
 testcontainers = "2.0.4"
