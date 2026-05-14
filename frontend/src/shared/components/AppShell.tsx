@@ -14,8 +14,8 @@ import styles from "./AppShell.module.css";
 
 const NAV = [
     { href: "/dashboard", label: "Dashboard", icon: "⬡" },
-    { href: "/accounts", label: "Accounts", icon: "◫" },
     { href: "/institutions", label: "Institutions", icon: "⊞" },
+    { href: "/accounts", label: "Accounts", icon: "◫" },
     { href: "/transactions", label: "Transactions", icon: "⇌" },
     { href: "/analytics", label: "Analytics", icon: "◈" },
 ];
@@ -101,9 +101,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                         <span>Profile</span>
                     </Link>
 
-                    <button onClick={logout} className={styles.logout} aria-label="Sign out">
-                        <span aria-hidden="true">⊗</span>
-
+                    <button type="button" onClick={logout} className={styles.logout} aria-label="Sign out">
+                        <span className={styles.navIcon} aria-hidden="true">
+                            ⊗
+                        </span>
                         <span>Sign out</span>
                     </button>
                 </div>

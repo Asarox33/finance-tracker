@@ -93,7 +93,7 @@ function LoginForm() {
                 </form>
 
                 <footer className={styles.footer}>
-                    <Link href="/login/reset">Forgot password?</Link>
+                    <Link href="/login/reset">Forgot password ?</Link>
                     <span style={{ color: "var(--text-dim)" }}>·</span>
                     <Link href="/login/register">Create account</Link>
                 </footer>
