@@ -6,7 +6,7 @@ export interface LoginRequest {
 }
 
 export interface LoginResponse {
-    token: string;
+    accessToken: string;
 }
 
 export interface RegisterRequest {
@@ -32,6 +32,8 @@ export const authApi = {
     login: (body: LoginRequest) => http.post<LoginResponse>("/auth/login", body),
 
     register: (body: RegisterRequest) => http.post<RegisterResponse>("/auth/register", body),
+
+    logout: () => http.post<void>("/auth/logout", {}),
 
     requestPasswordReset: (body: PasswordResetRequest) => http.post<void>("/auth/password-reset/request", body),
 

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { isAuthenticated } from "@/lib/http";
+import { ensureSession, isAuthenticated } from "@/lib/http";
 
 export function useAuthGuard() {
     const router = useRouter();
@@ -10,20 +10,29 @@ export function useAuthGuard() {
     const [authenticated, setAuthenticated] = useState<boolean | null>(null);
 
     useEffect(() => {
-        const check = () => {
+        let cancelled = false;
+
+        async function check() {
+            await ensureSession();
+            if (cancelled) return;
             const auth = isAuthenticated();
             setAuthenticated(auth);
 
             if (!auth) {
                 router.replace("/login");
             }
+        }
+
+        void check();
+
+        const interval = setInterval(() => {
+            void check();
+        }, 10_000);
+
+        return () => {
+            cancelled = true;
+            clearInterval(interval);
         };
-
-        check();
-
-        const interval = setInterval(check, 10_000);
-
-        return () => clearInterval(interval);
     }, [router]);
 
     return {

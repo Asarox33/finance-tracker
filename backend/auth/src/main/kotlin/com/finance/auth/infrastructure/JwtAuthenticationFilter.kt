@@ -25,6 +25,11 @@ class JwtAuthenticationFilter(
         response: HttpServletResponse,
         filterChain: FilterChain
     ) {
+        if (shouldSkipJwtProcessing(request)) {
+            filterChain.doFilter(request, response)
+            return
+        }
+
         val header = request.getHeader("Authorization")
 
         if (header == null || !header.startsWith("Bearer ")) {
@@ -56,5 +61,10 @@ class JwtAuthenticationFilter(
         }
 
         filterChain.doFilter(request, response)
+    }
+
+    private fun shouldSkipJwtProcessing(request: HttpServletRequest): Boolean {
+        val path = request.requestURI.removePrefix(request.contextPath.ifEmpty { "" })
+        return path == "/api/auth/refresh" || path == "/api/auth/logout"
     }
 }

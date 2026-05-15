@@ -31,9 +31,9 @@ export function useLogin() {
         setLoading(true);
         setError(null);
         try {
-            const { token } = await authApi.login({ email, password });
-            setToken(token);
-            const userId = extractUserId(token);
+            const { accessToken } = await authApi.login({ email, password });
+            setToken(accessToken);
+            const userId = extractUserId(accessToken);
             if (userId) setUserId(userId);
             router.push("/dashboard");
         } catch (err) {
@@ -116,7 +116,12 @@ export function usePasswordReset() {
 export function useLogout() {
     const router = useRouter();
 
-    const logout = () => {
+    const logout = async () => {
+        try {
+            await authApi.logout();
+        } catch {
+            /* ignore */
+        }
         httpModule.removeToken();
         httpModule.removeUserId();
         router.replace("/login");

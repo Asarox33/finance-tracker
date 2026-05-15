@@ -14,8 +14,8 @@ class TokenService(
     @param:Value($$"${auth.jwt.secret}")
     private val secret: String,
 
-    @param:Value($$"${auth.jwt.expiration-ms}")
-    private val expirationMs: Long
+    @param:Value($$"${auth.jwt.access-expiration-ms}")
+    private val accessExpirationMs: Long
 ) : TokenIssuer {
 
     private val key by lazy { Keys.hmacShaKeyFor(secret.toByteArray()) }
@@ -24,7 +24,7 @@ class TokenService(
         val token = Jwts.builder()
             .subject(userId.toString())
             .issuedAt(Date())
-            .expiration(Date(System.currentTimeMillis() + expirationMs))
+            .expiration(Date(System.currentTimeMillis() + accessExpirationMs))
             .signWith(key)
             .compact()
         return AuthToken(value = token, userId = userId)

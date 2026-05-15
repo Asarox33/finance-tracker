@@ -9,6 +9,7 @@ import { useLogout } from "@/features/auth/hooks/useAuth";
 import { useAuthGuard } from "@/shared/hooks/useAuthGuard";
 import { useUserProfile } from "@/features/user-profile/hooks/useUserProfile";
 import { useSessionTimeout } from "@/shared/hooks/useSessionTimeout";
+import SessionTimeoutModal from "@/shared/components/SessionTimeoutModal";
 
 import styles from "./AppShell.module.css";
 
@@ -29,7 +30,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
     const { isAuthenticated, isLoading } = useAuthGuard();
 
-    useSessionTimeout();
+    const sessionTimeout = useSessionTimeout();
 
     useEffect(() => {
         if (!isLoading && !isAuthenticated) {
@@ -54,6 +55,13 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
     return (
         <div className={styles.shell}>
+            <SessionTimeoutModal
+                open={sessionTimeout.warningOpen}
+                reason={sessionTimeout.reason}
+                secondsLeft={sessionTimeout.secondsLeft}
+                onStayConnected={() => void sessionTimeout.stayConnected()}
+                onSignOut={() => void sessionTimeout.signOutNow()}
+            />
             <nav className={styles.sidebar} aria-label="Main navigation">
                 <div className={styles.brand} aria-label="Finance Tracker">
                     <span className={styles.brandIcon} aria-hidden="true">
@@ -101,7 +109,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                         <span>Profile</span>
                     </Link>
 
-                    <button type="button" onClick={logout} className={styles.logout} aria-label="Sign out">
+                    <button type="button" onClick={() => void logout()} className={styles.logout} aria-label="Sign out">
                         <span className={styles.navIcon} aria-hidden="true">
                             ⊗
                         </span>

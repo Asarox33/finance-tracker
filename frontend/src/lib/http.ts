@@ -1,3 +1,5 @@
+import { redirectToLogin } from "@/lib/navigation";
+
 const BASE_URL = "/api";
 
 function isTokenExpired(token: string): boolean {
@@ -10,18 +12,34 @@ function isTokenExpired(token: string): boolean {
     }
 }
 
-export function getToken(): string | null {
+function readStoredAccessToken(): string | null {
     /* istanbul ignore next */
     if (typeof window === "undefined") return null;
     try {
-        const token = localStorage.getItem("auth_token");
-        if (!token) return null;
-        if (isTokenExpired(token)) {
-            localStorage.removeItem("auth_token");
-            localStorage.removeItem("user_id");
-            return null;
-        }
-        return token;
+        return localStorage.getItem("auth_token");
+    } catch {
+        return null;
+    }
+}
+
+/**
+ * Returns the access JWT only if present and not expired.
+ * Expired tokens may remain in storage until refresh succeeds or the user logs out.
+ */
+export function getToken(): string | null {
+    const token = readStoredAccessToken();
+    if (!token) return null;
+    if (isTokenExpired(token)) return null;
+    return token;
+}
+
+export function getAccessTokenExpiryMs(): number | null {
+    const raw = readStoredAccessToken();
+    if (!raw) return null;
+    try {
+        const payload = JSON.parse(atob(raw.split(".")[1]));
+        if (!payload.exp || typeof payload.exp !== "number") return null;
+        return payload.exp * 1000;
     } catch {
         return null;
     }
@@ -62,24 +80,101 @@ export function removeUserId(): void {
 }
 
 export function isAuthenticated(): boolean {
-    return !!getToken();
+    const token = readStoredAccessToken();
+    return !!token && !isTokenExpired(token);
+}
+
+let refreshInFlight: Promise<boolean> | null = null;
+
+async function doRefreshAccessToken(): Promise<boolean> {
+    try {
+        const res = await fetch(`${BASE_URL}/auth/refresh`, {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+        });
+        if (!res.ok) return false;
+        const data = (await res.json()) as { accessToken?: string };
+        if (!data.accessToken) return false;
+        setToken(data.accessToken);
+        return true;
+    } catch {
+        return false;
+    }
+}
+
+export function refreshAccessToken(): Promise<boolean> {
+    if (!refreshInFlight) {
+        refreshInFlight = (async () => {
+            try {
+                return await doRefreshAccessToken();
+            } finally {
+                refreshInFlight = null;
+            }
+        })();
+    }
+    return refreshInFlight;
+}
+
+export async function ensureSession(): Promise<boolean> {
+    const token = readStoredAccessToken();
+    if (token && !isTokenExpired(token)) return true;
+    return refreshAccessToken();
+}
+
+function shouldPrefetchSession(path: string): boolean {
+    return (
+        !path.startsWith("/auth/login") &&
+        !path.startsWith("/auth/register") &&
+        !path.startsWith("/auth/password-reset") &&
+        !path.startsWith("/auth/refresh")
+    );
+}
+
+function clearSessionAndRedirectToLogin(): void {
+    removeToken();
+    removeUserId();
+    redirectToLogin();
 }
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
-    const token = getToken();
+    if (shouldPrefetchSession(path)) {
+        await ensureSession();
+    }
+
+    let token = getToken();
     const headers: Record<string, string> = {
         "Content-Type": "application/json",
         ...(options.headers as Record<string, string>),
     };
     if (token) headers["Authorization"] = `Bearer ${token}`;
 
-    const res = await fetch(`${BASE_URL}${path}`, { ...options, headers });
+    const execFetch = () =>
+        fetch(`${BASE_URL}${path}`, {
+            ...options,
+            headers,
+            credentials: "include",
+        });
+
+    let res = await execFetch();
 
     if (res.status === 401 && !path.startsWith("/auth/")) {
-        removeToken();
-        removeUserId();
-        if (typeof window !== "undefined") window.location.href = "/login";
-        throw new Error("Unauthorized");
+        const refreshed = await refreshAccessToken();
+        if (refreshed) {
+            token = getToken();
+            const retryHeaders = { ...headers };
+            if (token) retryHeaders["Authorization"] = `Bearer ${token}`;
+            else delete retryHeaders["Authorization"];
+            res = await fetch(`${BASE_URL}${path}`, {
+                ...options,
+                headers: retryHeaders,
+                credentials: "include",
+            });
+        }
+        if (res.status === 401) {
+            clearSessionAndRedirectToLogin();
+            throw new Error("Unauthorized");
+        }
     }
 
     if (res.status === 204 || res.headers.get("content-length") === "0") {

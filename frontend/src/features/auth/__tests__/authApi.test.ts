@@ -34,20 +34,20 @@ describe("authApi", () => {
 
     it("calls login endpoint with credentials", async () => {
         const token = makeValidToken();
-        mockResponse({ token });
+        mockResponse({ accessToken: token });
         const result = await authApi.login({
             email: "test@example.com",
             password: "Password123!",
         });
-        expect(result.token).toBe(token);
+        expect(result.accessToken).toBe(token);
         expect(mockFetch).toHaveBeenCalledWith(
             expect.stringContaining("/auth/login"),
-            expect.objectContaining({ method: "POST" })
+            expect.objectContaining({ method: "POST", credentials: "include" })
         );
     });
 
     it("sends correct body on login", async () => {
-        mockResponse({ token: makeValidToken() });
+        mockResponse({ accessToken: makeValidToken() });
         await authApi.login({
             email: "test@example.com",
             password: "Password123!",

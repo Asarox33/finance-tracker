@@ -33,7 +33,7 @@ All 13 modules are implemented end-to-end (domain → application → infrastruc
 - ✅ JWT authentication (`JwtAuthenticationFilter`)
 - ✅ Global exception handler (`GlobalExceptionHandler`) with correlation ID
 - ✅ Correlation ID filter (`CorrelationIdFilter`, MDC-based)
-- ✅ Rate limiting on auth endpoints (`RateLimitingFilter`, Bucket4j)
+- ✅ Rate limiting on auth endpoints (`RateLimitingFilter`, Bucket4j) — includes `/api/auth/refresh`
 - ✅ Spring Security configuration (stateless, JWT)
 - ✅ OpenAPI / Swagger UI (dev only)
 - ✅ Spring Actuator (`/actuator/health`, `/actuator/info`)
@@ -60,9 +60,9 @@ Features are integrated as vertical slices. Status is **functional** where marke
 
 **Shared / lib**
 
-- ✅ `AppShell` — nav includes Dashboard, Accounts, **Institutions**, Transactions, Analytics; auth guard; **loading shell** while auth is resolving; session timeout; responsive sidebar
+- ✅ `AppShell` — nav includes Dashboard, Accounts, **Institutions**, Transactions, Analytics; auth guard; **loading shell** while auth is resolving; **session timeout modal** (idle + access expiry, 15s grace, refresh on “Stay signed in”); responsive sidebar
 - ✅ `ThemeToggle`, shared UI primitives (`ui.tsx`)
-- ✅ `http.ts` with JWT handling; **unit tests:** `src/lib/__tests__/http.test.ts`
+- ✅ `http.ts` — access JWT in `localStorage`, `credentials: "include"`, **refresh on 401** via cookie, `ensureSession()` for auth guard; **unit tests:** `src/lib/__tests__/http.test.ts`
 - ✅ `format.ts`, `currencies.ts`, `countries.ts` (used by accounts / profile / institutions)
 - ✅ `fr-FR` hardcoded for money and dates in `format.ts`
 
@@ -247,6 +247,14 @@ File: `backend/auth/src/main/resources/db/seed/V0_1__seed_dev_user.sql`
 
 Configured via Spring profiles (`dev`, `prod`, `test`) — see `application*.yml` under `backend/app` (and modules).
 
+| Variable | Role |
+|---|---|
+| `AUTH_JWT_SECRET` | HMAC secret for access JWT |
+| `AUTH_JWT_ACCESS_EXPIRATION_MS` | Access JWT lifetime (ms); if unset, falls back to `AUTH_JWT_EXPIRATION_MS`, then **900000** (15 min) |
+| `AUTH_JWT_EXPIRATION_MS` | *(Legacy)* Used only when `AUTH_JWT_ACCESS_EXPIRATION_MS` is unset |
+| `AUTH_REFRESH_EXPIRATION_MS` | Refresh token row + cookie max-age (ms) |
+| `AUTH_REFRESH_COOKIE_SECURE` | `true` / `false` — `Secure` flag on refresh cookie (`false` typical for local HTTP) |
+
 ### Frontend
 
 | Variable | Default | Description |
@@ -259,7 +267,7 @@ Configured via Spring profiles (`dev`, `prod`, `test`) — see `application*.yml
 
 ### Backend
 
-Portfolio rebalancing, budget tracking, notifications, multi-currency time-series net worth, asset holdings, CSV/OFX import, audit log, multi-tenancy, refresh tokens, email verification, admin APIs — see `module-rules.md` for module-specific gaps.
+Portfolio rebalancing, budget tracking, notifications, multi-currency time-series net worth, asset holdings, CSV/OFX import, audit log, multi-tenancy, email verification, admin APIs — see `module-rules.md` for module-specific gaps.
 
 ### Frontend
 

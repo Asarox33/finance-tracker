@@ -1,6 +1,7 @@
 package com.finance.app
 
 import com.finance.auth.application.AccountLockedException
+import com.finance.auth.application.RefreshTokenInvalidException
 import com.finance.shared.error.AuthenticationFailedException
 import com.finance.shared.error.BusinessRuleViolationException
 import com.finance.shared.error.InvalidRequestException
@@ -75,6 +76,14 @@ class GlobalExceptionHandler {
         return ResponseEntity
             .status(HttpStatus.TOO_MANY_REQUESTS)
             .body(ErrorResponse("Account is temporarily locked. Try again later."))
+    }
+
+    @ExceptionHandler(RefreshTokenInvalidException::class)
+    fun handleRefreshTokenInvalid(ex: RefreshTokenInvalidException): ResponseEntity<ErrorResponse> {
+        log.warn("Refresh rejected: {}", ex.message)
+        return ResponseEntity
+            .status(HttpStatus.UNAUTHORIZED)
+            .body(ErrorResponse(ex.message ?: "Invalid or expired refresh token"))
     }
 
     @ExceptionHandler(InvalidRequestException::class)

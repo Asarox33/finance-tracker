@@ -242,7 +242,7 @@ Migration filenames follow the pattern `V<major>_<minor>__<description>.sql`. Sc
 - Public endpoints: `/api/auth/**`, `/actuator/health`, `/actuator/info`, Swagger UI
 - Rate limiting on auth endpoints via `RateLimitingFilter` (Bucket4j, 10 req/min per IP)
 - `X-Correlation-Id` header propagated through MDC via `CorrelationIdFilter`
-- Frontend: JWT stored in `localStorage`; checked for expiry on every request; auto-logout on 401 or 5-min inactivity
+- Frontend: short-lived **access JWT** in `localStorage`; **refresh** in httpOnly cookie; `fetch` with credentials; refresh on 401; session timeout modal (idle + expiry) with grace period
 
 ---
 

@@ -18,6 +18,7 @@ class RateLimitingFilter : OncePerRequestFilter() {
     private val rateLimitedPaths = setOf(
         "/api/auth/login",
         "/api/auth/register",
+        "/api/auth/refresh",
         "/api/auth/password-reset/request",
         "/api/auth/password-reset/confirm"
     )

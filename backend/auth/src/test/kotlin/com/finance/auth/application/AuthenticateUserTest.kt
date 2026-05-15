@@ -1,8 +1,10 @@
 package com.finance.auth.application
 
 import com.finance.auth.FixedTokenIssuer
+import com.finance.auth.InMemoryRefreshTokenRepository
 import com.finance.auth.InMemoryUserRepository
 import com.finance.auth.PlainPasswordEncoder
+import com.finance.auth.TestRefreshTokenFactory
 import com.finance.auth.VALID_PASSWORD
 import com.finance.auth.domain.User
 import com.finance.shared.error.AuthenticationFailedException
@@ -18,7 +20,16 @@ class AuthenticateUserTest {
     private val repository = InMemoryUserRepository()
     private val encoder = PlainPasswordEncoder()
     private val tokenIssuer = FixedTokenIssuer()
-    private val useCase = AuthenticateUser(repository, encoder, tokenIssuer)
+    private val refreshRepo = InMemoryRefreshTokenRepository()
+    private val refreshFactory = TestRefreshTokenFactory()
+    private val useCase = AuthenticateUser(
+        repository,
+        encoder,
+        tokenIssuer,
+        refreshRepo,
+        refreshFactory,
+        java.time.Duration.ofDays(7)
+    )
 
     @Test
     fun authenticatesValidCredentials() {

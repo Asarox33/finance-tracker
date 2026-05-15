@@ -30,7 +30,7 @@ class OpenApiConfig {
                     .type(SecurityScheme.Type.HTTP)
                     .scheme("bearer")
                     .bearerFormat("JWT")
-                    .description("Paste your JWT token obtained from POST /api/auth/login")
+                    .description("Paste your access JWT from POST /api/auth/login (JSON field accessToken)")
             )
         )
 

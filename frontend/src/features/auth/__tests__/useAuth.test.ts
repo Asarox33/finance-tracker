@@ -27,6 +27,7 @@ jest.mock("@/lib/http", () => ({
 jest.mock("@/features/auth/api/authApi", () => ({
     authApi: {
         login: jest.fn(),
+        logout: jest.fn(),
         register: jest.fn(),
         requestPasswordReset: jest.fn(),
         confirmPasswordReset: jest.fn(),
@@ -41,7 +42,7 @@ describe("useLogin", () => {
 
     it("calls authApi.login with credentials", async () => {
         (authApiModule.authApi.login as jest.Mock).mockResolvedValue({
-            token: mockToken,
+            accessToken: mockToken,
         });
         const { result } = renderHook(() => useLogin());
         await act(async () => {
@@ -54,7 +55,7 @@ describe("useLogin", () => {
     });
 
     it("sets loading during login", async () => {
-        let resolve: (v: { token: string }) => void = () => {};
+        let resolve: (v: { accessToken: string }) => void = () => {};
         (authApiModule.authApi.login as jest.Mock).mockReturnValue(
             new Promise((r) => {
                 resolve = r;
@@ -66,7 +67,7 @@ describe("useLogin", () => {
         });
         expect(result.current.loading).toBe(true);
         await act(async () => {
-            resolve({ token: mockToken });
+            resolve({ accessToken: mockToken });
         });
         expect(result.current.loading).toBe(false);
     });
@@ -96,7 +97,7 @@ describe("useLogin", () => {
 
     it("sets token and userId on success", async () => {
         (authApiModule.authApi.login as jest.Mock).mockResolvedValue({
-            token: mockToken,
+            accessToken: mockToken,
         });
         const { result } = renderHook(() => useLogin());
         await act(async () => {
@@ -210,11 +211,13 @@ describe("usePasswordReset", () => {
 });
 
 describe("useLogout", () => {
-    it("removes token and userId", () => {
+    it("calls logout API then removes token and userId", async () => {
+        (authApiModule.authApi.logout as jest.Mock).mockResolvedValue(undefined);
         const { result } = renderHook(() => useLogout());
-        act(() => {
-            result.current.logout();
+        await act(async () => {
+            await result.current.logout();
         });
+        expect(authApiModule.authApi.logout).toHaveBeenCalled();
         expect(httpModule.removeToken).toHaveBeenCalled();
         expect(httpModule.removeUserId).toHaveBeenCalled();
     });
@@ -227,7 +230,7 @@ describe("extractUserId edge cases", () => {
         const malformedPayload = btoa("not-json");
         const badToken = `header.${malformedPayload}.sig`;
         (authApiModule.authApi.login as jest.Mock).mockResolvedValue({
-            token: badToken,
+            accessToken: badToken,
         });
         const { result } = renderHook(() => useLogin());
         await act(async () => {
@@ -239,7 +242,7 @@ describe("extractUserId edge cases", () => {
 
     it("handles token with wrong number of parts", async () => {
         (authApiModule.authApi.login as jest.Mock).mockResolvedValue({
-            token: "onlytwoparts.x",
+            accessToken: "onlytwoparts.x",
         });
         const { result } = renderHook(() => useLogin());
         await act(async () => {

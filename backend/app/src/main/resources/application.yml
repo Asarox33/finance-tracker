@@ -58,7 +58,12 @@ info:
 auth:
   jwt:
     secret: ${AUTH_JWT_SECRET}
-    expiration-ms: ${AUTH_JWT_EXPIRATION_MS}
+    # Prefer AUTH_JWT_ACCESS_EXPIRATION_MS; else legacy AUTH_JWT_EXPIRATION_MS; else 15 minutes (ms)
+    access-expiration-ms: ${AUTH_JWT_ACCESS_EXPIRATION_MS:${AUTH_JWT_EXPIRATION_MS:900000}}
+  refresh:
+    expiration-ms: ${AUTH_REFRESH_EXPIRATION_MS:604800000}
+  refresh-cookie:
+    secure: ${AUTH_REFRESH_COOKIE_SECURE:true}
 
 price:
   lookback-days: 30

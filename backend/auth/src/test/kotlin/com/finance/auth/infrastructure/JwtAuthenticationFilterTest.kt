@@ -27,6 +27,23 @@ class JwtAuthenticationFilterTest {
     }
 
     @Test
+    fun skipsJwtValidationForRefreshPathWithInvalidBearer() {
+        val request = MockHttpServletRequest().apply {
+            requestURI = "/api/auth/refresh"
+            method = "POST"
+            addHeader("Authorization", "Bearer invalid.token.here")
+        }
+        val response = MockHttpServletResponse()
+        var chainCalled = false
+        val chain = FilterChain { _, _ -> chainCalled = true }
+
+        filter.doFilter(request, response, chain)
+
+        assertTrue(chainCalled)
+        assertEquals(200, response.status)
+    }
+
+    @Test
     fun setsAuthenticationForValidToken() {
         val userId = UUID.randomUUID().toString()
         val token = buildToken(userId)

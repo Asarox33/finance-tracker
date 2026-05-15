@@ -3,15 +3,20 @@ package com.finance.auth.infrastructure
 import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.finance.auth.application.AuthenticateUser
+import com.finance.auth.application.RefreshAccessToken
 import com.finance.auth.application.RegisterUser
 import com.finance.auth.application.RequestPasswordReset
 import com.finance.auth.application.ResetPassword
+import com.finance.auth.application.RevokeRefreshToken
+import io.swagger.v3.oas.annotations.media.Schema
+import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
 import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Size
+import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
-import io.swagger.v3.oas.annotations.media.Schema
+import org.springframework.http.ResponseEntity
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -25,8 +30,11 @@ import java.util.UUID
 class AuthController(
     private val registerUser: RegisterUser,
     private val authenticateUser: AuthenticateUser,
+    private val refreshAccessToken: RefreshAccessToken,
+    private val revokeRefreshToken: RevokeRefreshToken,
     private val requestPasswordReset: RequestPasswordReset,
-    private val resetPassword: ResetPassword
+    private val resetPasswordHandler: ResetPassword,
+    private val refreshCookieFactory: RefreshCookieFactory
 ) {
     data class RegisterRequest @JsonCreator constructor(
         @param:JsonProperty("email")
@@ -65,7 +73,9 @@ class AuthController(
         val password: String
     )
 
-    data class LoginResponse(val token: String)
+    data class LoginResponse(val accessToken: String)
+
+    data class RefreshResponse(val accessToken: String)
 
     data class RequestPasswordResetRequest @JsonCreator constructor(
         @param:JsonProperty("email")
@@ -81,6 +91,7 @@ class AuthController(
         @field:Email
         @field:NotBlank
         @field:Schema(example = "user@example.com")
+        @field:Size(max = 255)
         val email: String,
 
         @param:JsonProperty("otp")
@@ -107,11 +118,35 @@ class AuthController(
     }
 
     @PostMapping("/login")
-    fun login(@Valid @RequestBody request: LoginRequest): LoginResponse {
-        val token = authenticateUser.execute(
+    fun login(@Valid @RequestBody request: LoginRequest): ResponseEntity<LoginResponse> {
+        val session = authenticateUser.execute(
             AuthenticateUser.Command(email = request.email, rawPassword = request.password)
         )
-        return LoginResponse(token = token.value)
+        val headers = HttpHeaders()
+        headers.add(HttpHeaders.SET_COOKIE, refreshCookieFactory.buildSetCookie(session.refreshTokenPlain))
+        return ResponseEntity.ok()
+            .headers(headers)
+            .body(LoginResponse(accessToken = session.accessToken))
+    }
+
+    @PostMapping("/refresh")
+    fun refresh(request: HttpServletRequest): ResponseEntity<RefreshResponse> {
+        val raw = request.cookies?.firstOrNull { it.name == RefreshCookieFactory.COOKIE_NAME }?.value
+        val session = refreshAccessToken.execute(raw)
+        val headers = HttpHeaders()
+        headers.add(HttpHeaders.SET_COOKIE, refreshCookieFactory.buildSetCookie(session.refreshTokenPlain))
+        return ResponseEntity.ok()
+            .headers(headers)
+            .body(RefreshResponse(accessToken = session.accessToken))
+    }
+
+    @PostMapping("/logout")
+    fun logout(request: HttpServletRequest): ResponseEntity<Void> {
+        val raw = request.cookies?.firstOrNull { it.name == RefreshCookieFactory.COOKIE_NAME }?.value
+        revokeRefreshToken.execute(raw)
+        val headers = HttpHeaders()
+        headers.add(HttpHeaders.SET_COOKIE, refreshCookieFactory.buildClearCookie())
+        return ResponseEntity.noContent().headers(headers).build()
     }
 
     @PostMapping("/password-reset/request")
@@ -123,7 +158,7 @@ class AuthController(
     @PostMapping("/password-reset/confirm")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     fun resetPassword(@Valid @RequestBody request: ResetPasswordRequest) {
-        resetPassword.execute(
+        resetPasswordHandler.execute(
             ResetPassword.Command(
                 email = request.email,
                 rawOtp = request.otp,

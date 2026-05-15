@@ -275,10 +275,11 @@ All in `src/shared/components/ui.tsx`:
 
 ## Authentication
 
-- JWT stored in `localStorage` as `auth_token`; user ID as `user_id`
-- `http.ts` injects the token on every request, checks expiry before use, auto-redirects on 401
+- **Access JWT** stored in `localStorage` as `auth_token`; user ID as `user_id`
+- **Refresh token** in httpOnly cookie `ft_refresh` (path `/api`); all `http` calls use `credentials: "include"`
+- `http.ts` injects the access token when valid, attempts **cookie refresh** on 401 or before guarded navigation (`ensureSession`), then auto-redirects to `/login` if refresh fails
 - `useAuthGuard` (in `AppShell`) redirects unauthenticated users to `/login`
-- `useSessionTimeout` auto-logs out after **5 minutes** of inactivity
+- `useSessionTimeout` warns after **5 minutes** of inactivity or shortly before access JWT expiry; **15-second** grace with **Stay signed in** (refresh) or **Sign out**
 - Lock detection: backend returns HTTP 429; frontend checks `message.includes("locked")`
 
 ---

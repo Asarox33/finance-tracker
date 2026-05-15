@@ -13,6 +13,7 @@ module.exports = createJestConfig({
         "src/lib/**/*.{ts,tsx}",
         "!src/lib/countries.ts",
         "!src/lib/currencies.ts",
+        "!src/lib/navigation.ts",
         "!src/**/*.d.ts",
     ],
     coverageProvider: "v8",
