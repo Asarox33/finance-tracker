@@ -220,7 +220,6 @@ function AccountCard({
             </div>
             <div className={styles.accountMeta}>
                 <span className={styles.currency}>{account.currency}</span>
-                <span className={styles.id}>{account.id.slice(0, 8)}…</span>
             </div>
             {account.status === "ACTIVE" && (
                 <div className={styles.accountActions}>

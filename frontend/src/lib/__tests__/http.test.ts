@@ -10,6 +10,7 @@ import {
     removeUserId,
     setToken,
     setUserId,
+    subscribeAccessTokenChange,
 } from "@/lib/http";
 
 jest.mock("@/lib/navigation", () => ({
@@ -255,6 +256,28 @@ describe("getAccessTokenExpiryMs", () => {
         const badExp = btoa(JSON.stringify({ sub: "user-123", exp: "soon" }));
         setToken(`${header}.${badExp}.sig`);
         expect(getAccessTokenExpiryMs()).toBeNull();
+    });
+});
+
+describe("subscribeAccessTokenChange", () => {
+    beforeEach(() => localStorage.clear());
+
+    it("notifies listeners when setToken is called", () => {
+        const listener = jest.fn();
+        const unsubscribe = subscribeAccessTokenChange(listener);
+        setToken(makeValidToken());
+        expect(listener).toHaveBeenCalledTimes(1);
+        unsubscribe();
+        setToken(makeValidToken());
+        expect(listener).toHaveBeenCalledTimes(1);
+    });
+
+    it("notifies listeners when removeToken is called", () => {
+        setToken(makeValidToken());
+        const listener = jest.fn();
+        subscribeAccessTokenChange(listener);
+        removeToken();
+        expect(listener).toHaveBeenCalledTimes(1);
     });
 });
 

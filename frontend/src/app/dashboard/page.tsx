@@ -1,7 +1,9 @@
 "use client";
 
+import { useMemo } from "react";
 import { usePerformance, usePortfolioValue } from "@/features/analytics/hooks/useAnalytics";
 import { useAccounts } from "@/features/accounts/hooks/useAccounts";
+import { useInstitutions } from "@/features/institutions/hooks/useInstitutions";
 import { Badge, Card, ErrorState, PageHeader, Skeleton } from "@/shared/components/ui";
 import { formatBasisPoints, formatDate, formatMoney, today } from "@/lib/format";
 import styles from "./page.module.css";
@@ -10,6 +12,17 @@ export default function DashboardPage() {
     const { data: portfolio, isLoading: pvLoading, error: pvError } = usePortfolioValue("EUR");
     const { data: perf, isLoading: perfLoading } = usePerformance("EUR", 12);
     const { data: accounts, isLoading: accLoading } = useAccounts();
+    const { data: institutions, isLoading: instLoading } = useInstitutions();
+
+    const accountById = useMemo(() => {
+        return new Map(accounts?.items.map((a) => [a.id, a]) ?? []);
+    }, [accounts]);
+
+    const institutionById = useMemo(() => {
+        return new Map(institutions?.items.map((i) => [i.id, i]) ?? []);
+    }, [institutions]);
+
+    const breakdownLoading = pvLoading || accLoading || instLoading;
 
     const gainPositive = (perf?.gainLossBasisPoints ?? 0) >= 0;
 
@@ -64,7 +77,7 @@ export default function DashboardPage() {
 
                 <section aria-label="Account breakdown" className={styles.section}>
                     <h2 className={styles.sectionTitle}>Account Breakdown</h2>
-                    {pvLoading ? (
+                    {breakdownLoading ? (
                         <div className={styles.skels}>
                             {[1, 2, 3].map((i) => (
                                 <Skeleton key={i} className={styles.rowSkel} />
@@ -76,6 +89,7 @@ export default function DashboardPage() {
                                 <thead>
                                     <tr>
                                         <th scope="col">Account</th>
+                                        <th scope="col">Institution</th>
                                         <th scope="col">Currency</th>
                                         <th scope="col" style={{ textAlign: "right" }}>
                                             Value
@@ -89,7 +103,7 @@ export default function DashboardPage() {
                                     {portfolio?.snapshots.length === 0 && (
                                         <tr>
                                             <td
-                                                colSpan={4}
+                                                colSpan={5}
                                                 style={{
                                                     textAlign: "center",
                                                     color: "var(--text-muted)",
@@ -100,40 +114,37 @@ export default function DashboardPage() {
                                             </td>
                                         </tr>
                                     )}
-                                    {portfolio?.snapshots.map((snap) => (
-                                        <tr key={snap.accountId}>
-                                            <td>
-                                                <span
+                                    {portfolio?.snapshots.map((snap) => {
+                                        const account = accountById.get(snap.accountId);
+                                        const institution = account
+                                            ? institutionById.get(account.institutionId)
+                                            : undefined;
+                                        return (
+                                            <tr key={snap.accountId}>
+                                                <td>{account?.name ?? "—"}</td>
+                                                <td>{institution?.name ?? "—"}</td>
+                                                <td>
+                                                    <Badge>{snap.currency}</Badge>
+                                                </td>
+                                                <td
                                                     style={{
+                                                        textAlign: "right",
                                                         fontFamily: "var(--font-mono)",
-                                                        fontSize: "0.75rem",
-                                                        color: "var(--text-muted)",
                                                     }}
                                                 >
-                                                    {snap.accountId.slice(0, 8)}…
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <Badge>{snap.currency}</Badge>
-                                            </td>
-                                            <td
-                                                style={{
-                                                    textAlign: "right",
-                                                    fontFamily: "var(--font-mono)",
-                                                }}
-                                            >
-                                                {formatMoney(snap.valueInAccountCurrency, snap.currency)}
-                                            </td>
-                                            <td
-                                                style={{
-                                                    textAlign: "right",
-                                                    fontFamily: "var(--font-mono)",
-                                                }}
-                                            >
-                                                {formatMoney(snap.valueInReferenceCurrency, snap.referenceCurrency)}
-                                            </td>
-                                        </tr>
-                                    ))}
+                                                    {formatMoney(snap.valueInAccountCurrency, snap.currency)}
+                                                </td>
+                                                <td
+                                                    style={{
+                                                        textAlign: "right",
+                                                        fontFamily: "var(--font-mono)",
+                                                    }}
+                                                >
+                                                    {formatMoney(snap.valueInReferenceCurrency, snap.referenceCurrency)}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
                                 </tbody>
                             </table>
                         </Card>

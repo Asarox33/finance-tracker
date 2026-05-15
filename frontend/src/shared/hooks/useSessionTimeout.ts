@@ -3,15 +3,33 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useLogout } from "@/features/auth/hooks/useAuth";
-import { getAccessTokenExpiryMs, refreshAccessToken } from "@/lib/http";
+import {
+    getAccessTokenExpiryMs,
+    getToken,
+    refreshAccessToken,
+    subscribeAccessTokenChange,
+} from "@/lib/http";
 
 const IDLE_WARNING_MS = 5 * 60 * 1000;
 const GRACE_COUNTDOWN_SEC = 15;
 const JWT_WARNING_BEFORE_MS = 15 * 1000;
+const REFRESH_AHEAD_MS = 2 * 60 * 1000;
 const ACTIVITY_THROTTLE_MS = 1000;
+const PROACTIVE_REFRESH_THROTTLE_MS = 60 * 1000;
 const EVENTS = ["mousedown", "mousemove", "keydown", "scroll", "touchstart"];
 
 export type SessionTimeoutReason = "idle" | "jwt";
+
+function remainingMs(): number | null {
+    const exp = getAccessTokenExpiryMs();
+    if (exp == null) return null;
+    return exp - Date.now();
+}
+
+function hasComfortableTokenLifetime(): boolean {
+    const remaining = remainingMs();
+    return remaining != null && remaining > JWT_WARNING_BEFORE_MS;
+}
 
 export function useSessionTimeout() {
     const { logout } = useLogout();
@@ -24,6 +42,7 @@ export function useSessionTimeout() {
     const jwtTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const lastActivityThrottleRef = useRef(0);
+    const lastProactiveRefreshRef = useRef(0);
 
     const [warningOpen, setWarningOpen] = useState(false);
     const [reason, setReason] = useState<SessionTimeoutReason>("idle");
@@ -68,16 +87,43 @@ export function useSessionTimeout() {
         clearJwtTimer();
         const exp = getAccessTokenExpiryMs();
         if (exp == null) return;
-        const warnAt = exp - JWT_WARNING_BEFORE_MS;
-        const delay = warnAt - Date.now();
+
+        const fireImminent = () => {
+            void (async () => {
+                if (warningOpenRef.current) return;
+                const ok = await refreshAccessToken();
+                if (ok) {
+                    scheduleJwtWarning();
+                } else {
+                    openWarning("jwt");
+                }
+            })();
+        };
+
+        const delay = exp - JWT_WARNING_BEFORE_MS - Date.now();
         if (delay <= 0) {
-            openWarning("jwt");
+            fireImminent();
             return;
         }
-        jwtTimerRef.current = setTimeout(() => {
-            openWarning("jwt");
-        }, delay);
+        jwtTimerRef.current = setTimeout(fireImminent, delay);
     }, [clearJwtTimer, openWarning]);
+
+    const tryProactiveRefreshIfNeeded = useCallback(async () => {
+        if (warningOpenRef.current) return;
+        const remaining = remainingMs();
+        if (remaining == null || remaining > REFRESH_AHEAD_MS) return;
+
+        const now = Date.now();
+        if (now - lastProactiveRefreshRef.current < PROACTIVE_REFRESH_THROTTLE_MS) return;
+        lastProactiveRefreshRef.current = now;
+
+        const ok = await refreshAccessToken();
+        if (ok) {
+            scheduleJwtWarning();
+        } else if (remaining <= JWT_WARNING_BEFORE_MS) {
+            openWarning("jwt");
+        }
+    }, [openWarning, scheduleJwtWarning]);
 
     const armIdleTimer = useCallback(() => {
         clearIdleTimer();
@@ -107,11 +153,15 @@ export function useSessionTimeout() {
 
     useEffect(() => {
         if (!warningOpen || secondsLeft > 0 || graceExpiredRef.current) return;
+        if (getToken() && hasComfortableTokenLifetime()) {
+            closeWarningAndContinue();
+            return;
+        }
         graceExpiredRef.current = true;
         warningOpenRef.current = false;
         setWarningOpen(false);
         void logoutRef.current();
-    }, [warningOpen, secondsLeft]);
+    }, [warningOpen, secondsLeft, closeWarningAndContinue]);
 
     const onActivity = useCallback(() => {
         const now = Date.now();
@@ -123,20 +173,52 @@ export function useSessionTimeout() {
         }
 
         armIdleTimer();
+        void tryProactiveRefreshIfNeeded();
         scheduleJwtWarning();
-    }, [armIdleTimer, scheduleJwtWarning]);
+    }, [armIdleTimer, scheduleJwtWarning, tryProactiveRefreshIfNeeded]);
 
     useEffect(() => {
         armIdleTimer();
+        void tryProactiveRefreshIfNeeded();
         scheduleJwtWarning();
+
+        const unsubscribe = subscribeAccessTokenChange(() => {
+            if (warningOpenRef.current && hasComfortableTokenLifetime()) {
+                closeWarningAndContinue();
+            } else {
+                scheduleJwtWarning();
+            }
+        });
+
+        const onStorage = (e: StorageEvent) => {
+            if (e.key !== "auth_token") return;
+            if (warningOpenRef.current && hasComfortableTokenLifetime()) {
+                closeWarningAndContinue();
+            } else {
+                scheduleJwtWarning();
+            }
+        };
+        window.addEventListener("storage", onStorage);
+
         EVENTS.forEach((e) => window.addEventListener(e, onActivity, { passive: true }));
         return () => {
             clearIdleTimer();
             clearJwtTimer();
             clearCountdown();
+            unsubscribe();
+            window.removeEventListener("storage", onStorage);
             EVENTS.forEach((e) => window.removeEventListener(e, onActivity));
         };
-    }, [armIdleTimer, scheduleJwtWarning, onActivity, clearIdleTimer, clearJwtTimer, clearCountdown]);
+    }, [
+        armIdleTimer,
+        scheduleJwtWarning,
+        tryProactiveRefreshIfNeeded,
+        onActivity,
+        clearIdleTimer,
+        clearJwtTimer,
+        clearCountdown,
+        closeWarningAndContinue,
+    ]);
 
     const stayConnected = useCallback(async () => {
         const ok = await refreshAccessToken();

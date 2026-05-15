@@ -112,7 +112,7 @@ frontend/src/
 │   │   └── ui.tsx                # Card, Skeleton, Badge, Button, PageHeader, EmptyState, ErrorState
 │   ├── hooks/
 │   │   ├── useAuthGuard.ts       # Redirects to /login if unauthenticated
-│   │   ├── useSessionTimeout.ts  # Auto-logout after 5 min inactivity
+│   │   ├── useSessionTimeout.ts  # Idle warning (5 min); proactive refresh near JWT exp; modal fallback
 │   │   └── useTheme.ts           # Dark/light theme with localStorage persistence
 │   └── types/index.ts            # All shared TypeScript interfaces & types
 └── lib/
@@ -242,7 +242,7 @@ Migration filenames follow the pattern `V<major>_<minor>__<description>.sql`. Sc
 - Public endpoints: `/api/auth/**`, `/actuator/health`, `/actuator/info`, Swagger UI
 - Rate limiting on auth endpoints via `RateLimitingFilter` (Bucket4j, 10 req/min per IP)
 - `X-Correlation-Id` header propagated through MDC via `CorrelationIdFilter`
-- Frontend: short-lived **access JWT** in `localStorage`; **refresh** in httpOnly cookie; `fetch` with credentials; refresh on 401; session timeout modal (idle + expiry) with grace period
+- Frontend: short-lived **access JWT** (default **10 min**, max cap on backend) in `localStorage`; **refresh** in httpOnly cookie (default **7 days**); `fetch` with credentials; refresh on 401; **proactive refresh** while active near expiry; session timeout modal (idle + failed refresh) with 15s grace
 
 ---
 

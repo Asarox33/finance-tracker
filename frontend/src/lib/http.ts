@@ -45,16 +45,31 @@ export function getAccessTokenExpiryMs(): number | null {
     }
 }
 
+type AccessTokenListener = () => void;
+const accessTokenListeners = new Set<AccessTokenListener>();
+
+function notifyAccessTokenChange(): void {
+    accessTokenListeners.forEach((listener) => listener());
+}
+
+/** Subscribe to access-token writes (login, refresh, logout). Returns an unsubscribe function. */
+export function subscribeAccessTokenChange(listener: AccessTokenListener): () => void {
+    accessTokenListeners.add(listener);
+    return () => accessTokenListeners.delete(listener);
+}
+
 export function setToken(token: string): void {
     /* istanbul ignore next */
     if (typeof window === "undefined") return;
     localStorage.setItem("auth_token", token);
+    notifyAccessTokenChange();
 }
 
 export function removeToken(): void {
     /* istanbul ignore next */
     if (typeof window === "undefined") return;
     localStorage.removeItem("auth_token");
+    notifyAccessTokenChange();
 }
 
 export function getUserId(): string | null {

@@ -164,6 +164,7 @@ Features are integrated as vertical slices. Status is **functional** where marke
 
 - No React **error boundary**.
 - `useSessionTimeout` runs whenever `AppShell` mounts (including rare cases with token on public routes).
+- **Per-user access session length (2–10 min)** in `user-profile` not implemented; global default/max **10 min** via `auth.jwt.access-expiration-ms` / `TokenService.MAX_ACCESS_EXPIRATION_MS`.
 - No optimistic mutations for creates/closes/updates.
 - `fr-FR` only in formatters.
 
@@ -250,8 +251,7 @@ Configured via Spring profiles (`dev`, `prod`, `test`) — see `application*.yml
 | Variable | Role |
 |---|---|
 | `AUTH_JWT_SECRET` | HMAC secret for access JWT |
-| `AUTH_JWT_ACCESS_EXPIRATION_MS` | Access JWT lifetime (ms); if unset, falls back to `AUTH_JWT_EXPIRATION_MS`, then **900000** (15 min) |
-| `AUTH_JWT_EXPIRATION_MS` | *(Legacy)* Used only when `AUTH_JWT_ACCESS_EXPIRATION_MS` is unset |
+| `AUTH_JWT_ACCESS_EXPIRATION_MS` | Access JWT lifetime (ms); default **600000** (10 min); values above **600000** are clamped in `TokenService` |
 | `AUTH_REFRESH_EXPIRATION_MS` | Refresh token row + cookie max-age (ms) |
 | `AUTH_REFRESH_COOKIE_SECURE` | `true` / `false` — `Secure` flag on refresh cookie (`false` typical for local HTTP) |
 
