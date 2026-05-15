@@ -6,7 +6,7 @@ import java.util.UUID
 interface InstitutionRepository {
     fun save(institution: Institution): Institution
     fun findById(id: UUID): Institution?
-    fun findAll(page: Int, pageSize: Int): List<Institution>
-    fun count(): Long
+    fun findAll(page: Int, pageSize: Int, name: String? = null, country: Country? = null): List<Institution>
+    fun count(name: String? = null, country: Country? = null): Long
     fun existsByNameAndCountry(name: String, country: Country): Boolean
 }

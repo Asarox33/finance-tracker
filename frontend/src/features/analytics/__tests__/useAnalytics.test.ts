@@ -72,6 +72,11 @@ describe("usePortfolioValue", () => {
         renderHook(() => usePortfolioValue("USD"));
         expect(apiModule.analyticsApi.portfolioValue).toHaveBeenCalledWith(expect.any(String), "USD");
     });
+
+    it("does not fetch when currency is undefined", () => {
+        renderHook(() => usePortfolioValue(undefined));
+        expect(apiModule.analyticsApi.portfolioValue).not.toHaveBeenCalled();
+    });
 });
 
 describe("usePerformance", () => {

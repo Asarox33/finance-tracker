@@ -34,10 +34,24 @@ class InstitutionRepositoryAdapter(
     override fun findById(id: UUID): Institution? =
         jpaRepo.findById(id).orElse(null)?.toDomain()
 
-    override fun findAll(page: Int, pageSize: Int): List<Institution> =
-        jpaRepo.findAllBy(PageRequest.of(page, pageSize)).content.map { it.toDomain() }
+    override fun findAll(page: Int, pageSize: Int, name: String?, country: Country?): List<Institution> {
+        val pageable = PageRequest.of(page, pageSize)
+        val page = when {
+            name != null && country != null ->
+                jpaRepo.findByNameContainingIgnoreCaseAndCountry(name, country, pageable)
+            name != null -> jpaRepo.findByNameContainingIgnoreCase(name, pageable)
+            country != null -> jpaRepo.findByCountry(country, pageable)
+            else -> jpaRepo.findAllBy(pageable)
+        }
+        return page.content.map { it.toDomain() }
+    }
 
-    override fun count(): Long = jpaRepo.count()
+    override fun count(name: String?, country: Country?): Long = when {
+        name != null && country != null -> jpaRepo.countByNameContainingIgnoreCaseAndCountry(name, country)
+        name != null -> jpaRepo.countByNameContainingIgnoreCase(name)
+        country != null -> jpaRepo.countByCountry(country)
+        else -> jpaRepo.count()
+    }
 
     override fun existsByNameAndCountry(name: String, country: Country): Boolean =
         jpaRepo.existsByNameAndCountry(name, country)

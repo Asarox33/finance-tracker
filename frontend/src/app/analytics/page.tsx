@@ -7,6 +7,7 @@ import {
     usePerformanceAfterInflation,
     usePortfolioValue,
 } from "@/features/analytics/hooks/useAnalytics";
+import { useReferenceCurrency } from "@/shared/hooks/useReferenceCurrency";
 import { Badge, Card, ErrorState, PageHeader, Skeleton } from "@/shared/components/ui";
 import { formatBasisPoints, formatDate, formatMoney } from "@/lib/format";
 import type { PortfolioPerformance } from "@/shared/types";
@@ -21,12 +22,16 @@ const PERIODS = [
 
 export default function AnalyticsPage() {
     const [months, setMonths] = useState(12);
-    const [currency] = useState("EUR");
+    const { referenceCurrency, isLoading: currencyLoading } = useReferenceCurrency();
+    const analyticsCurrency = currencyLoading ? undefined : referenceCurrency;
 
-    const { data: portfolio, isLoading: pvLoading } = usePortfolioValue(currency);
-    const { data: perf, isLoading: perfLoading, error: perfError } = usePerformance(currency, months);
-    const { data: perfFees, isLoading: feesLoading } = usePerformanceAfterFees(currency, months);
-    const { data: perfInflation, isLoading: inflLoading } = usePerformanceAfterInflation(currency, months);
+    const { data: portfolio, isLoading: pvLoading } = usePortfolioValue(analyticsCurrency);
+    const { data: perf, isLoading: perfLoading, error: perfError } = usePerformance(analyticsCurrency, months);
+    const { data: perfFees, isLoading: feesLoading } = usePerformanceAfterFees(analyticsCurrency, months);
+    const { data: perfInflation, isLoading: inflLoading } = usePerformanceAfterInflation(analyticsCurrency, months);
+
+    const valueLoading = currencyLoading || pvLoading;
+    const perfSectionLoading = currencyLoading || perfLoading;
 
     return (
         <div className={styles.page}>
@@ -45,18 +50,18 @@ export default function AnalyticsPage() {
                             </button>
                         ))}
                     </div>
-                    <Badge>{currency}</Badge>
+                    <Badge>{referenceCurrency}</Badge>
                 </div>
 
                 <section aria-label="Portfolio value" className={styles.section}>
                     <h2 className={styles.sectionTitle}>Current Value</h2>
                     <Card className={styles.valueCard}>
-                        {pvLoading ? (
+                        {valueLoading ? (
                             <Skeleton style={{ height: "3rem", width: "200px" }} />
                         ) : (
                             <>
                                 <p className={styles.bigValue}>
-                                    {formatMoney(portfolio?.totalValue ?? 0, portfolio?.currency ?? currency)}
+                                    {formatMoney(portfolio?.totalValue ?? 0, portfolio?.currency ?? referenceCurrency)}
                                 </p>
                                 <p className={styles.valueDate}>as of {formatDate(portfolio?.asOf ?? "")}</p>
                             </>
@@ -67,18 +72,26 @@ export default function AnalyticsPage() {
                 <section aria-label="Performance comparison" className={styles.section}>
                     <h2 className={styles.sectionTitle}>Performance</h2>
                     <div className={styles.perfGrid}>
-                        <PerfCard label="Gross Performance" data={perf} loading={perfLoading} error={!!perfError} />
+                        <PerfCard
+                            label="Gross Performance"
+                            data={perf}
+                            loading={perfSectionLoading}
+                            error={!!perfError}
+                            referenceCurrency={referenceCurrency}
+                        />
                         <PerfCard
                             label="After Fees"
                             data={perfFees}
-                            loading={feesLoading}
+                            loading={currencyLoading || feesLoading}
                             description="Deducting all recorded fees"
+                            referenceCurrency={referenceCurrency}
                         />
                         <PerfCard
                             label="After Inflation"
                             data={perfInflation}
-                            loading={inflLoading}
+                            loading={currencyLoading || inflLoading}
                             description="Real purchasing power gain"
+                            referenceCurrency={referenceCurrency}
                         />
                     </div>
                 </section>
@@ -111,7 +124,7 @@ export default function AnalyticsPage() {
                                                 fontFamily: "var(--font-mono)",
                                             }}
                                         >
-                                            {formatMoney(perf.startValue, currency)}
+                                            {formatMoney(perf.startValue, referenceCurrency)}
                                         </td>
                                         <td
                                             style={{
@@ -119,7 +132,7 @@ export default function AnalyticsPage() {
                                                 fontFamily: "var(--font-mono)",
                                             }}
                                         >
-                                            {perfFees ? formatMoney(perfFees.startValue, currency) : "—"}
+                                            {perfFees ? formatMoney(perfFees.startValue, referenceCurrency) : "—"}
                                         </td>
                                         <td
                                             style={{
@@ -127,7 +140,7 @@ export default function AnalyticsPage() {
                                                 fontFamily: "var(--font-mono)",
                                             }}
                                         >
-                                            {perfInflation ? formatMoney(perfInflation.startValue, currency) : "—"}
+                                            {perfInflation ? formatMoney(perfInflation.startValue, referenceCurrency) : "—"}
                                         </td>
                                     </tr>
                                     <tr>
@@ -138,7 +151,7 @@ export default function AnalyticsPage() {
                                                 fontFamily: "var(--font-mono)",
                                             }}
                                         >
-                                            {formatMoney(perf.endValue, currency)}
+                                            {formatMoney(perf.endValue, referenceCurrency)}
                                         </td>
                                         <td
                                             style={{
@@ -146,7 +159,7 @@ export default function AnalyticsPage() {
                                                 fontFamily: "var(--font-mono)",
                                             }}
                                         >
-                                            {perfFees ? formatMoney(perfFees.endValue, currency) : "—"}
+                                            {perfFees ? formatMoney(perfFees.endValue, referenceCurrency) : "—"}
                                         </td>
                                         <td
                                             style={{
@@ -154,7 +167,7 @@ export default function AnalyticsPage() {
                                                 fontFamily: "var(--font-mono)",
                                             }}
                                         >
-                                            {perfInflation ? formatMoney(perfInflation.endValue, currency) : "—"}
+                                            {perfInflation ? formatMoney(perfInflation.endValue, referenceCurrency) : "—"}
                                         </td>
                                     </tr>
                                     <tr>
@@ -166,7 +179,7 @@ export default function AnalyticsPage() {
                                                 color: perf.gainLoss >= 0 ? "var(--success)" : "var(--danger)",
                                             }}
                                         >
-                                            {formatMoney(perf.gainLoss, currency)}
+                                            {formatMoney(perf.gainLoss, referenceCurrency)}
                                         </td>
                                         <td
                                             style={{
@@ -176,7 +189,7 @@ export default function AnalyticsPage() {
                                                     (perfFees?.gainLoss ?? 0) >= 0 ? "var(--success)" : "var(--danger)",
                                             }}
                                         >
-                                            {perfFees ? formatMoney(perfFees.gainLoss, currency) : "—"}
+                                            {perfFees ? formatMoney(perfFees.gainLoss, referenceCurrency) : "—"}
                                         </td>
                                         <td
                                             style={{
@@ -188,7 +201,7 @@ export default function AnalyticsPage() {
                                                         : "var(--danger)",
                                             }}
                                         >
-                                            {perfInflation ? formatMoney(perfInflation.gainLoss, currency) : "—"}
+                                            {perfInflation ? formatMoney(perfInflation.gainLoss, referenceCurrency) : "—"}
                                         </td>
                                     </tr>
                                     <tr>
@@ -244,12 +257,14 @@ function PerfCard({
     loading,
     error,
     description,
+    referenceCurrency,
 }: {
     label: string;
     data?: PortfolioPerformance;
     loading: boolean;
     error?: boolean;
     description?: string;
+    referenceCurrency: string;
 }) {
     const positive = (data?.gainLossBasisPoints ?? 0) >= 0;
 
@@ -275,7 +290,9 @@ function PerfCard({
                     <p className={`${styles.perfValue} ${positive ? styles.positive : styles.negative}`}>
                         {formatBasisPoints(data?.gainLossBasisPoints ?? 0)}
                     </p>
-                    <p className={styles.perfGain}>{formatMoney(data?.gainLoss ?? 0, data?.currency ?? "EUR")}</p>
+                    <p className={styles.perfGain}>
+                        {formatMoney(data?.gainLoss ?? 0, data?.currency ?? referenceCurrency)}
+                    </p>
                 </>
             )}
         </Card>

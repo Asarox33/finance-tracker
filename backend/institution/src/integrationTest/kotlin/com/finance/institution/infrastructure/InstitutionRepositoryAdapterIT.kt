@@ -58,10 +58,11 @@ class InstitutionRepositoryAdapterIT {
     @Test
     fun savesAndFindsById() {
         val id = UUID.randomUUID()
-        adapter.save(Institution(id, "BNP Paribas", InstitutionType.BANK, Country.FR, "BNPAFRPP", userId))
+        val name = "SaveFind ${UUID.randomUUID()}"
+        adapter.save(Institution(id, name, InstitutionType.BANK, Country.FR, "BNPAFRPP", userId))
         val found = adapter.findById(id)
         assertNotNull(found)
-        assertEquals("BNP Paribas", found!!.name)
+        assertEquals(name, found!!.name)
         assertEquals(userId, found.createdByUserId)
     }
 
@@ -81,5 +82,36 @@ class InstitutionRepositoryAdapterIT {
     fun detectsDuplicateNameAndCountry() {
         adapter.save(Institution(UUID.randomUUID(), "Credit Agricole", InstitutionType.BANK, Country.FR, null, userId))
         assertTrue(adapter.existsByNameAndCountry("Credit Agricole", Country.FR))
+    }
+
+    @Test
+    fun filtersByCountry() {
+        val suffix = UUID.randomUUID().toString().take(8)
+        adapter.save(Institution(UUID.randomUUID(), "Filter FR $suffix", InstitutionType.BANK, Country.FR, null, userId))
+        adapter.save(Institution(UUID.randomUUID(), "Filter DE $suffix", InstitutionType.BANK, Country.DE, null, userId))
+        val result = adapter.findAll(0, 20, name = null, country = Country.DE)
+        assertEquals(1, result.count { it.name == "Filter DE $suffix" })
+        assertTrue(adapter.count(name = null, country = Country.DE) >= 1L)
+    }
+
+    @Test
+    fun filtersByNameSubstringCaseInsensitive() {
+        val suffix = UUID.randomUUID().toString().take(8)
+        val bnpName = "SearchBNP $suffix"
+        adapter.save(Institution(UUID.randomUUID(), bnpName, InstitutionType.BANK, Country.FR, null, userId))
+        adapter.save(Institution(UUID.randomUUID(), "SearchOther $suffix", InstitutionType.BANK, Country.DE, null, userId))
+        val result = adapter.findAll(0, 20, name = "searchbnp", country = null)
+        assertEquals(1, result.count { it.name == bnpName })
+        assertTrue(adapter.count(name = "searchbnp", country = null) >= 1L)
+    }
+
+    @Test
+    fun filtersByNameAndCountry() {
+        val suffix = UUID.randomUUID().toString().take(8)
+        val bnpFr = "ComboBNP FR $suffix"
+        adapter.save(Institution(UUID.randomUUID(), bnpFr, InstitutionType.BANK, Country.FR, null, userId))
+        adapter.save(Institution(UUID.randomUUID(), "ComboBNP US $suffix", InstitutionType.BANK, Country.US, null, userId))
+        val result = adapter.findAll(0, 20, name = "ComboBNP", country = Country.FR)
+        assertEquals(1, result.count { it.name == bnpFr })
     }
 }

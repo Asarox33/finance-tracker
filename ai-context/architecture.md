@@ -207,7 +207,7 @@ Modules never depend on each other's infrastructure layer — only on applicatio
 |---|---|
 | Auth | `POST /api/auth/login`, `POST /api/auth/register`, `POST /api/auth/password-reset/request`, `POST /api/auth/password-reset/confirm` |
 | User Profile | `GET /api/users/me`, `PUT /api/users/me/preferences` |
-| Institutions | `GET /api/institutions`, `GET /api/institutions/:id`, `POST /api/institutions` |
+| Institutions | `GET /api/institutions?page&pageSize&name&country`, `GET /api/institutions/:id`, `POST /api/institutions` |
 | Accounts | `GET /api/accounts`, `GET /api/accounts/:id`, `POST /api/accounts`, `DELETE /api/accounts/:id` |
 | Transactions | `GET /api/transactions?accountId=...`, `GET /api/transactions/:id`, `POST /api/transactions` |
 | Analytics | `GET /api/analytics/portfolio-value`, `GET /api/analytics/performance`, `GET /api/analytics/performance-after-fees`, `GET /api/analytics/performance-after-inflation` |

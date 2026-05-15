@@ -4,13 +4,17 @@ import { useMemo } from "react";
 import { usePerformance, usePortfolioValue } from "@/features/analytics/hooks/useAnalytics";
 import { useAccounts } from "@/features/accounts/hooks/useAccounts";
 import { useInstitutions } from "@/features/institutions/hooks/useInstitutions";
+import { useReferenceCurrency } from "@/shared/hooks/useReferenceCurrency";
 import { Badge, Card, ErrorState, PageHeader, Skeleton } from "@/shared/components/ui";
 import { formatBasisPoints, formatDate, formatMoney, today } from "@/lib/format";
 import styles from "./page.module.css";
 
 export default function DashboardPage() {
-    const { data: portfolio, isLoading: pvLoading, error: pvError } = usePortfolioValue("EUR");
-    const { data: perf, isLoading: perfLoading } = usePerformance("EUR", 12);
+    const { referenceCurrency, isLoading: currencyLoading } = useReferenceCurrency();
+    const analyticsCurrency = currencyLoading ? undefined : referenceCurrency;
+
+    const { data: portfolio, isLoading: pvLoading, error: pvError } = usePortfolioValue(analyticsCurrency);
+    const { data: perf, isLoading: perfLoading } = usePerformance(analyticsCurrency, 12);
     const { data: accounts, isLoading: accLoading } = useAccounts();
     const { data: institutions, isLoading: instLoading } = useInstitutions();
 
@@ -22,7 +26,9 @@ export default function DashboardPage() {
         return new Map(institutions?.items.map((i) => [i.id, i]) ?? []);
     }, [institutions]);
 
-    const breakdownLoading = pvLoading || accLoading || instLoading;
+    const breakdownLoading = currencyLoading || pvLoading || accLoading || instLoading;
+    const kpiLoading = currencyLoading || pvLoading;
+    const perfKpiLoading = currencyLoading || perfLoading;
 
     const gainPositive = (perf?.gainLossBasisPoints ?? 0) >= 0;
 
@@ -34,21 +40,21 @@ export default function DashboardPage() {
                 <section aria-label="Portfolio overview" className={styles.kpis}>
                     <Card className={styles.kpi}>
                         <p className={styles.kpiLabel}>Portfolio Value</p>
-                        {pvLoading ? (
+                        {kpiLoading ? (
                             <Skeleton className={styles.kpiSkel} />
                         ) : pvError ? (
                             <ErrorState message="Could not load portfolio value" />
                         ) : (
                             <p className={styles.kpiValue}>
-                                {formatMoney(portfolio?.totalValue ?? 0, portfolio?.currency ?? "EUR")}
+                                {formatMoney(portfolio?.totalValue ?? 0, portfolio?.currency ?? referenceCurrency)}
                             </p>
                         )}
-                        <p className={styles.kpiSub}>{portfolio?.currency ?? "EUR"} · reference currency</p>
+                        <p className={styles.kpiSub}>{portfolio?.currency ?? referenceCurrency} · reference currency</p>
                     </Card>
 
                     <Card className={styles.kpi}>
                         <p className={styles.kpiLabel}>12-Month Performance</p>
-                        {perfLoading ? (
+                        {perfKpiLoading ? (
                             <Skeleton className={styles.kpiSkel} />
                         ) : (
                             <>
@@ -56,7 +62,7 @@ export default function DashboardPage() {
                                     {formatBasisPoints(perf?.gainLossBasisPoints ?? 0)}
                                 </p>
                                 <p className={styles.kpiSub}>
-                                    {formatMoney(perf?.gainLoss ?? 0, perf?.currency ?? "EUR")} gain/loss
+                                    {formatMoney(perf?.gainLoss ?? 0, perf?.currency ?? referenceCurrency)} gain/loss
                                 </p>
                             </>
                         )}
@@ -95,7 +101,7 @@ export default function DashboardPage() {
                                             Value
                                         </th>
                                         <th scope="col" style={{ textAlign: "right" }}>
-                                            In EUR
+                                            In {referenceCurrency}
                                         </th>
                                     </tr>
                                 </thead>

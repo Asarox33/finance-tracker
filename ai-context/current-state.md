@@ -74,11 +74,11 @@ Features are integrated as vertical slices. Status is **functional** where marke
 | `/login` | Sign-in, locked-account handling |
 | `/login/register` | Registration |
 | `/login/reset` | Password reset (request → OTP + new password → success) |
-| `/dashboard` | Portfolio KPIs, 12-month performance, account breakdown (reference currency **EUR** in code) |
+| `/dashboard` | Portfolio KPIs, 12-month performance, account breakdown (reference currency from profile `preferredCurrency`) |
 | `/accounts` | Account cards, create form, close account; **`useAccounts()` fixed to page 0** — no pagination UI |
 | `/institutions` | List, filters, pagination, create institution (`flag-icons` for country flags) |
 | `/transactions` | Account selector, paginated table, create form; **no date-range UI**; **no asset selector** |
-| `/analytics` | Period presets, performance variants; **currency state fixed to `"EUR"`** (not profile-driven) |
+| `/analytics` | Period presets, performance variants; reference currency from profile `preferredCurrency` |
 | `/profile` | Profile and preferences |
 
 #### Frontend Test Coverage (Jest)

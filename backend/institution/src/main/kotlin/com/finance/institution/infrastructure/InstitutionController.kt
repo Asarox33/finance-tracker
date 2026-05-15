@@ -87,9 +87,11 @@ class InstitutionController(
     @GetMapping
     fun list(
         @RequestParam(defaultValue = "0") page: Int,
-        @RequestParam(defaultValue = "20") pageSize: Int
+        @RequestParam(defaultValue = "20") pageSize: Int,
+        @RequestParam(required = false) name: String?,
+        @RequestParam(required = false) country: Country?
     ): PageResult<InstitutionResponse> {
-        val result = listInstitutions.execute(ListInstitutions.Query(page, pageSize))
+        val result = listInstitutions.execute(ListInstitutions.Query(page, pageSize, name, country))
         return PageResult.of(result.items.map { it.toResponse() }, page, pageSize, result.totalItems)
     }
 
