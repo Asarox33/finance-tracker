@@ -68,6 +68,12 @@ describe("useInstitutions", () => {
         renderHook(() => useInstitutions(2));
         expect(apiModule.institutionsApi.list).toHaveBeenCalledWith(2, 20, undefined, undefined);
     });
+
+    it("calls institutionsApi.list with custom pageSize", () => {
+        (apiModule.institutionsApi.list as jest.Mock).mockResolvedValue(mockPageResult);
+        renderHook(() => useInstitutions(0, undefined, undefined, 200));
+        expect(apiModule.institutionsApi.list).toHaveBeenCalledWith(0, 200, undefined, undefined);
+    });
 });
 
 describe("useInstitution", () => {

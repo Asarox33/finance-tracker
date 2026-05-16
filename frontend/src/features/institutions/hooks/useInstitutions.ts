@@ -3,9 +3,9 @@
 import useSWR from "swr";
 import { institutionsApi } from "../api/institutionsApi";
 
-export function useInstitutions(page = 0, name?: string, country?: string) {
-    const { data, error, isLoading, mutate } = useSWR(["institutions", page, name, country], () =>
-        institutionsApi.list(page, 20, name, country)
+export function useInstitutions(page = 0, name?: string, country?: string, pageSize = 20) {
+    const { data, error, isLoading, mutate } = useSWR(["institutions", page, name, country, pageSize], () =>
+        institutionsApi.list(page, pageSize, name, country)
     );
     return { data, error, isLoading, mutate };
 }

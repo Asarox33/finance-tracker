@@ -1,0 +1,51 @@
+.backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 250;
+    background: rgba(0, 0, 0, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.dialog {
+    width: 100%;
+    max-width: 26rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    box-shadow: var(--shadow-lg);
+}
+
+.title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text);
+    margin: 0 0 0.75rem;
+}
+
+.body {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+    margin: 0 0 1.25rem;
+}
+
+.error {
+    font-size: 0.875rem;
+    color: var(--danger);
+    margin: -0.5rem 0 1rem;
+    padding: 0.5rem 0.75rem;
+    background: var(--danger-dim);
+    border: 1px solid var(--danger);
+    border-radius: var(--radius-sm);
+}
+
+.actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    justify-content: flex-end;
+}
