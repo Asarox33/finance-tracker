@@ -82,6 +82,12 @@ describe("institutionsApi", () => {
         expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining("country=FR"), expect.anything());
     });
 
+    it("lists institutions with type filter", async () => {
+        mockResponse(mockPageResult);
+        await institutionsApi.list(0, 20, undefined, undefined, "BANK");
+        expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining("type=BANK"), expect.anything());
+    });
+
     it("gets a single institution by id", async () => {
         mockResponse(mockInstitution);
         const result = await institutionsApi.get("inst-1");

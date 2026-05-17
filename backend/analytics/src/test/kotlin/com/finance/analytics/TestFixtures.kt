@@ -46,8 +46,9 @@ fun transaction(
     accountId: UUID,
     amount: Long,
     currency: Currency = Currency.EUR,
-    date: LocalDate = LocalDate.of(2024, 1, 15)
-) = TransactionSummary(accountId, amount, currency, date, "DEPOSIT")
+    date: LocalDate = LocalDate.of(2024, 1, 15),
+    type: String = "DEPOSIT"
+) = TransactionSummary(accountId, amount, currency, date, type)
 
 fun fee(
     accountId: UUID,

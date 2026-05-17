@@ -25,6 +25,16 @@ const ACCOUNT_TYPES: AccountType[] = [
     "OTHER",
 ];
 
+const ACCOUNT_TYPE_CLASSES: Record<AccountType, string> = {
+    CHECKING: styles.typeChecking,
+    SAVINGS: styles.typeSavings,
+    BROKERAGE: styles.typeBrokerage,
+    CRYPTO: styles.typeCrypto,
+    REAL_ESTATE: styles.typeRealEstate,
+    RETIREMENT: styles.typeRetirement,
+    OTHER: styles.typeOther,
+};
+
 function getInstitutionDisplay(
     account: Account,
     institutionNameById: Map<string, string>,
@@ -48,7 +58,8 @@ export default function AccountsPage() {
     const { t } = useI18n();
     const [page, setPage] = useState(0);
     const [showClosed, setShowClosed] = useState(false);
-    const { data, isLoading, error, mutate } = useAccounts(page, showClosed);
+    const [typeFilter, setTypeFilter] = useState<AccountType | "">("");
+    const { data, isLoading, error, mutate } = useAccounts(page, showClosed, typeFilter || undefined);
     const {
         data: institutionsPage,
         isLoading: institutionsLoading,
@@ -162,6 +173,27 @@ export default function AccountsPage() {
                 )}
 
                 <div className={styles.toolbar}>
+                    <div className={styles.filters}>
+                        <div className={styles.filterField}>
+                            <label htmlFor="account-type-filter">{t("accounts.type")}</label>
+                            <select
+                                id="account-type-filter"
+                                value={typeFilter}
+                                onChange={(e) => {
+                                    setTypeFilter(e.target.value as AccountType | "");
+                                    setPage(0);
+                                }}
+                                aria-label={t("accounts.filterTypeAria")}
+                            >
+                                <option value="">{t("accounts.allTypes")}</option>
+                                {ACCOUNT_TYPES.map((accountType) => (
+                                    <option key={accountType} value={accountType}>
+                                        {t(`accountType.${accountType}` as TranslationKey)}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
                     <label className={styles.switchControl}>
                         <input
                             type="checkbox"
@@ -444,7 +476,9 @@ function AccountCard({
             <div className={styles.accountHeader}>
                 <div className={styles.accountTitleBlock}>
                     <p className={styles.accountName}>{account.name}</p>
-                    <p className={styles.accountType}>{t(`accountType.${account.type}` as TranslationKey)}</p>
+                    <span className={`${styles.typePill} ${ACCOUNT_TYPE_CLASSES[account.type]}`}>
+                        {t(`accountType.${account.type}` as TranslationKey)}
+                    </span>
                     <p
                         className={institutionLinePending ? styles.institutionPending : styles.institution}
                         aria-label={t("accounts.institution")}
@@ -456,34 +490,37 @@ function AccountCard({
                     {t(`accountStatus.${account.status}` as TranslationKey)}
                 </Badge>
             </div>
-            <div className={styles.accountMeta}>
-                <span className={styles.currency}>{account.currency}</span>
+            <div className={styles.accountFooter}>
+                <div className={styles.accountMeta}>
+                    <span className={styles.currency}>{account.currency}</span>
+                </div>
+                {account.status === "ACTIVE" && (
+                    <div className={styles.accountActions}>
+                        <Button
+                            variant="secondary"
+                            size="sm"
+                            className={styles.closeAction}
+                            onClick={onRequestClose}
+                            aria-label={t("accounts.closeAccountAria", { accountName: account.name })}
+                        >
+                            {t("accounts.closeAccount")}
+                        </Button>
+                    </div>
+                )}
+                {account.status === "CLOSED" && (
+                    <div className={styles.accountActions}>
+                        <Button
+                            variant="secondary"
+                            size="sm"
+                            loading={reactivating}
+                            onClick={onRequestReactivate}
+                            aria-label={t("accounts.reactivateAccountAria", { accountName: account.name })}
+                        >
+                            {t("accounts.reactivateAccount")}
+                        </Button>
+                    </div>
+                )}
             </div>
-            {account.status === "ACTIVE" && (
-                <div className={styles.accountActions}>
-                    <Button
-                        variant="danger"
-                        size="sm"
-                        onClick={onRequestClose}
-                        aria-label={t("accounts.closeAccountAria", { accountName: account.name })}
-                    >
-                        {t("accounts.closeAccount")}
-                    </Button>
-                </div>
-            )}
-            {account.status === "CLOSED" && (
-                <div className={styles.accountActions}>
-                    <Button
-                        variant="secondary"
-                        size="sm"
-                        loading={reactivating}
-                        onClick={onRequestReactivate}
-                        aria-label={t("accounts.reactivateAccountAria", { accountName: account.name })}
-                    >
-                        {t("accounts.reactivateAccount")}
-                    </Button>
-                </div>
-            )}
         </Card>
     );
 }

@@ -1,5 +1,6 @@
 package com.finance.institution.infrastructure
 
+import com.finance.institution.domain.InstitutionType
 import com.finance.shared.Country
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
@@ -16,7 +17,32 @@ interface JpaInstitutionSpringRepository : JpaRepository<JpaInstitutionEntity, U
         country: Country,
         pageable: Pageable
     ): Page<JpaInstitutionEntity>
+    fun findByType(type: InstitutionType, pageable: Pageable): Page<JpaInstitutionEntity>
+    fun findByNameContainingIgnoreCaseAndType(
+        name: String,
+        type: InstitutionType,
+        pageable: Pageable
+    ): Page<JpaInstitutionEntity>
+    fun findByCountryAndType(
+        country: Country,
+        type: InstitutionType,
+        pageable: Pageable
+    ): Page<JpaInstitutionEntity>
+    fun findByNameContainingIgnoreCaseAndCountryAndType(
+        name: String,
+        country: Country,
+        type: InstitutionType,
+        pageable: Pageable
+    ): Page<JpaInstitutionEntity>
     fun countByNameContainingIgnoreCase(name: String): Long
     fun countByCountry(country: Country): Long
     fun countByNameContainingIgnoreCaseAndCountry(name: String, country: Country): Long
+    fun countByType(type: InstitutionType): Long
+    fun countByNameContainingIgnoreCaseAndType(name: String, type: InstitutionType): Long
+    fun countByCountryAndType(country: Country, type: InstitutionType): Long
+    fun countByNameContainingIgnoreCaseAndCountryAndType(
+        name: String,
+        country: Country,
+        type: InstitutionType
+    ): Long
 }

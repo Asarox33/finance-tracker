@@ -71,6 +71,22 @@ describe("accountsApi", () => {
         expect(url).toContain("includeClosed=false");
     });
 
+    it("lists accounts with type query param", async () => {
+        mockResponse({
+            items: [],
+            totalItems: 0,
+            totalPages: 0,
+            page: 0,
+            pageSize: 20,
+            isEmpty: true,
+            isFirst: true,
+            isLast: true,
+        });
+        await accountsApi.list(0, 20, true, "SAVINGS");
+        const url = mockFetch.mock.calls[0][0] as string;
+        expect(url).toContain("type=SAVINGS");
+    });
+
     it("gets a single account", async () => {
         const id = "abc-123";
         mockResponse({

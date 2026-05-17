@@ -3,6 +3,7 @@ package com.finance.account.infrastructure
 import com.finance.account.domain.Account
 import com.finance.account.domain.AccountRepository
 import com.finance.account.domain.AccountStatus
+import com.finance.account.domain.AccountType
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Component
 import java.util.UUID
@@ -33,22 +34,25 @@ class AccountRepositoryAdapter(
     override fun findById(id: UUID): Account? =
         jpaRepo.findById(id).orElse(null)?.toDomain()
 
-    override fun findByUserId(userId: UUID, page: Int, pageSize: Int): List<Account> =
-        jpaRepo.findByUserId(userId, PageRequest.of(page, pageSize)).content.map { it.toDomain() }
+    override fun findByUserId(userId: UUID, page: Int, pageSize: Int, type: AccountType?): List<Account> =
+        jpaRepo.search(userId, status = null, type = type, pageable = PageRequest.of(page, pageSize)).content.map {
+            it.toDomain()
+        }
 
-    override fun countByUserId(userId: UUID): Long =
-        jpaRepo.countByUserId(userId)
+    override fun countByUserId(userId: UUID, type: AccountType?): Long =
+        jpaRepo.countSearch(userId, status = null, type = type)
 
     override fun findByUserIdAndStatus(
         userId: UUID,
         status: AccountStatus,
         page: Int,
-        pageSize: Int
+        pageSize: Int,
+        type: AccountType?
     ): List<Account> =
-        jpaRepo.findByUserIdAndStatus(userId, status, PageRequest.of(page, pageSize)).content.map { it.toDomain() }
+        jpaRepo.search(userId, status, type, PageRequest.of(page, pageSize)).content.map { it.toDomain() }
 
-    override fun countByUserIdAndStatus(userId: UUID, status: AccountStatus): Long =
-        jpaRepo.countByUserIdAndStatus(userId, status)
+    override fun countByUserIdAndStatus(userId: UUID, status: AccountStatus, type: AccountType?): Long =
+        jpaRepo.countSearch(userId, status, type)
 }
 
 private fun JpaAccountEntity.toDomain() = Account(

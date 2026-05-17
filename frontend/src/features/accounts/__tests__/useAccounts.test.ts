@@ -59,19 +59,25 @@ describe("useAccounts", () => {
     it("calls accountsApi.list with default page", () => {
         (apiModule.accountsApi.list as jest.Mock).mockResolvedValue(mockPageResult);
         renderHook(() => useAccounts());
-        expect(apiModule.accountsApi.list).toHaveBeenCalledWith(0, 20, true);
+        expect(apiModule.accountsApi.list).toHaveBeenCalledWith(0, 20, true, undefined);
     });
 
     it("calls accountsApi.list with provided page", () => {
         (apiModule.accountsApi.list as jest.Mock).mockResolvedValue(mockPageResult);
         renderHook(() => useAccounts(2));
-        expect(apiModule.accountsApi.list).toHaveBeenCalledWith(2, 20, true);
+        expect(apiModule.accountsApi.list).toHaveBeenCalledWith(2, 20, true, undefined);
     });
 
     it("calls accountsApi.list with includeClosed flag", () => {
         (apiModule.accountsApi.list as jest.Mock).mockResolvedValue(mockPageResult);
         renderHook(() => useAccounts(0, false));
-        expect(apiModule.accountsApi.list).toHaveBeenCalledWith(0, 20, false);
+        expect(apiModule.accountsApi.list).toHaveBeenCalledWith(0, 20, false, undefined);
+    });
+
+    it("calls accountsApi.list with type filter", () => {
+        (apiModule.accountsApi.list as jest.Mock).mockResolvedValue(mockPageResult);
+        renderHook(() => useAccounts(0, true, "SAVINGS"));
+        expect(apiModule.accountsApi.list).toHaveBeenCalledWith(0, 20, true, "SAVINGS");
     });
 });
 

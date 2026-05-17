@@ -11,14 +11,22 @@ class InMemoryAccountRepository : AccountRepository {
     private val store = mutableMapOf<UUID, Account>()
     override fun save(account: Account): Account { store[account.id] = account; return account }
     override fun findById(id: UUID): Account? = store[id]
-    override fun findByUserId(userId: UUID, page: Int, pageSize: Int): List<Account> =
-        store.values.filter { it.userId == userId }.drop(page * pageSize).take(pageSize)
-    override fun countByUserId(userId: UUID): Long =
-        store.values.count { it.userId == userId }.toLong()
-    override fun findByUserIdAndStatus(userId: UUID, status: AccountStatus, page: Int, pageSize: Int): List<Account> =
-        store.values.filter { it.userId == userId && it.status == status }.drop(page * pageSize).take(pageSize)
-    override fun countByUserIdAndStatus(userId: UUID, status: AccountStatus): Long =
-        store.values.count { it.userId == userId && it.status == status }.toLong()
+    override fun findByUserId(userId: UUID, page: Int, pageSize: Int, type: AccountType?): List<Account> =
+        store.values.filter { it.userId == userId && (type == null || it.type == type) }.drop(page * pageSize).take(pageSize)
+    override fun countByUserId(userId: UUID, type: AccountType?): Long =
+        store.values.count { it.userId == userId && (type == null || it.type == type) }.toLong()
+    override fun findByUserIdAndStatus(
+        userId: UUID,
+        status: AccountStatus,
+        page: Int,
+        pageSize: Int,
+        type: AccountType?
+    ): List<Account> =
+        store.values.filter {
+            it.userId == userId && it.status == status && (type == null || it.type == type)
+        }.drop(page * pageSize).take(pageSize)
+    override fun countByUserIdAndStatus(userId: UUID, status: AccountStatus, type: AccountType?): Long =
+        store.values.count { it.userId == userId && it.status == status && (type == null || it.type == type) }.toLong()
 }
 
 fun testAccount(

@@ -7,6 +7,7 @@ import com.finance.transaction.InMemoryTransactionRepository
 import com.finance.transaction.StubAccountAccessPort
 import com.finance.transaction.accountAccessSummary
 import com.finance.transaction.domain.TransactionType
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -58,9 +59,30 @@ class RecordTransactionTest {
     }
 
     @Test
-    fun acceptsNegativeAmount() {
-        val result = useCase.execute(command(amount = -5000L))
+    fun acceptsNegativeTransferAmount() {
+        val result = useCase.execute(command(type = TransactionType.TRANSFER, amount = -5000L))
         assertNotNull(result.transactionId)
+    }
+
+    @Test
+    fun rejectsNegativeAmountForDirectionalType() {
+        assertThrows(InvalidRequestException::class.java) {
+            useCase.execute(command(type = TransactionType.WITHDRAWAL, amount = -5000L))
+        }
+    }
+
+    @Test
+    fun normalizesWithdrawalAmountAsNegative() {
+        val result = useCase.execute(command(type = TransactionType.WITHDRAWAL, amount = 5000L))
+        val saved = repository.findById(result.transactionId)!!
+        assertEquals(-5000L, saved.amount)
+    }
+
+    @Test
+    fun preservesTransferAmountSign() {
+        val result = useCase.execute(command(type = TransactionType.TRANSFER, amount = -5000L))
+        val saved = repository.findById(result.transactionId)!!
+        assertEquals(-5000L, saved.amount)
     }
 
     @Test
@@ -90,6 +112,7 @@ class RecordTransactionTest {
     private fun command(
         accountId: UUID = this.accountId,
         label: String = "Monthly salary",
+        type: TransactionType = TransactionType.DEPOSIT,
         amount: Long = 10000L,
         appliedFxRate: Long? = null,
         appliedFxRateScale: Int? = null,
@@ -100,7 +123,7 @@ class RecordTransactionTest {
         requestingUserId = userId,
         accountId = accountId,
         assetId = null,
-        type = TransactionType.DEPOSIT,
+        type = type,
         amount = amount,
         currency = Currency.EUR,
         date = LocalDate.of(2024, 1, 15),

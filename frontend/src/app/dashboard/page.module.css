@@ -74,6 +74,71 @@
     height: 3rem;
 }
 
+.entityCell {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.35rem;
+    min-width: 0;
+}
+
+.entityName {
+    font-weight: 500;
+    overflow-wrap: anywhere;
+}
+
+.typePill {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid currentColor;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    line-height: 1;
+    padding: 0.22rem 0.55rem;
+    white-space: nowrap;
+}
+
+.typeChecking,
+.typeBank {
+    background: color-mix(in srgb, #14b8a6 18%, transparent);
+    color: #2dd4bf;
+}
+
+.typeSavings {
+    background: color-mix(in srgb, #22c55e 18%, transparent);
+    color: #4ade80;
+}
+
+.typeBrokerage,
+.typeBroker {
+    background: color-mix(in srgb, #f59e0b 18%, transparent);
+    color: #fbbf24;
+}
+
+.typeCrypto,
+.typeCryptoExchange {
+    background: color-mix(in srgb, #a855f7 18%, transparent);
+    color: #c084fc;
+}
+
+.typeRealEstate {
+    background: color-mix(in srgb, #ef4444 18%, transparent);
+    color: #f87171;
+}
+
+.typeRetirement,
+.typeInsurance {
+    background: color-mix(in srgb, #3b82f6 18%, transparent);
+    color: #60a5fa;
+}
+
+.typeOther {
+    background: color-mix(in srgb, #64748b 20%, transparent);
+    color: #94a3b8;
+}
+
 .onboardingCard {
     max-width: 680px;
 }

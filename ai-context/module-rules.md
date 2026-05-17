@@ -90,7 +90,7 @@
 **Key use cases:** `CreateInstitution`, `GetInstitution`, `ListInstitutions`
 
 **Frontend integration:**
-- **`/institutions`** — list with debounced name/country filters, localized country-name sorted dropdowns, clear-filters action, pagination, shared-repository notice, create form with client validation, and cards showing institution type, readable country, flag, and optional BIC. Feature code lives in `src/features/institutions/` (API + hooks + tests); E2E in `e2e/institutions.spec.ts`.
+- **`/institutions`** — list with debounced name/country/type filters, localized country-name sorted dropdowns, clear-filters action, pagination, shared-repository notice, create form with client validation, and cards showing colored institution type, readable country, flag, and optional BIC. Feature code lives in `src/features/institutions/` (API + hooks + tests); E2E in `e2e/institutions.spec.ts`.
 - Institutions are shared reference data across users. `createdByUserId` is audit metadata, not an ownership boundary for visibility.
 - **Account creation (`/accounts`)** uses a first-page institution picker backed by `useInstitutions(0, undefined, undefined, 200)`. Upgrade to a searchable/paginated picker if institution volume outgrows that cap.
 
@@ -130,14 +130,14 @@
 **Key use cases:** `CreateAccount`, `GetAccount`, `ListUserAccounts`, `CloseAccount`, `ReactivateAccount`
 
 **Frontend integration:**
-- `GET /api/accounts?page=0&pageSize=20&includeClosed=false` → `PageResult<Account>`; displayed as a paginated card grid on `/accounts`
+- `GET /api/accounts?page=0&pageSize=20&includeClosed=false&type=SAVINGS` → `PageResult<Account>`; displayed as a paginated card grid on `/accounts`
 - `POST /api/accounts` → creates account; requires `institutionId`, `name`, `type`, `currency`; the form selects the institution from the institutions API instead of asking for a raw UUID
 - `DELETE /api/accounts/:id` → closes account (204); uses the shared confirmation dialog
 - `POST /api/accounts/:id/reactivate` → reactivates a closed account; exposed when the user enables the show-closed checkbox
-- Account types shown: `CHECKING`, `SAVINGS`, `BROKERAGE`, `CRYPTO`, `REAL_ESTATE`, `RETIREMENT`, `OTHER`
+- Account types shown as colored labels and filter options: `CHECKING`, `SAVINGS`, `BROKERAGE`, `CRYPTO`, `REAL_ESTATE`, `RETIREMENT`, `OTHER`
 - Currency picker uses full ISO 4217 list from `src/lib/currencies.ts`
 - `ACTIVE` accounts are filterable in the transaction page's account selector
-- Dashboard shows a count of active accounts and their breakdown table (via `portfolioValue.snapshots`)
+- Dashboard shows a count of active accounts and a breakdown table (via `portfolioValue.snapshots`) with account and institution type badges under the names.
 
 ---
 
@@ -157,14 +157,16 @@
 
 **Querying:** `ListAccountTransactions` supports optional `from`/`to` date range filtering.
 
+**Amount signs:** Directional transaction types compute with business signs: `DEPOSIT`, `SELL`, `DIVIDEND` are positive; `WITHDRAWAL`, `BUY`, `FEE`, `TAX` are negative; only `TRANSFER` and `OTHER` may be submitted with an explicit negative amount and preserve that sign.
+
 **Frontend integration:**
 - `GET /api/transactions?accountId=...&page=0&pageSize=20&from=YYYY-MM-DD&to=YYYY-MM-DD` → `PageResult<Transaction>`; displayed as a table on `/transactions`
 - `GET /api/transactions/:id` → loads the user-facing transaction details panel
 - Account must be selected from a dropdown; only `ACTIVE` accounts are listed
 - `POST /api/transactions` → body includes `accountId`, `type`, `amount` (minor units), `currency`, `date`, `label`, `notes?`
 - `DELETE /api/transactions/:id` → soft-deletes a transaction after confirmation
-- Amount input accepts decimal (e.g. `100.50`); converted to minor units before sending: `Math.round(float * 10^2)`
-- Negative amounts (for WITHDRAWAL etc.) are allowed — the input's placeholder says "use − for withdrawals"
+- Amount input accepts digits plus one decimal separator (e.g. `100.50`); converted to minor units before sending: `Math.round(float * 10^2)`.
+- `-` is accepted only for `TRANSFER` and `OTHER`; API/use case validation rejects negative amounts for all directional types.
 - Transaction type badge colors: `DEPOSIT`/`DIVIDEND` → success (green), `WITHDRAWAL`/`FEE`/`TAX` → danger (red), `BUY`/`SELL` → warning (yellow), `TRANSFER`/`OTHER` → default (grey)
 - Pagination is implemented (previous/next buttons, page X of Y display)
 

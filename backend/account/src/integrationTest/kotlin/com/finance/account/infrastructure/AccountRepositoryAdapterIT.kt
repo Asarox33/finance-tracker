@@ -75,7 +75,7 @@ class AccountRepositoryAdapterIT {
         val uid = UUID.randomUUID()
         adapter.save(Account(UUID.randomUUID(), uid, institutionId, "Account 1", AccountType.SAVINGS, Currency.EUR, AccountStatus.ACTIVE))
         adapter.save(Account(UUID.randomUUID(), uid, institutionId, "Account 2", AccountType.CHECKING, Currency.EUR, AccountStatus.ACTIVE))
-        val result = adapter.findByUserId(uid, 0, 20)
+        val result = adapter.findByUserId(uid, 0, 20, type = null)
         assertEquals(2, result.size)
     }
 
@@ -83,7 +83,7 @@ class AccountRepositoryAdapterIT {
     fun countsAccountsByUserId() {
         val uid = UUID.randomUUID()
         adapter.save(Account(UUID.randomUUID(), uid, institutionId, "Account", AccountType.CHECKING, Currency.EUR, AccountStatus.ACTIVE))
-        assertEquals(1L, adapter.countByUserId(uid))
+        assertEquals(1L, adapter.countByUserId(uid, type = null))
     }
 
     @Test

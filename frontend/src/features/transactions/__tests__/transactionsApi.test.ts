@@ -144,4 +144,46 @@ describe("transactionsApi", () => {
         expect(body.amount).toBe(10000);
         expect(body.notes).toBe("Monthly salary");
     });
+
+    it("rejects non-integer minor unit amounts on create", async () => {
+        expect(() =>
+            transactionsApi.create({
+                accountId: "acc-1",
+                type: "DEPOSIT",
+                amount: 10.5,
+                currency: "EUR",
+                date: "2024-01-15",
+                label: "Invalid amount",
+            })
+        ).toThrow("non-zero integer");
+        expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it("rejects negative amounts for directional transaction types", async () => {
+        expect(() =>
+            transactionsApi.create({
+                accountId: "acc-1",
+                type: "WITHDRAWAL",
+                amount: -10000,
+                currency: "EUR",
+                date: "2024-01-15",
+                label: "Withdrawal",
+            })
+        ).toThrow("Negative amount");
+        expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it("allows negative amounts for transfer transactions", async () => {
+        mockResponse({ ...mockTransaction, type: "TRANSFER", amount: -10000 }, 201);
+        await transactionsApi.create({
+            accountId: "acc-1",
+            type: "TRANSFER",
+            amount: -10000,
+            currency: "EUR",
+            date: "2024-01-15",
+            label: "Transfer",
+        });
+        const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+        expect(body.amount).toBe(-10000);
+    });
 });

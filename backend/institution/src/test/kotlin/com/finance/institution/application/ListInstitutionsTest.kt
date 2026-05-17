@@ -1,6 +1,7 @@
 package com.finance.institution.application
 
 import com.finance.institution.InMemoryInstitutionRepository
+import com.finance.institution.domain.InstitutionType
 import com.finance.institution.testInstitution
 import com.finance.shared.Country
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -58,6 +59,15 @@ class ListInstitutionsTest {
         val result = useCase.execute(ListInstitutions.Query(country = Country.DE))
         assertEquals(1, result.items.size)
         assertEquals("Deutsche Bank", result.items[0].name)
+    }
+
+    @Test
+    fun filtersByType() {
+        repository.save(testInstitution(id = UUID.randomUUID(), name = "Bank", type = InstitutionType.BANK))
+        repository.save(testInstitution(id = UUID.randomUUID(), name = "Broker", type = InstitutionType.BROKER))
+        val result = useCase.execute(ListInstitutions.Query(type = InstitutionType.BROKER))
+        assertEquals(1, result.items.size)
+        assertEquals(InstitutionType.BROKER, result.items[0].type)
     }
 
     @Test

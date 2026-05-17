@@ -74,7 +74,7 @@ class InstitutionRepositoryAdapterIT {
     @Test
     fun listsInstitutions() {
         adapter.save(Institution(UUID.randomUUID(), "Societe Generale", InstitutionType.BANK, Country.FR, "SOGEFRPP", userId))
-        val result = adapter.findAll(0, 20)
+        val result = adapter.findAll(0, 20, name = null, country = null, type = null)
         assertTrue(result.isNotEmpty())
     }
 
@@ -89,9 +89,9 @@ class InstitutionRepositoryAdapterIT {
         val suffix = UUID.randomUUID().toString().take(8)
         adapter.save(Institution(UUID.randomUUID(), "Filter FR $suffix", InstitutionType.BANK, Country.FR, null, userId))
         adapter.save(Institution(UUID.randomUUID(), "Filter DE $suffix", InstitutionType.BANK, Country.DE, null, userId))
-        val result = adapter.findAll(0, 20, name = null, country = Country.DE)
+        val result = adapter.findAll(0, 20, name = null, country = Country.DE, type = null)
         assertEquals(1, result.count { it.name == "Filter DE $suffix" })
-        assertTrue(adapter.count(name = null, country = Country.DE) >= 1L)
+        assertTrue(adapter.count(name = null, country = Country.DE, type = null) >= 1L)
     }
 
     @Test
@@ -100,9 +100,9 @@ class InstitutionRepositoryAdapterIT {
         val bnpName = "SearchBNP $suffix"
         adapter.save(Institution(UUID.randomUUID(), bnpName, InstitutionType.BANK, Country.FR, null, userId))
         adapter.save(Institution(UUID.randomUUID(), "SearchOther $suffix", InstitutionType.BANK, Country.DE, null, userId))
-        val result = adapter.findAll(0, 20, name = "searchbnp", country = null)
+        val result = adapter.findAll(0, 20, name = "searchbnp", country = null, type = null)
         assertEquals(1, result.count { it.name == bnpName })
-        assertTrue(adapter.count(name = "searchbnp", country = null) >= 1L)
+        assertTrue(adapter.count(name = "searchbnp", country = null, type = null) >= 1L)
     }
 
     @Test
@@ -111,7 +111,7 @@ class InstitutionRepositoryAdapterIT {
         val bnpFr = "ComboBNP FR $suffix"
         adapter.save(Institution(UUID.randomUUID(), bnpFr, InstitutionType.BANK, Country.FR, null, userId))
         adapter.save(Institution(UUID.randomUUID(), "ComboBNP US $suffix", InstitutionType.BANK, Country.US, null, userId))
-        val result = adapter.findAll(0, 20, name = "ComboBNP", country = Country.FR)
+        val result = adapter.findAll(0, 20, name = "ComboBNP", country = Country.FR, type = null)
         assertEquals(1, result.count { it.name == bnpFr })
     }
 }

@@ -38,6 +38,22 @@ class ComputePerformanceTest {
     }
 
     @Test
+    fun appliesTransactionTypeDirectionToPerformance() {
+        val account = account(currency = Currency.EUR)
+        val useCase = ComputePerformance(
+            StubAccountPort(listOf(account)),
+            StubTransactionPort(listOf(
+                transaction(account.id, 100000L, date = LocalDate.of(2023, 12, 1), type = "DEPOSIT"),
+                transaction(account.id, 20000L, date = LocalDate.of(2024, 3, 1), type = "WITHDRAWAL")
+            )),
+            StubFxRatePort()
+        )
+        val result = useCase.execute(ComputePerformance.Query(userId, from, to, Currency.EUR))
+        assertEquals(80000L, result.endValue)
+        assertEquals(-20000L, result.gainLoss)
+    }
+
+    @Test
     fun returnsZeroGainLossWhenNoMovement() {
         val account = account(currency = Currency.EUR)
         val useCase = ComputePerformance(

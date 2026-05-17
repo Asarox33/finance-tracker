@@ -2,6 +2,7 @@ package com.finance.account.application
 
 import com.finance.account.InMemoryAccountRepository
 import com.finance.account.domain.AccountStatus
+import com.finance.account.domain.AccountType
 import com.finance.account.testAccount
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -45,5 +46,15 @@ class ListUserAccountsTest {
         val result = useCase.execute(ListUserAccounts.Query(userId = userId, includeClosed = false))
         assertEquals(1L, result.totalItems)
         assertEquals(AccountStatus.ACTIVE, result.items.single().status)
+    }
+
+    @Test
+    fun filtersByType() {
+        val userId = UUID.randomUUID()
+        repository.save(testAccount(userId = userId, type = AccountType.CHECKING))
+        repository.save(testAccount(userId = userId, type = AccountType.SAVINGS))
+        val result = useCase.execute(ListUserAccounts.Query(userId = userId, type = AccountType.SAVINGS))
+        assertEquals(1L, result.totalItems)
+        assertEquals(AccountType.SAVINGS, result.items.single().type)
     }
 }

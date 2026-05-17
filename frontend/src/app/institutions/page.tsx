@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useInstitutions } from "@/features/institutions/hooks/useInstitutions";
 import { INSTITUTION_TYPES, institutionsApi, type InstitutionType } from "@/features/institutions/api/institutionsApi";
-import { Badge, Button, Card, EmptyState, ErrorState, PageHeader, Skeleton } from "@/shared/components/ui";
+import { Button, Card, EmptyState, ErrorState, PageHeader, Skeleton } from "@/shared/components/ui";
 import { useI18n, type TranslationKey } from "@/shared/i18n";
 import type { Institution } from "@/shared/types";
 import { COUNTRIES } from "@/lib/countries";
@@ -12,29 +12,41 @@ import "flag-icons/css/flag-icons.min.css";
 
 const BIC_PATTERN = /^[A-Z]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/;
 
+const INSTITUTION_TYPE_CLASSES: Record<InstitutionType, string> = {
+    BANK: styles.typeBank,
+    BROKER: styles.typeBroker,
+    INSURANCE: styles.typeInsurance,
+    CRYPTO_EXCHANGE: styles.typeCryptoExchange,
+    OTHER: styles.typeOther,
+};
+
 export default function InstitutionsPage() {
     const { t, locale } = useI18n();
     const [page, setPage] = useState(0);
     const [nameSearch, setNameSearch] = useState("");
     const [countryFilter, setCountryFilter] = useState("");
+    const [typeFilter, setTypeFilter] = useState<InstitutionType | "">("");
     const [showForm, setShowForm] = useState(false);
     const debouncedNameFilter = useDebouncedValue(nameSearch.trim(), 250);
-    const hasActiveFilters = debouncedNameFilter.length > 0 || countryFilter.length > 0;
+    const hasActiveFilters = debouncedNameFilter.length > 0 || countryFilter.length > 0 || typeFilter.length > 0;
     const countries = useLocalizedCountries(locale);
 
     const { data, isLoading, error, mutate } = useInstitutions(
         page,
         debouncedNameFilter || undefined,
-        countryFilter || undefined
+        countryFilter || undefined,
+        20,
+        typeFilter || undefined
     );
 
     useEffect(() => {
         setPage(0);
-    }, [debouncedNameFilter, countryFilter]);
+    }, [debouncedNameFilter, countryFilter, typeFilter]);
 
     function clearFilters() {
         setNameSearch("");
         setCountryFilter("");
+        setTypeFilter("");
         setPage(0);
     }
 
@@ -79,6 +91,22 @@ export default function InstitutionsPage() {
                             {countries.map((c) => (
                                 <option key={c.code} value={c.code}>
                                     {c.name}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                    <div className={styles.filterField}>
+                        <label htmlFor="filter-type">{t("institutions.type")}</label>
+                        <select
+                            id="filter-type"
+                            value={typeFilter}
+                            onChange={(e) => setTypeFilter(e.target.value as InstitutionType | "")}
+                            aria-label={t("institutions.filterTypeAria")}
+                        >
+                            <option value="">{t("institutions.allTypes")}</option>
+                            {INSTITUTION_TYPES.map((institutionType) => (
+                                <option key={institutionType.value} value={institutionType.value}>
+                                    {t(`institutionType.${institutionType.value}` as TranslationKey)}
                                 </option>
                             ))}
                         </select>
@@ -332,7 +360,13 @@ function InstitutionCard({ institution }: { institution: Institution }) {
                         {countryName}
                     </p>
                 </div>
-                <Badge>{t(`institutionType.${institution.type}` as TranslationKey)}</Badge>
+                <span
+                    className={`${styles.typePill} ${
+                        INSTITUTION_TYPE_CLASSES[institution.type as InstitutionType] ?? styles.typeOther
+                    }`}
+                >
+                    {t(`institutionType.${institution.type}` as TranslationKey)}
+                </span>
             </div>
 
             <div className={styles.cardMeta}>

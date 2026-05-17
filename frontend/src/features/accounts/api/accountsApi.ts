@@ -1,9 +1,16 @@
 import { http } from "@/lib/http";
-import type { Account, PageResult } from "@/shared/types";
+import type { Account, AccountType, PageResult } from "@/shared/types";
 
 export const accountsApi = {
-    list: (page = 0, pageSize = 20, includeClosed = true) =>
-        http.get<PageResult<Account>>(`/accounts?page=${page}&pageSize=${pageSize}&includeClosed=${includeClosed}`),
+    list: (page = 0, pageSize = 20, includeClosed = true, type?: AccountType) => {
+        const params = new URLSearchParams({
+            page: String(page),
+            pageSize: String(pageSize),
+            includeClosed: String(includeClosed),
+        });
+        if (type) params.set("type", type);
+        return http.get<PageResult<Account>>(`/accounts?${params}`);
+    },
 
     get: (id: string) => http.get<Account>(`/accounts/${id}`),
 

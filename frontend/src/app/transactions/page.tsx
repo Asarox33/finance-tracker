@@ -34,6 +34,40 @@ const TYPE_VARIANTS: Record<string, "success" | "danger" | "warning" | "default"
     OTHER: "default",
 };
 
+const INFLOW_TYPES: TransactionType[] = ["DEPOSIT", "SELL", "DIVIDEND"];
+const OUTFLOW_TYPES: TransactionType[] = ["WITHDRAWAL", "BUY", "FEE", "TAX"];
+const EXPLICIT_SIGN_TYPES: TransactionType[] = ["TRANSFER", "OTHER"];
+
+function signedTransactionAmount(tx: Pick<Transaction, "type" | "amount">): number {
+    if (INFLOW_TYPES.includes(tx.type)) return Math.abs(tx.amount);
+    if (OUTFLOW_TYPES.includes(tx.type)) return -Math.abs(tx.amount);
+    return tx.amount;
+}
+
+function sanitizeAmountInput(value: string, type: TransactionType): string {
+    const negativeAllowed = EXPLICIT_SIGN_TYPES.includes(type);
+    const normalized = value.replace(",", ".");
+    let result = "";
+    let hasSeparator = false;
+
+    for (const char of normalized) {
+        if (char >= "0" && char <= "9") {
+            result += char;
+            continue;
+        }
+        if (char === "." && !hasSeparator) {
+            result += char;
+            hasSeparator = true;
+            continue;
+        }
+        if (char === "-" && negativeAllowed && result.length === 0) {
+            result += char;
+        }
+    }
+
+    return result;
+}
+
 export default function TransactionsPage() {
     const { t } = useI18n();
     const { data: accounts } = useAccounts();
@@ -306,7 +340,7 @@ function AddTransactionForm({
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
-        const amountFloat = parseFloat(amount);
+        const amountFloat = Number(amount);
         if (isNaN(amountFloat) || amountFloat === 0) {
             setError(t("transactions.amountValidationError"));
             return;
@@ -349,7 +383,11 @@ function AddTransactionForm({
                         <select
                             id="tx-type"
                             value={type}
-                            onChange={(e) => setType(e.target.value as TransactionType)}
+                            onChange={(e) => {
+                                const nextType = e.target.value as TransactionType;
+                                setType(nextType);
+                                setAmount((current) => sanitizeAmountInput(current, nextType));
+                            }}
                             disabled={loading}
                         >
                             {TRANSACTION_TYPES.map((transactionType) => (
@@ -375,12 +413,12 @@ function AddTransactionForm({
                         </label>
                         <input
                             id="tx-amount"
-                            type="number"
-                            step="0.01"
+                            type="text"
+                            inputMode="decimal"
                             required
                             aria-required="true"
                             value={amount}
-                            onChange={(e) => setAmount(e.target.value)}
+                            onChange={(e) => setAmount(sanitizeAmountInput(e.target.value, type))}
                             placeholder={t("transactions.amountPlaceholder")}
                             disabled={loading}
                             style={{ fontFamily: "var(--font-mono)" }}
@@ -414,7 +452,7 @@ function AddTransactionForm({
                         />
                     </div>
 
-                    <div className={styles.field} style={{ gridColumn: "1 / -1" }}>
+                    <div className={`${styles.field} ${styles.fieldWide}`}>
                         <label htmlFor="tx-notes">
                             {t("transactions.notes")}{" "}
                             <span
@@ -476,7 +514,7 @@ function TransactionDetail({ tx, onClose, onDelete }: { tx: Transaction; onClose
                 </div>
                 <div>
                     <dt>{t("transactions.amount")}</dt>
-                    <dd>{formatMoney(tx.amount, tx.currency)}</dd>
+                    <dd>{formatMoney(signedTransactionAmount(tx), tx.currency)}</dd>
                 </div>
                 <div>
                     <dt>{t("transactions.asset")}</dt>
@@ -521,7 +559,8 @@ function TransactionRow({
     onViewDetails: () => void;
     onDelete: () => void;
 }) {
-    const positive = ["DEPOSIT", "DIVIDEND", "SELL"].includes(tx.type);
+    const signedAmount = signedTransactionAmount(tx);
+    const positive = signedAmount >= 0;
     const { formatDate, formatMoney } = useFormatters();
     const { t } = useI18n();
 
@@ -578,7 +617,7 @@ function TransactionRow({
                     }}
                 >
                     {positive ? "+" : ""}
-                    {formatMoney(tx.amount, tx.currency)}
+                    {formatMoney(signedAmount, tx.currency)}
                 </span>
             </td>
             <td>

@@ -28,13 +28,13 @@ class ComputePerformance(
 
         val startValue = accounts.sumOf { account ->
             val txs = transactionPort.findByAccountId(query.userId, account.id, LocalDate.MIN, query.from)
-            val value = txs.sumOf { it.amount }
+            val value = txs.sumOf { it.signedAmount() }
             convertToRef(value, account.currency, query.referenceCurrency, query.from)
         }
 
         val endValue = accounts.sumOf { account ->
             val txs = transactionPort.findByAccountId(query.userId, account.id, LocalDate.MIN, query.to)
-            val value = txs.sumOf { it.amount }
+            val value = txs.sumOf { it.signedAmount() }
             convertToRef(value, account.currency, query.referenceCurrency, query.to)
         }
 

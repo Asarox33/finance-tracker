@@ -102,14 +102,16 @@ class AccountController(
         @AuthenticationPrincipal userId: String,
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "20") pageSize: Int,
-        @RequestParam(defaultValue = "true") includeClosed: Boolean
+        @RequestParam(defaultValue = "true") includeClosed: Boolean,
+        @RequestParam(required = false) type: AccountType?
     ): PageResult<AccountResponse> {
         val result = listUserAccounts.execute(
             ListUserAccounts.Query(
                 userId = UUID.fromString(userId),
                 page = page,
                 pageSize = pageSize,
-                includeClosed = includeClosed
+                includeClosed = includeClosed,
+                type = type
             )
         )
         return PageResult.of(result.items.map { it.toResponse() }, page, pageSize, result.totalItems)

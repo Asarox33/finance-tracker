@@ -48,31 +48,37 @@ describe("useInstitutions", () => {
     it("calls institutionsApi.list with default params", () => {
         (apiModule.institutionsApi.list as jest.Mock).mockResolvedValue(mockPageResult);
         renderHook(() => useInstitutions());
-        expect(apiModule.institutionsApi.list).toHaveBeenCalledWith(0, 20, undefined, undefined);
+        expect(apiModule.institutionsApi.list).toHaveBeenCalledWith(0, 20, undefined, undefined, undefined);
     });
 
     it("calls institutionsApi.list with name filter", () => {
         (apiModule.institutionsApi.list as jest.Mock).mockResolvedValue(mockPageResult);
         renderHook(() => useInstitutions(0, "BNP"));
-        expect(apiModule.institutionsApi.list).toHaveBeenCalledWith(0, 20, "BNP", undefined);
+        expect(apiModule.institutionsApi.list).toHaveBeenCalledWith(0, 20, "BNP", undefined, undefined);
     });
 
     it("calls institutionsApi.list with country filter", () => {
         (apiModule.institutionsApi.list as jest.Mock).mockResolvedValue(mockPageResult);
         renderHook(() => useInstitutions(0, undefined, "FR"));
-        expect(apiModule.institutionsApi.list).toHaveBeenCalledWith(0, 20, undefined, "FR");
+        expect(apiModule.institutionsApi.list).toHaveBeenCalledWith(0, 20, undefined, "FR", undefined);
     });
 
     it("calls institutionsApi.list with page param", () => {
         (apiModule.institutionsApi.list as jest.Mock).mockResolvedValue(mockPageResult);
         renderHook(() => useInstitutions(2));
-        expect(apiModule.institutionsApi.list).toHaveBeenCalledWith(2, 20, undefined, undefined);
+        expect(apiModule.institutionsApi.list).toHaveBeenCalledWith(2, 20, undefined, undefined, undefined);
     });
 
     it("calls institutionsApi.list with custom pageSize", () => {
         (apiModule.institutionsApi.list as jest.Mock).mockResolvedValue(mockPageResult);
         renderHook(() => useInstitutions(0, undefined, undefined, 200));
-        expect(apiModule.institutionsApi.list).toHaveBeenCalledWith(0, 200, undefined, undefined);
+        expect(apiModule.institutionsApi.list).toHaveBeenCalledWith(0, 200, undefined, undefined, undefined);
+    });
+
+    it("calls institutionsApi.list with type filter", () => {
+        (apiModule.institutionsApi.list as jest.Mock).mockResolvedValue(mockPageResult);
+        renderHook(() => useInstitutions(0, undefined, undefined, 20, "BANK"));
+        expect(apiModule.institutionsApi.list).toHaveBeenCalledWith(0, 20, undefined, undefined, "BANK");
     });
 });
 

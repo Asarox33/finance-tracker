@@ -6,6 +6,8 @@ import com.finance.shared.error.NotFoundException
 import com.finance.transaction.domain.Transaction
 import com.finance.transaction.domain.TransactionRepository
 import com.finance.transaction.domain.TransactionType
+import com.finance.transaction.domain.allowsExplicitNegativeAmount
+import com.finance.transaction.domain.signedAmount
 import com.finance.transaction.domain.ports.AccountAccessPort
 import java.time.LocalDate
 import java.util.UUID
@@ -36,6 +38,9 @@ class RecordTransaction(
     fun execute(command: Command): Result {
         if (command.label.isBlank()) throw InvalidRequestException("Transaction label must not be blank")
         if (command.amount == 0L) throw InvalidRequestException("Transaction amount must not be zero")
+        if (command.amount < 0L && !command.type.allowsExplicitNegativeAmount()) {
+            throw InvalidRequestException("Negative amount is only allowed for TRANSFER or OTHER transactions")
+        }
         val account = accountAccessPort.findAccountForUser(command.accountId, command.requestingUserId)
             ?: throw NotFoundException("Account not found: ${command.accountId}")
         if (!account.active) throw InvalidRequestException("Cannot record transactions for a closed account")
@@ -57,7 +62,7 @@ class RecordTransaction(
             accountId = command.accountId,
             assetId = command.assetId,
             type = command.type,
-            amount = command.amount,
+            amount = command.type.signedAmount(command.amount),
             currency = command.currency,
             date = command.date,
             label = command.label,

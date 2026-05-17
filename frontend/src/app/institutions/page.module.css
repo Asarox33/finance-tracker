@@ -111,6 +111,13 @@
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
+    min-height: 7.5rem;
+    transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.institutionCard:hover {
+    border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+    box-shadow: var(--card-hover-shadow);
 }
 
 .cardHeader {
@@ -123,6 +130,44 @@
 .cardName {
     font-weight: 500;
     font-size: 1rem;
+}
+
+.typePill {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid currentColor;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    line-height: 1;
+    padding: 0.25rem 0.6rem;
+    white-space: nowrap;
+}
+
+.typeBank {
+    background: color-mix(in srgb, #14b8a6 18%, transparent);
+    color: #2dd4bf;
+}
+
+.typeBroker {
+    background: color-mix(in srgb, #f59e0b 18%, transparent);
+    color: #fbbf24;
+}
+
+.typeInsurance {
+    background: color-mix(in srgb, #3b82f6 18%, transparent);
+    color: #60a5fa;
+}
+
+.typeCryptoExchange {
+    background: color-mix(in srgb, #a855f7 18%, transparent);
+    color: #c084fc;
+}
+
+.typeOther {
+    background: color-mix(in srgb, #64748b 20%, transparent);
+    color: #94a3b8;
 }
 
 .countryLine {
@@ -139,6 +184,8 @@
     gap: 0.75rem;
     align-items: center;
     flex-wrap: wrap;
+    min-height: 1.55rem;
+    margin-top: auto;
 }
 
 .bic {

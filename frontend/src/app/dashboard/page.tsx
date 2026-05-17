@@ -7,9 +7,28 @@ import { useAccounts } from "@/features/accounts/hooks/useAccounts";
 import { useInstitutions } from "@/features/institutions/hooks/useInstitutions";
 import { useReferenceCurrency } from "@/shared/hooks/useReferenceCurrency";
 import { Badge, Card, ErrorState, PageHeader, Skeleton } from "@/shared/components/ui";
-import { useFormatters, useI18n } from "@/shared/i18n";
+import { useFormatters, useI18n, type TranslationKey } from "@/shared/i18n";
+import type { AccountType } from "@/shared/types";
 import { formatBasisPoints, today } from "@/lib/format";
 import styles from "./page.module.css";
+
+const ACCOUNT_TYPE_CLASSES: Record<AccountType, string> = {
+    CHECKING: styles.typeChecking,
+    SAVINGS: styles.typeSavings,
+    BROKERAGE: styles.typeBrokerage,
+    CRYPTO: styles.typeCrypto,
+    REAL_ESTATE: styles.typeRealEstate,
+    RETIREMENT: styles.typeRetirement,
+    OTHER: styles.typeOther,
+};
+
+const INSTITUTION_TYPE_CLASSES: Record<string, string> = {
+    BANK: styles.typeBank,
+    BROKER: styles.typeBroker,
+    INSURANCE: styles.typeInsurance,
+    CRYPTO_EXCHANGE: styles.typeCryptoExchange,
+    OTHER: styles.typeOther,
+};
 
 export default function DashboardPage() {
     const { referenceCurrency, isLoading: currencyLoading } = useReferenceCurrency();
@@ -149,8 +168,37 @@ export default function DashboardPage() {
                                             : undefined;
                                         return (
                                             <tr key={snap.accountId}>
-                                                <td>{account?.name ?? "—"}</td>
-                                                <td>{institution?.name ?? "—"}</td>
+                                                <td>
+                                                    <div className={styles.entityCell}>
+                                                        <span className={styles.entityName}>{account?.name ?? "—"}</span>
+                                                        {account && (
+                                                            <span
+                                                                className={`${styles.typePill} ${
+                                                                    ACCOUNT_TYPE_CLASSES[account.type]
+                                                                }`}
+                                                            >
+                                                                {t(`accountType.${account.type}` as TranslationKey)}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div className={styles.entityCell}>
+                                                        <span className={styles.entityName}>
+                                                            {institution?.name ?? "—"}
+                                                        </span>
+                                                        {institution && (
+                                                            <span
+                                                                className={`${styles.typePill} ${
+                                                                    INSTITUTION_TYPE_CLASSES[institution.type] ??
+                                                                    styles.typeOther
+                                                                }`}
+                                                            >
+                                                                {t(`institutionType.${institution.type}` as TranslationKey)}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </td>
                                                 <td>
                                                     <Badge>{snap.currency}</Badge>
                                                 </td>

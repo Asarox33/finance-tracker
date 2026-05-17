@@ -215,8 +215,8 @@ Modules never depend on each other's infrastructure layer — only on applicatio
 |---|---|
 | Auth | `POST /api/auth/login`, `POST /api/auth/register`, `POST /api/auth/refresh` (internal session refresh), `POST /api/auth/logout`, `POST /api/auth/password-reset/request`, `POST /api/auth/password-reset/confirm` |
 | User Profile | `GET /api/users/me`, `PUT /api/users/me/preferences` (includes preferred currency and display language) |
-| Institutions | `GET /api/institutions?page&pageSize&name&country`, `GET /api/institutions/:id`, `POST /api/institutions` |
-| Accounts | `GET /api/accounts?includeClosed=...`, `GET /api/accounts/:id`, `POST /api/accounts`, `DELETE /api/accounts/:id`, `POST /api/accounts/:id/reactivate` |
+| Institutions | `GET /api/institutions?page&pageSize&name&country&type`, `GET /api/institutions/:id`, `POST /api/institutions` |
+| Accounts | `GET /api/accounts?page&pageSize&includeClosed&type`, `GET /api/accounts/:id`, `POST /api/accounts`, `DELETE /api/accounts/:id`, `POST /api/accounts/:id/reactivate` |
 | Transactions | `GET /api/transactions?accountId=...&from=...&to=...`, `GET /api/transactions/:id`, `POST /api/transactions`, `DELETE /api/transactions/:id` (soft delete) |
 | Analytics | `GET /api/analytics/portfolio-value`, `GET /api/analytics/performance`, `GET /api/analytics/performance-after-fees`, `GET /api/analytics/performance-after-inflation` |
 

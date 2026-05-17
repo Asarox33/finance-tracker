@@ -1,28 +1,29 @@
 @import url("https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap");
 
 :root {
-    --bg: #0a0a0f;
-    --surface: #13131a;
-    --surface-2: #1c1c27;
-    --border: #2a2a3d;
-    --border-subtle: #1e1e2e;
-    --text: #e8e8f0;
-    --text-muted: #6b6b8a;
-    --text-dim: #3d3d55;
-    --accent: #7c6aff;
-    --accent-hover: #9580ff;
-    --accent-dim: rgba(124, 106, 255, 0.12);
-    --success: #34d399;
-    --success-dim: rgba(52, 211, 153, 0.12);
-    --danger: #f87171;
-    --danger-dim: rgba(248, 113, 113, 0.12);
+    --bg: #090d18;
+    --surface: #111827;
+    --surface-2: #1b2540;
+    --border: #2a3654;
+    --border-subtle: #1d2942;
+    --text: #edf3ff;
+    --text-muted: #9aa8c2;
+    --text-dim: #5f6e8b;
+    --accent: #8b8cff;
+    --accent-hover: #a4a6ff;
+    --accent-dim: rgba(139, 140, 255, 0.15);
+    --success: #5ee6a8;
+    --success-dim: rgba(94, 230, 168, 0.13);
+    --danger: #ff7b8f;
+    --danger-dim: rgba(255, 123, 143, 0.13);
     --warning: #fbbf24;
-    --warning-dim: rgba(251, 191, 36, 0.12);
+    --warning-dim: rgba(251, 191, 36, 0.13);
     --radius: 10px;
     --radius-sm: 6px;
     --radius-lg: 16px;
-    --shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
-    --shadow-lg: 0 8px 48px rgba(0, 0, 0, 0.6);
+    --shadow: 0 4px 24px rgba(0, 0, 0, 0.36);
+    --shadow-lg: 0 8px 48px rgba(0, 0, 0, 0.54);
+    --card-hover-shadow: 0 10px 28px rgba(139, 140, 255, 0.18), 0 24px 60px rgba(80, 140, 255, 0.14);
     --font-display: "DM Serif Display", Georgia, serif;
     --font-body: "DM Sans", system-ui, sans-serif;
     --font-mono: "DM Mono", "Courier New", monospace;
@@ -30,25 +31,26 @@
 }
 
 [data-theme="light"] {
-    --bg: #f4f4f8;
-    --surface: #ffffff;
-    --surface-2: #f0f0f5;
-    --border: #d8d8e8;
-    --border-subtle: #e8e8f0;
-    --text: #1a1a2e;
-    --text-muted: #6b6b8a;
-    --text-dim: #b0b0c8;
-    --accent: #6255e0;
-    --accent-hover: #7c6aff;
-    --accent-dim: rgba(98, 85, 224, 0.1);
-    --success: #059669;
-    --success-dim: rgba(5, 150, 105, 0.1);
-    --danger: #dc2626;
-    --danger-dim: rgba(220, 38, 38, 0.1);
-    --warning: #d97706;
-    --warning-dim: rgba(217, 119, 6, 0.1);
-    --shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
-    --shadow-lg: 0 8px 48px rgba(0, 0, 0, 0.12);
+    --bg: #e9e1d2;
+    --surface: #f6f0e6;
+    --surface-2: #ded3c0;
+    --border: #bfae95;
+    --border-subtle: #d3c5b1;
+    --text: #201a14;
+    --text-muted: #66594a;
+    --text-dim: #9a8b79;
+    --accent: #6f5be8;
+    --accent-hover: #8471f2;
+    --accent-dim: rgba(111, 91, 232, 0.12);
+    --success: #177245;
+    --success-dim: rgba(23, 114, 69, 0.12);
+    --danger: #a33a2b;
+    --danger-dim: rgba(163, 58, 43, 0.11);
+    --warning: #9a5b14;
+    --warning-dim: rgba(154, 91, 20, 0.13);
+    --shadow: 0 10px 30px rgba(52, 40, 26, 0.12);
+    --shadow-lg: 0 18px 60px rgba(52, 40, 26, 0.18);
+    --card-hover-shadow: 0 10px 28px rgba(111, 91, 232, 0.1), 0 24px 60px rgba(52, 40, 26, 0.14);
 }
 
 *,

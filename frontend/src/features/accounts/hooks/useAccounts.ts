@@ -2,10 +2,11 @@
 
 import useSWR from "swr";
 import { accountsApi } from "../api/accountsApi";
+import type { AccountType } from "@/shared/types";
 
-export function useAccounts(page = 0, includeClosed = true) {
-    const { data, error, isLoading, mutate } = useSWR(["accounts", page, includeClosed], () =>
-        accountsApi.list(page, 20, includeClosed)
+export function useAccounts(page = 0, includeClosed = true, type?: AccountType) {
+    const { data, error, isLoading, mutate } = useSWR(["accounts", page, includeClosed, type], () =>
+        accountsApi.list(page, 20, includeClosed, type)
     );
     return { data, error, isLoading, mutate };
 }

@@ -47,6 +47,24 @@ class ComputePortfolioValueTest {
     }
 
     @Test
+    fun appliesTransactionTypeDirectionToPortfolioValue() {
+        val account = account(currency = Currency.EUR)
+        val useCase = ComputePortfolioValue(
+            StubAccountPort(listOf(account)),
+            StubTransactionPort(listOf(
+                transaction(account.id, 100000L, type = "DEPOSIT"),
+                transaction(account.id, 20000L, type = "WITHDRAWAL"),
+                transaction(account.id, -5000L, type = "FEE")
+            )),
+            StubFxRatePort()
+        )
+        val result = useCase.execute(ComputePortfolioValue.Query(
+            java.util.UUID.randomUUID(), asOf, Currency.EUR
+        ))
+        assertEquals(75000L, result.totalValue)
+    }
+
+    @Test
     fun convertsForeignCurrencyAccountUsingFxRate() {
         val account = account(currency = Currency.USD)
         val useCase = ComputePortfolioValue(

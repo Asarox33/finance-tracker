@@ -12,13 +12,14 @@ export const INSTITUTION_TYPES: { value: InstitutionType; label: string }[] = [
 ];
 
 export const institutionsApi = {
-    list: (page = 0, pageSize = 20, name?: string, country?: string) => {
+    list: (page = 0, pageSize = 20, name?: string, country?: string, type?: InstitutionType) => {
         const params = new URLSearchParams({
             page: String(page),
             pageSize: String(pageSize),
         });
         if (name) params.set("name", name);
         if (country) params.set("country", country);
+        if (type) params.set("type", type);
         return http.get<PageResult<Institution>>(`/institutions?${params}`);
     },
 
