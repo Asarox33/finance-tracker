@@ -74,7 +74,7 @@ Features are integrated as vertical slices. Status is **functional** where marke
 | `/login` | Sign-in, locked-account handling |
 | `/login/register` | Registration |
 | `/login/reset` | Password reset (request → OTP + new password → success) |
-| `/dashboard` | Portfolio KPIs, 12-month performance, account breakdown with account/institution type badges, and contextual getting-started checklist while setup is incomplete (reference currency from profile `preferredCurrency`) |
+| `/dashboard` | Portfolio KPIs, 12-month performance, account breakdown with account/institution type badges and formatted currency values, and contextual getting-started checklist while setup is incomplete (reference currency from profile `preferredCurrency`) |
 | `/accounts` | Account cards with colored type labels, type filter, create form with institution picker, close/reactivate account, show-closed toggle, pagination |
 | `/institutions` | Debounced list filters, type filter, localized country-name sorted dropdowns, clear filters, pagination, shared-repository notice, create institution with client validation, colored type/country cards (`flag-icons` for country flags) |
 | `/transactions` | Account selector, date-range filters, paginated table, create form, detail view, soft-delete action; transaction signs follow operation type for deposits/withdrawals/buys/sells/fees/taxes; **no asset selector** |

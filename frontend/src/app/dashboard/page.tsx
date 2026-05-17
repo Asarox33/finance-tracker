@@ -6,7 +6,7 @@ import { usePerformance, usePortfolioValue } from "@/features/analytics/hooks/us
 import { useAccounts } from "@/features/accounts/hooks/useAccounts";
 import { useInstitutions } from "@/features/institutions/hooks/useInstitutions";
 import { useReferenceCurrency } from "@/shared/hooks/useReferenceCurrency";
-import { Badge, Card, ErrorState, PageHeader, Skeleton } from "@/shared/components/ui";
+import { Card, ErrorState, PageHeader, Skeleton } from "@/shared/components/ui";
 import { useFormatters, useI18n, type TranslationKey } from "@/shared/i18n";
 import type { AccountType } from "@/shared/types";
 import { formatBasisPoints, today } from "@/lib/format";
@@ -151,7 +151,6 @@ export default function DashboardPage() {
                                     <tr>
                                         <th scope="col">{t("dashboard.account")}</th>
                                         <th scope="col">{t("dashboard.institution")}</th>
-                                        <th scope="col">{t("dashboard.currency")}</th>
                                         <th scope="col" style={{ textAlign: "right" }}>
                                             {t("dashboard.value")}
                                         </th>
@@ -198,9 +197,6 @@ export default function DashboardPage() {
                                                             </span>
                                                         )}
                                                     </div>
-                                                </td>
-                                                <td>
-                                                    <Badge>{snap.currency}</Badge>
                                                 </td>
                                                 <td
                                                     style={{
