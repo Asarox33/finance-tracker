@@ -4,12 +4,14 @@ import { useState } from "react";
 import { useInstitutions } from "@/features/institutions/hooks/useInstitutions";
 import { INSTITUTION_TYPES, institutionsApi, type InstitutionType } from "@/features/institutions/api/institutionsApi";
 import { Button, Card, EmptyState, ErrorState, PageHeader, Skeleton } from "@/shared/components/ui";
+import { useI18n, type TranslationKey } from "@/shared/i18n";
 import type { Institution } from "@/shared/types";
 import { COUNTRIES } from "@/lib/countries";
 import styles from "./page.module.css";
 import "flag-icons/css/flag-icons.min.css";
 
 export default function InstitutionsPage() {
+    const { t, locale } = useI18n();
     const [page, setPage] = useState(0);
     const [nameFilter, setNameFilter] = useState("");
     const [countryFilter, setCountryFilter] = useState("");
@@ -28,18 +30,18 @@ export default function InstitutionsPage() {
     return (
         <div className={styles.page}>
             <PageHeader
-                title="Institutions"
-                description="Manage financial institutions"
+                title={t("institutions.title")}
+                description={t("institutions.description")}
                 action={
                     <Button variant="primary" onClick={() => setShowForm(true)}>
-                        + New institution
+                        {t("institutions.new")}
                     </Button>
                 }
             />
             <div className={styles.body}>
-                <div className={styles.toolbar} role="search" aria-label="Filter institutions">
+                <div className={styles.toolbar} role="search" aria-label={t("institutions.filterAria")}>
                     <div className={styles.filterField}>
-                        <label htmlFor="filter-name">Search by name</label>
+                        <label htmlFor="filter-name">{t("institutions.searchByName")}</label>
                         <input
                             id="filter-name"
                             type="search"
@@ -48,12 +50,12 @@ export default function InstitutionsPage() {
                                 setNameFilter(e.target.value);
                                 handleFilterChange();
                             }}
-                            placeholder="e.g. BNP Paribas"
-                            aria-label="Filter by institution name"
+                            placeholder={t("institutions.searchPlaceholder")}
+                            aria-label={t("institutions.filterNameAria")}
                         />
                     </div>
                     <div className={styles.filterField}>
-                        <label htmlFor="filter-country">Country</label>
+                        <label htmlFor="filter-country">{t("institutions.country")}</label>
                         <select
                             id="filter-country"
                             value={countryFilter}
@@ -61,12 +63,12 @@ export default function InstitutionsPage() {
                                 setCountryFilter(e.target.value);
                                 handleFilterChange();
                             }}
-                            aria-label="Filter by country"
+                            aria-label={t("institutions.filterCountryAria")}
                         >
-                            <option value="">All countries</option>
+                            <option value="">{t("institutions.allCountries")}</option>
                             {COUNTRIES.map((c) => (
                                 <option key={c.code} value={c.code}>
-                                    {c.name}
+                                    {formatCountryName(c.code, locale, c.name)}
                                 </option>
                             ))}
                         </select>
@@ -84,24 +86,24 @@ export default function InstitutionsPage() {
                 )}
 
                 {isLoading && (
-                    <div className={styles.skels} aria-busy="true" aria-label="Loading institutions">
+                    <div className={styles.skels} aria-busy="true" aria-label={t("institutions.loadingAria")}>
                         {[1, 2, 3].map((i) => (
                             <Skeleton key={i} className={styles.cardSkel} />
                         ))}
                     </div>
                 )}
 
-                {error && <ErrorState message="Could not load institutions. Please try again." />}
+                {error && <ErrorState message={t("institutions.loadError")} />}
 
                 {!isLoading && !error && data?.items.length === 0 && !showForm && (
                     <EmptyState
-                        title="No institutions found"
-                        description="Add your first institution or adjust your filters"
+                        title={t("institutions.emptyTitle")}
+                        description={t("institutions.emptyDescription")}
                     />
                 )}
 
                 {!isLoading && !error && data && data.items.length > 0 && (
-                    <div className={styles.grid} role="list" aria-label="Institution list">
+                    <div className={styles.grid} role="list" aria-label={t("institutions.listAria")}>
                         {data.items.map((institution) => (
                             <div key={institution.id} role="listitem">
                                 <InstitutionCard institution={institution} />
@@ -111,23 +113,23 @@ export default function InstitutionsPage() {
                 )}
 
                 {data && data.totalPages > 1 && (
-                    <nav className={styles.pagination} aria-label="Institution pages">
+                    <nav className={styles.pagination} aria-label={t("institutions.pagesAria")}>
                         <button
                             className={styles.pageBtn}
                             onClick={() => setPage((p) => p - 1)}
                             disabled={data.isFirst}
-                            aria-label="Previous page"
+                            aria-label={t("common.previousPage")}
                         >
                             ←
                         </button>
                         <span className={styles.pageInfo} aria-live="polite">
-                            Page {page + 1} of {data.totalPages}
+                            {t("common.pageOfTotal", { page: page + 1, total: data.totalPages })}
                         </span>
                         <button
                             className={styles.pageBtn}
                             onClick={() => setPage((p) => p + 1)}
                             disabled={data.isLast}
-                            aria-label="Next page"
+                            aria-label={t("common.nextPage")}
                         >
                             →
                         </button>
@@ -139,6 +141,7 @@ export default function InstitutionsPage() {
 }
 
 function AddInstitutionForm({ onSuccess, onCancel }: { onSuccess: () => void; onCancel: () => void }) {
+    const { t, locale } = useI18n();
     const [name, setName] = useState("");
     const [country, setCountry] = useState("");
     const [type, setType] = useState<InstitutionType>("BANK");
@@ -159,7 +162,7 @@ function AddInstitutionForm({ onSuccess, onCancel }: { onSuccess: () => void; on
             });
             onSuccess();
         } catch (err) {
-            setError((err as { message?: string }).message ?? "Failed to create institution");
+            setError((err as { message?: string }).message ?? t("institutions.createError"));
         } finally {
             setLoading(false);
         }
@@ -167,8 +170,8 @@ function AddInstitutionForm({ onSuccess, onCancel }: { onSuccess: () => void; on
 
     return (
         <Card className={styles.formCard}>
-            <h2 className={styles.formTitle}>New institution</h2>
-            <form onSubmit={handleSubmit} noValidate aria-label="Add institution form">
+            <h2 className={styles.formTitle}>{t("institutions.formTitle")}</h2>
+            <form onSubmit={handleSubmit} noValidate aria-label={t("institutions.formAria")}>
                 {error && (
                     <div role="alert" className={styles.formError}>
                         {error}
@@ -176,7 +179,7 @@ function AddInstitutionForm({ onSuccess, onCancel }: { onSuccess: () => void; on
                 )}
                 <div className={styles.formGrid}>
                     <div className={styles.field}>
-                        <label htmlFor="inst-name">Institution name</label>
+                        <label htmlFor="inst-name">{t("institutions.name")}</label>
                         <input
                             id="inst-name"
                             type="text"
@@ -184,13 +187,13 @@ function AddInstitutionForm({ onSuccess, onCancel }: { onSuccess: () => void; on
                             aria-required="true"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
-                            placeholder="e.g. BNP Paribas"
+                            placeholder={t("institutions.searchPlaceholder")}
                             disabled={loading}
                         />
                     </div>
 
                     <div className={styles.field}>
-                        <label htmlFor="inst-type">Type</label>
+                        <label htmlFor="inst-type">{t("institutions.type")}</label>
                         <select
                             id="inst-type"
                             required
@@ -199,16 +202,16 @@ function AddInstitutionForm({ onSuccess, onCancel }: { onSuccess: () => void; on
                             onChange={(e) => setType(e.target.value as InstitutionType)}
                             disabled={loading}
                         >
-                            {INSTITUTION_TYPES.map((t) => (
-                                <option key={t.value} value={t.value}>
-                                    {t.label}
+                            {INSTITUTION_TYPES.map((institutionType) => (
+                                <option key={institutionType.value} value={institutionType.value}>
+                                    {t(`institutionType.${institutionType.value}` as TranslationKey)}
                                 </option>
                             ))}
                         </select>
                     </div>
 
                     <div className={styles.field}>
-                        <label htmlFor="inst-country">Country</label>
+                        <label htmlFor="inst-country">{t("institutions.country")}</label>
                         <select
                             id="inst-country"
                             required
@@ -217,10 +220,10 @@ function AddInstitutionForm({ onSuccess, onCancel }: { onSuccess: () => void; on
                             onChange={(e) => setCountry(e.target.value)}
                             disabled={loading}
                         >
-                            <option value="">Select a country…</option>
+                            <option value="">{t("institutions.selectCountry")}</option>
                             {COUNTRIES.map((c) => (
                                 <option key={c.code} value={c.code}>
-                                    {c.name}
+                                    {formatCountryName(c.code, locale, c.name)}
                                 </option>
                             ))}
                         </select>
@@ -228,7 +231,7 @@ function AddInstitutionForm({ onSuccess, onCancel }: { onSuccess: () => void; on
 
                     <div className={styles.field}>
                         <label htmlFor="inst-bic">
-                            BIC / SWIFT
+                            {t("institutions.bic")}
                             <span
                                 style={{
                                     fontWeight: 400,
@@ -237,7 +240,7 @@ function AddInstitutionForm({ onSuccess, onCancel }: { onSuccess: () => void; on
                                     textTransform: "none",
                                 }}
                             >
-                                (optional)
+                                {t("common.optional")}
                             </span>
                         </label>
                         <input
@@ -245,7 +248,7 @@ function AddInstitutionForm({ onSuccess, onCancel }: { onSuccess: () => void; on
                             type="text"
                             value={bic}
                             onChange={(e) => setBic(e.target.value.toUpperCase())}
-                            placeholder="e.g. BNPAFRPP"
+                            placeholder={t("institutions.bicPlaceholder")}
                             disabled={loading}
                             aria-describedby="bic-hint"
                             maxLength={11}
@@ -255,17 +258,17 @@ function AddInstitutionForm({ onSuccess, onCancel }: { onSuccess: () => void; on
                             }}
                         />
                         <p id="bic-hint" className={styles.hint}>
-                            8 or 11 uppercase characters (e.g. BNPAFRPP or BNPAFRPPXXX)
+                            {t("institutions.bicHint")}
                         </p>
                     </div>
                 </div>
 
                 <div className={styles.formActions}>
                     <Button type="button" variant="ghost" onClick={onCancel} disabled={loading}>
-                        Cancel
+                        {t("common.cancel")}
                     </Button>
                     <Button type="submit" variant="primary" loading={loading}>
-                        Create institution
+                        {t("institutions.create")}
                     </Button>
                 </div>
             </form>
@@ -274,11 +277,16 @@ function AddInstitutionForm({ onSuccess, onCancel }: { onSuccess: () => void; on
 }
 
 function InstitutionCard({ institution }: { institution: Institution }) {
+    const { locale } = useI18n();
+
     return (
         <Card className={styles.institutionCard}>
             <div className={styles.cardHeader}>
                 <p className={styles.cardName}>{institution.name}</p>
-                <span className={`fi fi-${institution.country.toLowerCase()}`} title={institution.country} />
+                <span
+                    className={`fi fi-${institution.country.toLowerCase()}`}
+                    title={formatCountryName(institution.country, locale, institution.country)}
+                />
             </div>
 
             <div className={styles.cardMeta}>
@@ -286,4 +294,8 @@ function InstitutionCard({ institution }: { institution: Institution }) {
             </div>
         </Card>
     );
+}
+
+function formatCountryName(code: string, locale: string, fallback: string): string {
+    return new Intl.DisplayNames([locale], { type: "region" }).of(code) ?? fallback;
 }

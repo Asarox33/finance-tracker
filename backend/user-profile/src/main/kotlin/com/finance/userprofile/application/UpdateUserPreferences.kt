@@ -1,6 +1,7 @@
 package com.finance.userprofile.application
 
 import com.finance.shared.Currency
+import com.finance.shared.DisplayLanguage
 import com.finance.shared.error.InvalidRequestException
 import com.finance.shared.error.NotFoundException
 import com.finance.userprofile.domain.UserProfile
@@ -17,6 +18,7 @@ class UpdateUserPreferences(
         val lastName: String,
         val displayName: String,
         val preferredCurrency: Currency,
+        val preferredLanguage: DisplayLanguage,
         val birthDate: LocalDate?
     )
 
@@ -34,6 +36,7 @@ class UpdateUserPreferences(
                 lastName = command.lastName,
                 displayName = command.displayName,
                 preferredCurrency = command.preferredCurrency,
+                preferredLanguage = command.preferredLanguage,
                 birthDate = command.birthDate
             )
         )

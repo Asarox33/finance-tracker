@@ -6,7 +6,8 @@ import { useAccounts } from "@/features/accounts/hooks/useAccounts";
 import { useInstitutions } from "@/features/institutions/hooks/useInstitutions";
 import { useReferenceCurrency } from "@/shared/hooks/useReferenceCurrency";
 import { Badge, Card, ErrorState, PageHeader, Skeleton } from "@/shared/components/ui";
-import { formatBasisPoints, formatDate, formatMoney, today } from "@/lib/format";
+import { useFormatters, useI18n } from "@/shared/i18n";
+import { formatBasisPoints, today } from "@/lib/format";
 import styles from "./page.module.css";
 
 export default function DashboardPage() {
@@ -17,6 +18,8 @@ export default function DashboardPage() {
     const { data: perf, isLoading: perfLoading } = usePerformance(analyticsCurrency, 12);
     const { data: accounts, isLoading: accLoading } = useAccounts();
     const { data: institutions, isLoading: instLoading } = useInstitutions();
+    const { formatDate, formatMoney } = useFormatters();
+    const { t } = useI18n();
 
     const accountById = useMemo(() => {
         return new Map(accounts?.items.map((a) => [a.id, a]) ?? []);
@@ -34,26 +37,28 @@ export default function DashboardPage() {
 
     return (
         <div className={styles.page}>
-            <PageHeader title="Dashboard" description={`As of ${formatDate(today())}`} />
+            <PageHeader title={t("dashboard.title")} description={t("dashboard.asOfDate", { date: formatDate(today()) })} />
 
             <div className={styles.body}>
-                <section aria-label="Portfolio overview" className={styles.kpis}>
+                <section aria-label={t("dashboard.portfolioOverviewAria")} className={styles.kpis}>
                     <Card className={styles.kpi}>
-                        <p className={styles.kpiLabel}>Portfolio Value</p>
+                        <p className={styles.kpiLabel}>{t("dashboard.portfolioValue")}</p>
                         {kpiLoading ? (
                             <Skeleton className={styles.kpiSkel} />
                         ) : pvError ? (
-                            <ErrorState message="Could not load portfolio value" />
+                            <ErrorState message={t("dashboard.loadPortfolioError")} />
                         ) : (
                             <p className={styles.kpiValue}>
                                 {formatMoney(portfolio?.totalValue ?? 0, portfolio?.currency ?? referenceCurrency)}
                             </p>
                         )}
-                        <p className={styles.kpiSub}>{portfolio?.currency ?? referenceCurrency} · reference currency</p>
+                        <p className={styles.kpiSub}>
+                            {portfolio?.currency ?? referenceCurrency} · {t("dashboard.referenceCurrency")}
+                        </p>
                     </Card>
 
                     <Card className={styles.kpi}>
-                        <p className={styles.kpiLabel}>12-Month Performance</p>
+                        <p className={styles.kpiLabel}>{t("dashboard.performance12Month")}</p>
                         {perfKpiLoading ? (
                             <Skeleton className={styles.kpiSkel} />
                         ) : (
@@ -62,14 +67,15 @@ export default function DashboardPage() {
                                     {formatBasisPoints(perf?.gainLossBasisPoints ?? 0)}
                                 </p>
                                 <p className={styles.kpiSub}>
-                                    {formatMoney(perf?.gainLoss ?? 0, perf?.currency ?? referenceCurrency)} gain/loss
+                                    {formatMoney(perf?.gainLoss ?? 0, perf?.currency ?? referenceCurrency)}{" "}
+                                    {t("dashboard.gainLoss")}
                                 </p>
                             </>
                         )}
                     </Card>
 
                     <Card className={styles.kpi}>
-                        <p className={styles.kpiLabel}>Active Accounts</p>
+                        <p className={styles.kpiLabel}>{t("dashboard.activeAccounts")}</p>
                         {accLoading ? (
                             <Skeleton className={styles.kpiSkel} />
                         ) : (
@@ -77,12 +83,12 @@ export default function DashboardPage() {
                                 {accounts?.items.filter((a) => a.status === "ACTIVE").length ?? 0}
                             </p>
                         )}
-                        <p className={styles.kpiSub}>across all institutions</p>
+                        <p className={styles.kpiSub}>{t("dashboard.acrossInstitutions")}</p>
                     </Card>
                 </section>
 
-                <section aria-label="Account breakdown" className={styles.section}>
-                    <h2 className={styles.sectionTitle}>Account Breakdown</h2>
+                <section aria-label={t("dashboard.accountBreakdownAria")} className={styles.section}>
+                    <h2 className={styles.sectionTitle}>{t("dashboard.accountBreakdown")}</h2>
                     {breakdownLoading ? (
                         <div className={styles.skels}>
                             {[1, 2, 3].map((i) => (
@@ -91,17 +97,17 @@ export default function DashboardPage() {
                         </div>
                     ) : (
                         <Card>
-                            <table aria-label="Account values">
+                            <table aria-label={t("dashboard.accountValuesAria")}>
                                 <thead>
                                     <tr>
-                                        <th scope="col">Account</th>
-                                        <th scope="col">Institution</th>
-                                        <th scope="col">Currency</th>
+                                        <th scope="col">{t("dashboard.account")}</th>
+                                        <th scope="col">{t("dashboard.institution")}</th>
+                                        <th scope="col">{t("dashboard.currency")}</th>
                                         <th scope="col" style={{ textAlign: "right" }}>
-                                            Value
+                                            {t("dashboard.value")}
                                         </th>
                                         <th scope="col" style={{ textAlign: "right" }}>
-                                            In {referenceCurrency}
+                                            {t("dashboard.inCurrency", { currency: referenceCurrency })}
                                         </th>
                                     </tr>
                                 </thead>
@@ -116,7 +122,7 @@ export default function DashboardPage() {
                                                     padding: "2rem",
                                                 }}
                                             >
-                                                No accounts yet
+                                                {t("dashboard.noAccounts")}
                                             </td>
                                         </tr>
                                     )}

@@ -1,6 +1,7 @@
 package com.finance.userprofile.application
 
 import com.finance.shared.Currency
+import com.finance.shared.DisplayLanguage
 import com.finance.shared.error.InvalidRequestException
 import com.finance.userprofile.InMemoryUserProfileRepository
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -32,6 +33,7 @@ class CreateUserProfileTest {
         lastName = "Doe",
         displayName = "johndoe",
         preferredCurrency = Currency.EUR,
+        preferredLanguage = DisplayLanguage.ENG,
         birthDate = null
     )
 }

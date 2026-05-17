@@ -55,7 +55,7 @@ test.describe("Institutions page", () => {
 
     test("shows country badge", async ({ page }) => {
         await page.goto("/institutions");
-        await expect(page.locator("span[title='FR']").first()).toBeVisible();
+        await expect(page.locator("span[title='France']").first()).toBeVisible();
     });
 
     test("opens add institution form on button click", async ({ page }) => {
@@ -152,5 +152,16 @@ test.describe("Institutions page", () => {
         await button.focus();
         await page.keyboard.press("Enter");
         await expect(page.getByRole("heading", { name: "New institution" })).toBeVisible();
+    });
+
+    test("renders translated labels in French", async ({ page }) => {
+        await mockUserProfile(page, "FRA");
+        await page.goto("/institutions");
+        await expect(page.getByRole("heading", { name: "Institutions" })).toBeVisible();
+        await expect(page.getByRole("button", { name: "+ Nouvelle institution" })).toBeVisible();
+        await expect(page.getByRole("searchbox", { name: "Filtrer par nom d'institution" })).toBeVisible();
+        await page.getByRole("button", { name: "+ Nouvelle institution" }).click();
+        await expect(page.getByRole("heading", { name: "Nouvelle institution" })).toBeVisible();
+        await expect(page.getByRole("button", { name: "Créer l'institution" })).toBeVisible();
     });
 });

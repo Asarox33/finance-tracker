@@ -26,8 +26,11 @@ export interface UserProfile {
     lastName: string;
     displayName: string;
     preferredCurrency: string;
+    preferredLanguage: DisplayLanguage;
     birthDate: string | null;
 }
+
+export type DisplayLanguage = "ENG" | "FRA" | "ESP" | "ITA";
 
 export interface Account {
     id: string;

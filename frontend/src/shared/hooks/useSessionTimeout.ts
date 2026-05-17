@@ -3,12 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useLogout } from "@/features/auth/hooks/useAuth";
-import {
-    getAccessTokenExpiryMs,
-    getToken,
-    refreshAccessToken,
-    subscribeAccessTokenChange,
-} from "@/lib/http";
+import { getAccessTokenExpiryMs, getToken, refreshAccessToken, subscribeAccessTokenChange } from "@/lib/http";
 
 const IDLE_WARNING_MS = 5 * 60 * 1000;
 const GRACE_COUNTDOWN_SEC = 15;

@@ -3,6 +3,7 @@
 import { createPortal } from "react-dom";
 
 import { Button } from "@/shared/components/ui";
+import { useI18n } from "@/shared/i18n";
 
 import type { SessionTimeoutReason } from "@/shared/hooks/useSessionTimeout";
 import styles from "./SessionTimeoutModal.module.css";
@@ -15,21 +16,11 @@ type Props = {
     onSignOut: () => void;
 };
 
-function copyFor(reason: SessionTimeoutReason): { title: string; body: string } {
-    if (reason === "jwt") {
-        return {
-            title: "Session ending soon",
-            body: "Your access token is about to expire. You can stay signed in or sign out now. If you do nothing, you will be signed out automatically.",
-        };
-    }
-    return {
-        title: "You have been inactive",
-        body: "For your security, you will be signed out after a period of inactivity. You can stay signed in or sign out now. If you do nothing, you will be signed out automatically.",
-    };
-}
-
 export default function SessionTimeoutModal({ open, reason, secondsLeft, onStayConnected, onSignOut }: Props) {
-    const { title, body } = copyFor(reason);
+    const { t } = useI18n();
+    const title = reason === "jwt" ? t("session.jwtTitle") : t("session.idleTitle");
+    const body = reason === "jwt" ? t("session.jwtBody") : t("session.idleBody");
+    const countdownKey = secondsLeft === 1 ? "session.countdownOne" : "session.countdownMany";
 
     if (!open || typeof document === "undefined") return null;
 
@@ -49,14 +40,14 @@ export default function SessionTimeoutModal({ open, reason, secondsLeft, onStayC
                     {body}
                 </p>
                 <p className={styles.countdown} aria-live="polite">
-                    Signing out in {secondsLeft} second{secondsLeft === 1 ? "" : "s"}…
+                    {t(countdownKey, { seconds: secondsLeft })}
                 </p>
                 <div className={styles.actions}>
                     <Button type="button" variant="secondary" size="md" onClick={onSignOut}>
-                        Sign out
+                        {t("session.signOut")}
                     </Button>
                     <Button type="button" variant="primary" size="md" onClick={onStayConnected}>
-                        Stay signed in
+                        {t("session.staySignedIn")}
                     </Button>
                 </div>
             </div>

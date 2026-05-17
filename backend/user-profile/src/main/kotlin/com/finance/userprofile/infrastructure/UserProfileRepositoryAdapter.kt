@@ -17,6 +17,7 @@ class UserProfileRepositoryAdapter(
                 it.lastName = profile.lastName
                 it.displayName = profile.displayName
                 it.preferredCurrency = profile.preferredCurrency
+                it.preferredLanguage = profile.preferredLanguage
                 it.birthDate = profile.birthDate
             }
             ?: JpaUserProfileEntity(
@@ -25,6 +26,7 @@ class UserProfileRepositoryAdapter(
                 lastName = profile.lastName,
                 displayName = profile.displayName,
                 preferredCurrency = profile.preferredCurrency,
+                preferredLanguage = profile.preferredLanguage,
                 birthDate = profile.birthDate
             )
         return jpaRepo.save(entity).toDomain()
@@ -40,5 +42,6 @@ private fun JpaUserProfileEntity.toDomain() = UserProfile(
     lastName = lastName,
     displayName = displayName,
     preferredCurrency = preferredCurrency,
+    preferredLanguage = preferredLanguage,
     birthDate = birthDate
 )

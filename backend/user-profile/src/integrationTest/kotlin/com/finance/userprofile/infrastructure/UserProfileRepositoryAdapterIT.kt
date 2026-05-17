@@ -3,6 +3,7 @@ package com.finance.userprofile.infrastructure
 import com.finance.userprofile.UserTestApplication
 import com.finance.userprofile.domain.UserProfile
 import com.finance.shared.Currency
+import com.finance.shared.DisplayLanguage
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
@@ -56,8 +57,9 @@ class UserProfileRepositoryAdapterIT {
         firstName: String = "John",
         lastName: String = "Doe",
         displayName: String = "johndoe",
-        preferredCurrency: Currency = Currency.EUR
-    ) = UserProfile(id, firstName, lastName, displayName, preferredCurrency, null)
+        preferredCurrency: Currency = Currency.EUR,
+        preferredLanguage: DisplayLanguage = DisplayLanguage.ENG
+    ) = UserProfile(id, firstName, lastName, displayName, preferredCurrency, preferredLanguage, null)
 
     @Test
     fun savesAndFindsProfileById() {
@@ -77,10 +79,18 @@ class UserProfileRepositoryAdapterIT {
     fun updatesExistingProfile() {
         val id = UUID.randomUUID()
         adapter.save(profile(id = id, displayName = "Old Name"))
-        adapter.save(profile(id = id, displayName = "New Name", preferredCurrency = Currency.USD))
+        adapter.save(
+            profile(
+                id = id,
+                displayName = "New Name",
+                preferredCurrency = Currency.USD,
+                preferredLanguage = DisplayLanguage.ITA
+            )
+        )
         val found = adapter.findById(id)
         assertNotNull(found)
         assertEquals("New Name", found!!.displayName)
         assertEquals(Currency.USD, found.preferredCurrency)
+        assertEquals(DisplayLanguage.ITA, found.preferredLanguage)
     }
 }

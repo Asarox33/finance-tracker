@@ -10,16 +10,17 @@ import { useAuthGuard } from "@/shared/hooks/useAuthGuard";
 import { useUserProfile } from "@/features/user-profile/hooks/useUserProfile";
 import { useSessionTimeout } from "@/shared/hooks/useSessionTimeout";
 import SessionTimeoutModal from "@/shared/components/SessionTimeoutModal";
+import { DEFAULT_LANGUAGE, I18nProvider, translate, useI18n, type TranslationKey } from "@/shared/i18n";
 
 import styles from "./AppShell.module.css";
 
 const NAV = [
-    { href: "/dashboard", label: "Dashboard", icon: "⬡" },
-    { href: "/institutions", label: "Institutions", icon: "⊞" },
-    { href: "/accounts", label: "Accounts", icon: "◫" },
-    { href: "/transactions", label: "Transactions", icon: "⇌" },
-    { href: "/analytics", label: "Analytics", icon: "◈" },
-];
+    { href: "/dashboard", labelKey: "nav.dashboard", icon: "⬡" },
+    { href: "/institutions", labelKey: "nav.institutions", icon: "⊞" },
+    { href: "/accounts", labelKey: "nav.accounts", icon: "◫" },
+    { href: "/transactions", labelKey: "nav.transactions", icon: "⇌" },
+    { href: "/analytics", labelKey: "nav.analytics", icon: "◈" },
+] satisfies { href: string; labelKey: TranslationKey; icon: string }[];
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
@@ -43,7 +44,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             <div className={styles.loadingShell}>
                 <div className={styles.loadingCard}>
                     <div className={styles.spinner} aria-hidden="true" />
-                    <p className={styles.loadingText}>Loading your workspace...</p>
+                    <p className={styles.loadingText}>{translate(DEFAULT_LANGUAGE, "app.loadingWorkspace")}</p>
                 </div>
             </div>
         );
@@ -54,6 +55,35 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     }
 
     return (
+        <I18nProvider language={profile?.preferredLanguage}>
+            <AppShellFrame
+                pathname={pathname}
+                profileDisplayName={profile?.displayName}
+                sessionTimeout={sessionTimeout}
+                onLogout={() => void logout()}
+            >
+                {children}
+            </AppShellFrame>
+        </I18nProvider>
+    );
+}
+
+function AppShellFrame({
+    children,
+    pathname,
+    profileDisplayName,
+    sessionTimeout,
+    onLogout,
+}: {
+    children: React.ReactNode;
+    pathname: string;
+    profileDisplayName?: string;
+    sessionTimeout: ReturnType<typeof useSessionTimeout>;
+    onLogout: () => void;
+}) {
+    const { t } = useI18n();
+
+    return (
         <div className={styles.shell}>
             <SessionTimeoutModal
                 open={sessionTimeout.warningOpen}
@@ -62,16 +92,16 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 onStayConnected={() => void sessionTimeout.stayConnected()}
                 onSignOut={() => void sessionTimeout.signOutNow()}
             />
-            <nav className={styles.sidebar} aria-label="Main navigation">
-                <div className={styles.brand} aria-label="Finance Tracker">
+            <nav className={styles.sidebar} aria-label={t("app.mainNavigation")}>
+                <div className={styles.brand} aria-label={t("app.brand")}>
                     <span className={styles.brandIcon} aria-hidden="true">
                         ◈
                     </span>
-                    <span className={styles.brandName}>Finance</span>
+                    <span className={styles.brandName}>{t("app.brandShort")}</span>
                 </div>
 
                 <ul className={styles.nav} role="list">
-                    {NAV.map(({ href, label, icon }) => (
+                    {NAV.map(({ href, labelKey, icon }) => (
                         <li key={href}>
                             <Link
                                 href={href}
@@ -82,7 +112,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                                     {" "}
                                     {icon}{" "}
                                 </span>
-                                <span>{label}</span>
+                                <span>{t(labelKey)}</span>
                             </Link>
                         </li>
                     ))}
@@ -91,9 +121,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 <div className={styles.bottomSection}>
                     <hr className={styles.separator} aria-hidden="true" />
 
-                    {profile && (
-                        <p className={styles.displayName} aria-label="Logged in as">
-                            {profile.displayName}
+                    {profileDisplayName && (
+                        <p className={styles.displayName} aria-label={t("app.loggedInAs")}>
+                            {profileDisplayName}
                         </p>
                     )}
 
@@ -106,14 +136,14 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                             ◉
                         </span>
 
-                        <span>Profile</span>
+                        <span>{t("nav.profile")}</span>
                     </Link>
 
-                    <button type="button" onClick={() => void logout()} className={styles.logout} aria-label="Sign out">
+                    <button type="button" onClick={onLogout} className={styles.logout} aria-label={t("nav.signOut")}>
                         <span className={styles.navIcon} aria-hidden="true">
                             ⊗
                         </span>
-                        <span>Sign out</span>
+                        <span>{t("nav.signOut")}</span>
                     </button>
                 </div>
             </nav>

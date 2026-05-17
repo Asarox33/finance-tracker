@@ -7,6 +7,7 @@ import { accountsApi } from "@/features/accounts/api/accountsApi";
 import { useInstitutions } from "@/features/institutions/hooks/useInstitutions";
 import ConfirmDialog from "@/shared/components/ConfirmDialog";
 import { Badge, Button, Card, EmptyState, ErrorState, PageHeader, Skeleton } from "@/shared/components/ui";
+import { useI18n, type TranslationKey } from "@/shared/i18n";
 import type { Account, AccountType } from "@/shared/types";
 import styles from "./page.module.css";
 import { CURRENCIES } from "@/lib/currencies";
@@ -29,20 +30,22 @@ function getInstitutionDisplay(
     institutionNameById: Map<string, string>,
     institutionsLoading: boolean,
     institutionsPage: { items: { id: string; name: string }[] } | undefined,
-    institutionsError: unknown
+    institutionsError: unknown,
+    copy: { loadError: string; loading: string; unavailable: string }
 ): { text: string; pending: boolean } {
     if (institutionsError) {
-        return { text: "Could not load institution", pending: false };
+        return { text: copy.loadError, pending: false };
     }
     if (institutionsLoading && !institutionsPage) {
-        return { text: "Loading institution…", pending: true };
+        return { text: copy.loading, pending: true };
     }
     const name = institutionNameById.get(account.institutionId);
     if (name) return { text: name, pending: false };
-    return { text: "Institution unavailable", pending: false };
+    return { text: copy.unavailable, pending: false };
 }
 
 export default function AccountsPage() {
+    const { t } = useI18n();
     const { data, isLoading, error, mutate } = useAccounts();
     const {
         data: institutionsPage,
@@ -82,7 +85,7 @@ export default function AccountsPage() {
             await mutate();
             dismissCloseModal();
         } catch {
-            setCloseError("Failed to close account. Please try again.");
+            setCloseError(t("accounts.closeError"));
         } finally {
             setCloseSubmitting(false);
         }
@@ -92,29 +95,24 @@ export default function AccountsPage() {
         <div className={styles.page}>
             <ConfirmDialog
                 open={pendingCloseAccount !== null}
-                title="Close this account?"
+                title={t("accounts.closeTitle")}
                 description={
                     pendingCloseAccount ? (
                         <>
                             <p className={styles.closeModalLead}>
-                                You are about to close{" "}
-                                <strong>{pendingCloseAccount.name}</strong>
-                                {pendingInstitutionName ? (
-                                    <>
-                                        {" "}
-                                        at <strong>{pendingInstitutionName}</strong>
-                                    </>
-                                ) : null}
-                                . This cannot be undone.
+                                {pendingInstitutionName
+                                    ? t("accounts.closeDescriptionWithInstitution", {
+                                          accountName: pendingCloseAccount.name,
+                                          institutionName: pendingInstitutionName,
+                                      })
+                                    : t("accounts.closeDescription", { accountName: pendingCloseAccount.name })}
                             </p>
-                            <p className={styles.closeModalHint}>
-                                Make sure you have exported any history you need before continuing.
-                            </p>
+                            <p className={styles.closeModalHint}>{t("accounts.closeHint")}</p>
                         </>
                     ) : null
                 }
-                cancelLabel="Keep account"
-                confirmLabel="Close account"
+                cancelLabel={t("accounts.keepAccount")}
+                confirmLabel={t("accounts.closeAccount")}
                 confirmVariant="danger"
                 loading={closeSubmitting}
                 errorMessage={closeError}
@@ -122,11 +120,11 @@ export default function AccountsPage() {
                 onCancel={dismissCloseModal}
             />
             <PageHeader
-                title="Accounts"
-                description="Manage your financial accounts"
+                title={t("accounts.title")}
+                description={t("accounts.description")}
                 action={
                     <Button onClick={() => setShowForm(true)} variant="primary">
-                        + New account
+                        {t("accounts.new")}
                     </Button>
                 }
             />
@@ -150,7 +148,7 @@ export default function AccountsPage() {
                 )}
                 {error && <ErrorState />}
                 {!isLoading && data?.items.length === 0 && !showForm && (
-                    <EmptyState title="No accounts yet" description="Add your first account to start tracking" />
+                    <EmptyState title={t("accounts.emptyTitle")} description={t("accounts.emptyDescription")} />
                 )}
                 <div className={styles.grid}>
                     {data?.items.map((account) => {
@@ -159,7 +157,12 @@ export default function AccountsPage() {
                             institutionNameById,
                             institutionsLoading,
                             institutionsPage,
-                            institutionsError
+                            institutionsError,
+                            {
+                                loadError: t("accounts.loadInstitutionError"),
+                                loading: t("accounts.loadingInstitution"),
+                                unavailable: t("accounts.institutionUnavailable"),
+                            }
                         );
                         return (
                             <AccountCard
@@ -181,6 +184,7 @@ export default function AccountsPage() {
 }
 
 function AddAccountForm({ onSuccess, onCancel }: { onSuccess: () => void; onCancel: () => void }) {
+    const { t, locale } = useI18n();
     const {
         data: institutionsPage,
         isLoading: institutionsLoading,
@@ -202,7 +206,7 @@ function AddAccountForm({ onSuccess, onCancel }: { onSuccess: () => void; onCanc
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
         if (!institutionId.trim()) {
-            setError("Please select an institution.");
+            setError(t("accounts.selectInstitutionError"));
             return;
         }
         setLoading(true);
@@ -216,7 +220,7 @@ function AddAccountForm({ onSuccess, onCancel }: { onSuccess: () => void; onCanc
             });
             onSuccess();
         } catch (err) {
-            setError((err as { message?: string }).message ?? "Failed to create account");
+            setError((err as { message?: string }).message ?? t("accounts.createError"));
         } finally {
             setLoading(false);
         }
@@ -224,8 +228,8 @@ function AddAccountForm({ onSuccess, onCancel }: { onSuccess: () => void; onCanc
 
     return (
         <Card className={styles.formCard}>
-            <h2 className={styles.formTitle}>New account</h2>
-            <form onSubmit={handleSubmit} noValidate aria-label="Add account form">
+            <h2 className={styles.formTitle}>{t("accounts.formTitle")}</h2>
+            <form onSubmit={handleSubmit} noValidate aria-label={t("accounts.formAria")}>
                 {error && (
                     <div role="alert" className={styles.formError}>
                         {error}
@@ -234,7 +238,7 @@ function AddAccountForm({ onSuccess, onCancel }: { onSuccess: () => void; onCanc
 
                 <div className={styles.formGrid}>
                     <div className={styles.field}>
-                        <label htmlFor="acc-name">Account name</label>
+                        <label htmlFor="acc-name">{t("accounts.name")}</label>
                         <input
                             id="acc-name"
                             type="text"
@@ -242,29 +246,29 @@ function AddAccountForm({ onSuccess, onCancel }: { onSuccess: () => void; onCanc
                             aria-required="true"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
-                            placeholder="e.g. Main Checking"
+                            placeholder={t("accounts.namePlaceholder")}
                             disabled={loading}
                         />
                     </div>
 
                     <div className={styles.field}>
-                        <label htmlFor="acc-type">Type</label>
+                        <label htmlFor="acc-type">{t("accounts.type")}</label>
                         <select
                             id="acc-type"
                             value={type}
                             onChange={(e) => setType(e.target.value as AccountType)}
                             disabled={loading}
                         >
-                            {ACCOUNT_TYPES.map((t) => (
-                                <option key={t} value={t}>
-                                    {t.replace("_", " ")}
+                            {ACCOUNT_TYPES.map((accountType) => (
+                                <option key={accountType} value={accountType}>
+                                    {t(`accountType.${accountType}` as TranslationKey)}
                                 </option>
                             ))}
                         </select>
                     </div>
 
                     <div className={styles.field}>
-                        <label htmlFor="acc-currency">Currency</label>
+                        <label htmlFor="acc-currency">{t("accounts.currency")}</label>
                         <select
                             id="acc-currency"
                             value={currency}
@@ -280,7 +284,7 @@ function AddAccountForm({ onSuccess, onCancel }: { onSuccess: () => void; onCanc
                     </div>
 
                     <div className={styles.field}>
-                        <label htmlFor="acc-institution">Institution</label>
+                        <label htmlFor="acc-institution">{t("accounts.institution")}</label>
                         <select
                             id="acc-institution"
                             required
@@ -292,17 +296,17 @@ function AddAccountForm({ onSuccess, onCancel }: { onSuccess: () => void; onCanc
                             }
                         >
                             {institutionsLoading ? (
-                                <option value="">Loading institutions…</option>
+                                <option value="">{t("accounts.loadingInstitutions")}</option>
                             ) : institutionsError ? (
-                                <option value="">Could not load institutions</option>
+                                <option value="">{t("accounts.loadInstitutionsError")}</option>
                             ) : institutionsSorted.length === 0 ? (
-                                <option value="">No institutions yet</option>
+                                <option value="">{t("accounts.noInstitutions")}</option>
                             ) : (
                                 <>
-                                    <option value="">Select institution</option>
+                                    <option value="">{t("accounts.selectInstitution")}</option>
                                     {institutionsSorted.map((inst) => (
                                         <option key={inst.id} value={inst.id}>
-                                            {inst.name} ({inst.country})
+                                            {inst.name} ({formatCountryName(inst.country, locale, inst.country)})
                                         </option>
                                     ))}
                                 </>
@@ -310,13 +314,13 @@ function AddAccountForm({ onSuccess, onCancel }: { onSuccess: () => void; onCanc
                         </select>
                         {institutionsError && (
                             <p className={styles.fieldError} role="alert">
-                                Failed to load institutions. Refresh the page or try again later.
+                                {t("accounts.loadInstitutionsHint")}
                             </p>
                         )}
                         {!institutionsLoading && !institutionsError && institutionsSorted.length === 0 && (
                             <p className={styles.fieldHint}>
-                                Create an institution first, then return here.{" "}
-                                <Link href="/institutions">Go to Institutions</Link>
+                                {t("accounts.createInstitutionFirst")}{" "}
+                                <Link href="/institutions">{t("accounts.goToInstitutions")}</Link>
                             </p>
                         )}
                     </div>
@@ -324,7 +328,7 @@ function AddAccountForm({ onSuccess, onCancel }: { onSuccess: () => void; onCanc
 
                 <div className={styles.formActions}>
                     <Button type="button" variant="ghost" onClick={onCancel} disabled={loading}>
-                        Cancel
+                        {t("common.cancel")}
                     </Button>
                     <Button
                         type="submit"
@@ -337,12 +341,16 @@ function AddAccountForm({ onSuccess, onCancel }: { onSuccess: () => void; onCanc
                             !!institutionsError
                         }
                     >
-                        Create account
+                        {t("accounts.create")}
                     </Button>
                 </div>
             </form>
         </Card>
     );
+}
+
+function formatCountryName(code: string, locale: string, fallback: string): string {
+    return new Intl.DisplayNames([locale], { type: "region" }).of(code) ?? fallback;
 }
 
 function AccountCard({
@@ -356,20 +364,24 @@ function AccountCard({
     institutionLinePending: boolean;
     onRequestClose: () => void;
 }) {
+    const { t } = useI18n();
+
     return (
         <Card className={styles.accountCard}>
             <div className={styles.accountHeader}>
                 <div>
                     <p className={styles.accountName}>{account.name}</p>
-                    <p className={styles.accountType}>{account.type.replace("_", " ")}</p>
+                    <p className={styles.accountType}>{t(`accountType.${account.type}` as TranslationKey)}</p>
                     <p
                         className={institutionLinePending ? styles.institutionPending : styles.institution}
-                        aria-label="Institution"
+                        aria-label={t("accounts.institution")}
                     >
                         {institutionLine}
                     </p>
                 </div>
-                <Badge variant={account.status === "ACTIVE" ? "success" : "default"}>{account.status}</Badge>
+                <Badge variant={account.status === "ACTIVE" ? "success" : "default"}>
+                    {t(`accountStatus.${account.status}` as TranslationKey)}
+                </Badge>
             </div>
             <div className={styles.accountMeta}>
                 <span className={styles.currency}>{account.currency}</span>
@@ -380,9 +392,9 @@ function AccountCard({
                         variant="danger"
                         size="sm"
                         onClick={onRequestClose}
-                        aria-label={`Close account ${account.name}`}
+                        aria-label={t("accounts.closeAccountAria", { accountName: account.name })}
                     >
-                        Close account
+                        {t("accounts.closeAccount")}
                     </Button>
                 </div>
             )}

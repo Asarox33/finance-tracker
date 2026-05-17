@@ -1,6 +1,7 @@
 package com.finance.userprofile.application
 
 import com.finance.shared.Currency
+import com.finance.shared.DisplayLanguage
 import com.finance.shared.error.InvalidRequestException
 import com.finance.userprofile.domain.UserProfile
 import com.finance.userprofile.domain.UserProfileRepository
@@ -16,6 +17,7 @@ class CreateUserProfile(
         val lastName: String,
         val displayName: String,
         val preferredCurrency: Currency,
+        val preferredLanguage: DisplayLanguage,
         val birthDate: LocalDate?
     )
 
@@ -31,6 +33,7 @@ class CreateUserProfile(
             lastName = command.lastName,
             displayName = command.displayName,
             preferredCurrency = command.preferredCurrency,
+            preferredLanguage = command.preferredLanguage,
             birthDate = command.birthDate
         )
         return Result(userId = userProfileRepository.save(profile).id)

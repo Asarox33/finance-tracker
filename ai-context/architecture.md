@@ -114,6 +114,7 @@ frontend/src/
 │   │   ├── useAuthGuard.ts       # Redirects to /login if unauthenticated
 │   │   ├── useSessionTimeout.ts  # Idle warning (5 min); proactive refresh near JWT exp; modal fallback
 │   │   └── useTheme.ts           # Dark/light theme with localStorage persistence
+│   ├── i18n/                     # Profile-driven dictionaries, locale mapping, and format hooks
 │   └── types/index.ts            # All shared TypeScript interfaces & types
 └── lib/
     ├── http.ts                   # Fetch wrapper, JWT token management, auth helpers
@@ -186,6 +187,13 @@ The `analytics` module differs: it has **no DB of its own** and depends on other
 - Theme preference persisted in `localStorage` under key `theme`. Default is `dark`.
 - `ThemeToggle` is rendered in the root layout (fixed top-right), visible on all pages.
 
+### Internationalization
+
+- `UserProfile.preferredLanguage` stores the user display language as `ENG`, `FRA`, `ESP`, or `ITA`.
+- `AppShell` mounts the shared i18n provider for authenticated pages using the profile language.
+- `src/shared/i18n` owns typed dictionaries, language-to-locale mapping, placeholder interpolation, and `useFormatters()` for locale-aware money/date formatting.
+- Authenticated UI copy, accessibility labels, placeholders, modals, and enum display labels are dictionary-driven. Public auth pages still use English copy.
+
 ---
 
 ## Backend Dependency Flow
@@ -206,7 +214,7 @@ Modules never depend on each other's infrastructure layer — only on applicatio
 | Frontend Feature | API Endpoints Used |
 |---|---|
 | Auth | `POST /api/auth/login`, `POST /api/auth/register`, `POST /api/auth/password-reset/request`, `POST /api/auth/password-reset/confirm` |
-| User Profile | `GET /api/users/me`, `PUT /api/users/me/preferences` |
+| User Profile | `GET /api/users/me`, `PUT /api/users/me/preferences` (includes preferred currency and display language) |
 | Institutions | `GET /api/institutions?page&pageSize&name&country`, `GET /api/institutions/:id`, `POST /api/institutions` |
 | Accounts | `GET /api/accounts`, `GET /api/accounts/:id`, `POST /api/accounts`, `DELETE /api/accounts/:id` |
 | Transactions | `GET /api/transactions?accountId=...`, `GET /api/transactions/:id`, `POST /api/transactions` |

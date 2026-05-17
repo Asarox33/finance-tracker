@@ -1,6 +1,7 @@
 package com.finance.userprofile.domain
 
 import com.finance.shared.Currency
+import com.finance.shared.DisplayLanguage
 import com.finance.shared.error.BusinessRuleViolationException
 import java.time.LocalDate
 import java.util.UUID
@@ -11,6 +12,7 @@ data class UserProfile(
     val lastName: String,
     val displayName: String,
     val preferredCurrency: Currency,
+    val preferredLanguage: DisplayLanguage,
     val birthDate: LocalDate?
 ) {
     init {

@@ -1,5 +1,6 @@
 package com.finance.userprofile.domain
 
+import com.finance.shared.DisplayLanguage
 import com.finance.shared.error.BusinessRuleViolationException
 import com.finance.userprofile.testProfile
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -13,6 +14,7 @@ class UserProfileTest {
         val profile = testProfile()
         assertEquals("John", profile.firstName)
         assertEquals("Doe", profile.lastName)
+        assertEquals(DisplayLanguage.ENG, profile.preferredLanguage)
     }
 
     @Test

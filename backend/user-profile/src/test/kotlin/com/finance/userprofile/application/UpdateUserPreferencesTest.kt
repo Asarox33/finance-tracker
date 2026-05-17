@@ -1,6 +1,7 @@
 package com.finance.userprofile.application
 
 import com.finance.shared.Currency
+import com.finance.shared.DisplayLanguage
 import com.finance.shared.error.InvalidRequestException
 import com.finance.shared.error.NotFoundException
 import com.finance.userprofile.InMemoryUserProfileRepository
@@ -19,11 +20,21 @@ class UpdateUserPreferencesTest {
     fun updatesPreferencesSuccessfully() {
         val id = UUID.randomUUID()
         repository.save(testProfile(id = id))
-        val result = useCase.execute(command(userId = id, firstName = "Jane", lastName = "Smith", displayName = "janesmith", preferredCurrency = Currency.USD))
+        val result = useCase.execute(
+            command(
+                userId = id,
+                firstName = "Jane",
+                lastName = "Smith",
+                displayName = "janesmith",
+                preferredCurrency = Currency.USD,
+                preferredLanguage = DisplayLanguage.FRA
+            )
+        )
         assertEquals("Jane", result.firstName)
         assertEquals("Smith", result.lastName)
         assertEquals("janesmith", result.displayName)
         assertEquals(Currency.USD, result.preferredCurrency)
+        assertEquals(DisplayLanguage.FRA, result.preferredLanguage)
     }
 
     @Test
@@ -66,12 +77,14 @@ class UpdateUserPreferencesTest {
         lastName: String = "Doe",
         displayName: String = "johndoe",
         preferredCurrency: Currency = Currency.EUR,
+        preferredLanguage: DisplayLanguage = DisplayLanguage.ENG,
     ) = UpdateUserPreferences.Command(
         userId = userId,
         firstName = firstName,
         lastName = lastName,
         displayName = displayName,
         preferredCurrency = preferredCurrency,
+        preferredLanguage = preferredLanguage,
         birthDate = null
     )
 }

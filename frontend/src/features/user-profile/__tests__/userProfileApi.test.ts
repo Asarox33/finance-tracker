@@ -18,6 +18,7 @@ const mockProfile = {
     lastName: "Doe",
     displayName: "johndoe",
     preferredCurrency: "EUR",
+    preferredLanguage: "ENG",
     birthDate: null,
 };
 
@@ -62,6 +63,7 @@ describe("userProfileApi", () => {
             lastName: "Doe",
             displayName: "johndoe",
             preferredCurrency: "USD",
+            preferredLanguage: "FRA",
             birthDate: null,
         });
         expect(mockFetch).toHaveBeenCalledWith(
@@ -77,10 +79,12 @@ describe("userProfileApi", () => {
             lastName: "Doe",
             displayName: "johndoe",
             preferredCurrency: "USD",
+            preferredLanguage: "FRA",
             birthDate: null,
         });
         const call = mockFetch.mock.calls[0];
         const body = JSON.parse(call[1].body);
         expect(body.preferredCurrency).toBe("USD");
+        expect(body.preferredLanguage).toBe("FRA");
     });
 });

@@ -4,6 +4,7 @@ import { createPortal } from "react-dom";
 import { useEffect, type ReactNode } from "react";
 
 import { Button } from "@/shared/components/ui";
+import { useI18n } from "@/shared/i18n";
 
 import styles from "./ConfirmDialog.module.css";
 
@@ -24,14 +25,16 @@ export default function ConfirmDialog({
     open,
     title,
     description,
-    confirmLabel = "Confirm",
-    cancelLabel = "Cancel",
+    confirmLabel,
+    cancelLabel,
     confirmVariant = "primary",
     loading,
     errorMessage,
     onConfirm,
     onCancel,
 }: ConfirmDialogProps) {
+    const { t } = useI18n();
+
     useEffect(() => {
         if (!open) return;
         function onKeyDown(e: KeyboardEvent) {
@@ -44,12 +47,7 @@ export default function ConfirmDialog({
     if (!open || typeof document === "undefined") return null;
 
     return createPortal(
-        <div
-            className={styles.backdrop}
-            role="presentation"
-            aria-hidden="true"
-            onClick={onCancel}
-        >
+        <div className={styles.backdrop} role="presentation" aria-hidden="true" onClick={onCancel}>
             <div
                 className={styles.dialog}
                 role="alertdialog"
@@ -71,16 +69,10 @@ export default function ConfirmDialog({
                 )}
                 <div className={styles.actions}>
                     <Button type="button" variant="ghost" size="md" onClick={onCancel} disabled={loading}>
-                        {cancelLabel}
+                        {cancelLabel ?? t("dialog.cancel")}
                     </Button>
-                    <Button
-                        type="button"
-                        variant={confirmVariant}
-                        size="md"
-                        loading={loading}
-                        onClick={onConfirm}
-                    >
-                        {confirmLabel}
+                    <Button type="button" variant={confirmVariant} size="md" loading={loading} onClick={onConfirm}>
+                        {confirmLabel ?? t("dialog.confirm")}
                     </Button>
                 </div>
             </div>

@@ -1,6 +1,7 @@
 package com.finance.userprofile.infrastructure
 
 import com.finance.shared.Currency
+import com.finance.shared.DisplayLanguage
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
@@ -28,6 +29,10 @@ class JpaUserProfileEntity(
     @Enumerated(EnumType.STRING)
     @Column(name = "preferred_currency", nullable = false, length = 3)
     var preferredCurrency: Currency,
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "preferred_language", nullable = false, length = 3)
+    var preferredLanguage: DisplayLanguage,
 
     @Column(name = "birth_date")
     var birthDate: LocalDate?

@@ -13,6 +13,7 @@ test.describe("Profile page", () => {
         await expect(page.getByLabel("First name")).toHaveValue("John");
         await expect(page.getByLabel("Last name")).toHaveValue("Doe");
         await expect(page.getByLabel("Display name")).toHaveValue("johndoe");
+        await expect(page.getByLabel("Display language")).toHaveValue("ENG");
     });
 
     test("submits updated preferences", async ({ page }) => {
@@ -28,6 +29,7 @@ test.describe("Profile page", () => {
                     lastName: "Doe",
                     displayName: "janedoe",
                     preferredCurrency: "USD",
+                    preferredLanguage: "FRA",
                     birthDate: null,
                 }),
             });
@@ -35,6 +37,7 @@ test.describe("Profile page", () => {
         await page.goto("/profile");
         await page.getByLabel("First name").fill("Jane");
         await page.getByLabel("Display name").fill("janedoe");
+        await page.getByLabel("Display language").selectOption("FRA");
         await page.getByRole("button", { name: "Save changes" }).click();
         await page.waitForTimeout(500);
         expect(putCalled).toBe(true);
@@ -51,6 +54,7 @@ test.describe("Profile page", () => {
                     lastName: "Doe",
                     displayName: "johndoe",
                     preferredCurrency: "EUR",
+                    preferredLanguage: "ENG",
                     birthDate: null,
                 }),
             })
@@ -73,5 +77,15 @@ test.describe("Profile page", () => {
         await page.goto("/profile");
         await expect(page.getByRole("link", { name: "Profile" })).toBeVisible();
         await expect(page.getByRole("link", { name: "Profile" })).toHaveAttribute("aria-current", "page");
+    });
+
+    test("renders translated profile and navigation labels", async ({ page }) => {
+        await mockUserProfile(page, "FRA");
+        await page.goto("/profile");
+        await expect(page.getByRole("heading", { name: "Profil" })).toBeVisible();
+        await expect(page.getByLabel("Prénom")).toHaveValue("John");
+        await expect(page.getByLabel("Langue d'affichage")).toHaveValue("FRA");
+        await expect(page.getByRole("link", { name: "Tableau de bord" })).toBeVisible();
+        await expect(page.getByRole("button", { name: "Se déconnecter" })).toBeVisible();
     });
 });

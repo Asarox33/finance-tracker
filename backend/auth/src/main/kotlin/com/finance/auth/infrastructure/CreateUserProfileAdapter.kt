@@ -17,6 +17,7 @@ class CreateUserProfileAdapter(
                 lastName = command.lastName,
                 displayName = command.displayName,
                 preferredCurrency = command.preferredCurrency,
+                preferredLanguage = command.preferredLanguage,
                 birthDate = command.birthDate
             )
         )

@@ -3,6 +3,7 @@ package com.finance.userprofile.infrastructure
 import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.finance.shared.Currency
+import com.finance.shared.DisplayLanguage
 import com.finance.userprofile.application.GetUserProfile
 import com.finance.userprofile.application.UpdateUserPreferences
 import com.finance.userprofile.domain.UserProfile
@@ -50,6 +51,10 @@ class UserProfileController(
         @field:Schema(example = "EUR")
         val preferredCurrency: Currency,
 
+        @param:JsonProperty("preferredLanguage")
+        @field:Schema(example = "ENG")
+        val preferredLanguage: DisplayLanguage,
+
         @param:JsonProperty("birthDate")
         @field:Past(message = "Birth date must be in the past")
         @field:DateTimeFormat(pattern = "yyyy-MM-dd")
@@ -63,6 +68,7 @@ class UserProfileController(
         val lastName: String,
         val displayName: String,
         val preferredCurrency: Currency,
+        val preferredLanguage: DisplayLanguage,
         val birthDate: LocalDate?
     )
 
@@ -82,6 +88,7 @@ class UserProfileController(
                 lastName = request.lastName,
                 displayName = request.displayName,
                 preferredCurrency = request.preferredCurrency,
+                preferredLanguage = request.preferredLanguage,
                 birthDate = request.birthDate
             )
         ).toResponse()
@@ -92,6 +99,7 @@ class UserProfileController(
         lastName = lastName,
         displayName = displayName,
         preferredCurrency = preferredCurrency,
+        preferredLanguage = preferredLanguage,
         birthDate = birthDate
     )
 }

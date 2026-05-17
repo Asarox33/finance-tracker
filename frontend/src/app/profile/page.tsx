@@ -3,10 +3,21 @@
 import { type FormEvent, useEffect, useState } from "react";
 import { useUpdatePreferences, useUserProfile } from "@/features/user-profile/hooks/useUserProfile";
 import { Button, Card, ErrorState, PageHeader, Skeleton } from "@/shared/components/ui";
+import { useI18n, type TranslationKey } from "@/shared/i18n";
+import type { DisplayLanguage } from "@/shared/types";
 import { CURRENCIES } from "@/lib/currencies";
 import styles from "./page.module.css";
 
+const DISPLAY_LANGUAGES: DisplayLanguage[] = ["ENG", "FRA", "ESP", "ITA"];
+const LANGUAGE_LABEL_KEYS: Record<DisplayLanguage, TranslationKey> = {
+    ENG: "language.ENG",
+    FRA: "language.FRA",
+    ESP: "language.ESP",
+    ITA: "language.ITA",
+};
+
 export default function ProfilePage() {
+    const { t } = useI18n();
     const { profile, isLoading, error, mutate } = useUserProfile();
     const { update, loading: saving, error: saveError, success } = useUpdatePreferences();
 
@@ -14,6 +25,7 @@ export default function ProfilePage() {
     const [lastName, setLastName] = useState("");
     const [displayName, setDisplayName] = useState("");
     const [currency, setCurrency] = useState("EUR");
+    const [language, setLanguage] = useState<DisplayLanguage>("ENG");
     const [birthDate, setBirthDate] = useState("");
 
     useEffect(() => {
@@ -22,6 +34,7 @@ export default function ProfilePage() {
             setLastName(profile.lastName);
             setDisplayName(profile.displayName);
             setCurrency(profile.preferredCurrency);
+            setLanguage(profile.preferredLanguage);
             setBirthDate(profile.birthDate ?? "");
         }
     }, [profile]);
@@ -34,6 +47,7 @@ export default function ProfilePage() {
                 lastName,
                 displayName,
                 preferredCurrency: currency,
+                preferredLanguage: language,
                 birthDate: birthDate || null,
             },
             () => mutate()
@@ -42,7 +56,7 @@ export default function ProfilePage() {
 
     return (
         <div className={styles.page}>
-            <PageHeader title="Profile" description="Manage your personal information and preferences" />
+            <PageHeader title={t("profile.title")} description={t("profile.description")} />
             <div className={styles.body}>
                 {isLoading && (
                     <Card>
@@ -54,11 +68,11 @@ export default function ProfilePage() {
                     </Card>
                 )}
 
-                {error && <ErrorState message="Could not load your profile" />}
+                {error && <ErrorState message={t("profile.loadError")} />}
 
                 {profile && (
                     <Card>
-                        <form onSubmit={handleSubmit} noValidate aria-label="Edit profile form">
+                        <form onSubmit={handleSubmit} noValidate aria-label={t("profile.formAria")}>
                             {saveError && (
                                 <div role="alert" className={styles.error}>
                                     {saveError}
@@ -66,16 +80,16 @@ export default function ProfilePage() {
                             )}
                             {success && (
                                 <div role="status" className={styles.success}>
-                                    Profile updated successfully.
+                                    {t("profile.updated")}
                                 </div>
                             )}
 
                             <fieldset className={styles.fieldset}>
-                                <legend className={styles.legend}>Personal information</legend>
+                                <legend className={styles.legend}>{t("profile.personalInformation")}</legend>
 
                                 <div className={styles.row}>
                                     <div className={styles.field}>
-                                        <label htmlFor="firstName">First name</label>
+                                        <label htmlFor="firstName">{t("profile.firstName")}</label>
                                         <input
                                             id="firstName"
                                             type="text"
@@ -89,7 +103,7 @@ export default function ProfilePage() {
                                     </div>
 
                                     <div className={styles.field}>
-                                        <label htmlFor="lastName">Last name</label>
+                                        <label htmlFor="lastName">{t("profile.lastName")}</label>
                                         <input
                                             id="lastName"
                                             type="text"
@@ -104,7 +118,7 @@ export default function ProfilePage() {
                                 </div>
 
                                 <div className={styles.field}>
-                                    <label htmlFor="displayName">Display name</label>
+                                    <label htmlFor="displayName">{t("profile.displayName")}</label>
                                     <input
                                         id="displayName"
                                         type="text"
@@ -119,7 +133,7 @@ export default function ProfilePage() {
 
                                 <div className={styles.field}>
                                     <label htmlFor="birthDate">
-                                        Date of birth
+                                        {t("profile.birthDate")}
                                         <span
                                             style={{
                                                 fontWeight: 400,
@@ -128,7 +142,7 @@ export default function ProfilePage() {
                                                 textTransform: "none",
                                             }}
                                         >
-                                            (optional)
+                                            {t("profile.optional")}
                                         </span>
                                     </label>
                                     <input
@@ -144,10 +158,10 @@ export default function ProfilePage() {
                             </fieldset>
 
                             <fieldset className={styles.fieldset}>
-                                <legend className={styles.legend}>Preferences</legend>
+                                <legend className={styles.legend}>{t("profile.preferences")}</legend>
 
                                 <div className={styles.field}>
-                                    <label htmlFor="currency">Reference currency</label>
+                                    <label htmlFor="currency">{t("profile.referenceCurrency")}</label>
                                     <select
                                         id="currency"
                                         value={currency}
@@ -162,14 +176,34 @@ export default function ProfilePage() {
                                         ))}
                                     </select>
                                     <p id="currency-hint" className={styles.hint}>
-                                        Used as reference currency in analytics and portfolio value
+                                        {t("profile.currencyHint")}
+                                    </p>
+                                </div>
+
+                                <div className={styles.field}>
+                                    <label htmlFor="language">{t("profile.displayLanguage")}</label>
+                                    <select
+                                        id="language"
+                                        value={language}
+                                        onChange={(e) => setLanguage(e.target.value as DisplayLanguage)}
+                                        disabled={saving}
+                                        aria-describedby="language-hint"
+                                    >
+                                        {DISPLAY_LANGUAGES.map((displayLanguage) => (
+                                            <option key={displayLanguage} value={displayLanguage}>
+                                                {t(LANGUAGE_LABEL_KEYS[displayLanguage])}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <p id="language-hint" className={styles.hint}>
+                                        {t("profile.languageHint")}
                                     </p>
                                 </div>
                             </fieldset>
 
                             <div className={styles.actions}>
                                 <Button type="submit" variant="primary" loading={saving}>
-                                    Save changes
+                                    {t("profile.saveChanges")}
                                 </Button>
                             </div>
                         </form>

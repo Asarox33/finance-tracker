@@ -9,18 +9,20 @@ import {
 } from "@/features/analytics/hooks/useAnalytics";
 import { useReferenceCurrency } from "@/shared/hooks/useReferenceCurrency";
 import { Badge, Card, ErrorState, PageHeader, Skeleton } from "@/shared/components/ui";
-import { formatBasisPoints, formatDate, formatMoney } from "@/lib/format";
+import { useFormatters, useI18n, type TranslationKey } from "@/shared/i18n";
+import { formatBasisPoints } from "@/lib/format";
 import type { PortfolioPerformance } from "@/shared/types";
 import styles from "./page.module.css";
 
 const PERIODS = [
-    { label: "3M", months: 3 },
-    { label: "6M", months: 6 },
-    { label: "1Y", months: 12 },
-    { label: "3Y", months: 36 },
-];
+    { labelKey: "analytics.period3M", months: 3 },
+    { labelKey: "analytics.period6M", months: 6 },
+    { labelKey: "analytics.period1Y", months: 12 },
+    { labelKey: "analytics.period3Y", months: 36 },
+] satisfies { labelKey: TranslationKey; months: number }[];
 
 export default function AnalyticsPage() {
+    const { t } = useI18n();
     const [months, setMonths] = useState(12);
     const { referenceCurrency, isLoading: currencyLoading } = useReferenceCurrency();
     const analyticsCurrency = currencyLoading ? undefined : referenceCurrency;
@@ -29,32 +31,33 @@ export default function AnalyticsPage() {
     const { data: perf, isLoading: perfLoading, error: perfError } = usePerformance(analyticsCurrency, months);
     const { data: perfFees, isLoading: feesLoading } = usePerformanceAfterFees(analyticsCurrency, months);
     const { data: perfInflation, isLoading: inflLoading } = usePerformanceAfterInflation(analyticsCurrency, months);
+    const { formatDate, formatMoney } = useFormatters();
 
     const valueLoading = currencyLoading || pvLoading;
     const perfSectionLoading = currencyLoading || perfLoading;
 
     return (
         <div className={styles.page}>
-            <PageHeader title="Analytics" description="Performance analysis and portfolio insights" />
+            <PageHeader title={t("analytics.title")} description={t("analytics.description")} />
             <div className={styles.body}>
                 <div className={styles.controls}>
-                    <div role="group" aria-label="Time period" className={styles.periods}>
-                        {PERIODS.map(({ label, months: m }) => (
+                    <div role="group" aria-label={t("analytics.timePeriodAria")} className={styles.periods}>
+                        {PERIODS.map(({ labelKey, months: m }) => (
                             <button
-                                key={label}
+                                key={labelKey}
                                 className={`${styles.periodBtn} ${months === m ? styles.active : ""}`}
                                 onClick={() => setMonths(m)}
                                 aria-pressed={months === m}
                             >
-                                {label}
+                                {t(labelKey)}
                             </button>
                         ))}
                     </div>
                     <Badge>{referenceCurrency}</Badge>
                 </div>
 
-                <section aria-label="Portfolio value" className={styles.section}>
-                    <h2 className={styles.sectionTitle}>Current Value</h2>
+                <section aria-label={t("analytics.portfolioValueAria")} className={styles.section}>
+                    <h2 className={styles.sectionTitle}>{t("analytics.currentValue")}</h2>
                     <Card className={styles.valueCard}>
                         {valueLoading ? (
                             <Skeleton style={{ height: "3rem", width: "200px" }} />
@@ -63,61 +66,66 @@ export default function AnalyticsPage() {
                                 <p className={styles.bigValue}>
                                     {formatMoney(portfolio?.totalValue ?? 0, portfolio?.currency ?? referenceCurrency)}
                                 </p>
-                                <p className={styles.valueDate}>as of {formatDate(portfolio?.asOf ?? "")}</p>
+                                <p className={styles.valueDate}>
+                                    {t("analytics.asOfDate", { date: formatDate(portfolio?.asOf ?? "") })}
+                                </p>
                             </>
                         )}
                     </Card>
                 </section>
 
-                <section aria-label="Performance comparison" className={styles.section}>
-                    <h2 className={styles.sectionTitle}>Performance</h2>
+                <section aria-label={t("analytics.performanceComparisonAria")} className={styles.section}>
+                    <h2 className={styles.sectionTitle}>{t("analytics.performance")}</h2>
                     <div className={styles.perfGrid}>
                         <PerfCard
-                            label="Gross Performance"
+                            label={t("analytics.grossPerformance")}
                             data={perf}
                             loading={perfSectionLoading}
                             error={!!perfError}
                             referenceCurrency={referenceCurrency}
+                            formatMoney={formatMoney}
                         />
                         <PerfCard
-                            label="After Fees"
+                            label={t("analytics.afterFees")}
                             data={perfFees}
                             loading={currencyLoading || feesLoading}
-                            description="Deducting all recorded fees"
+                            description={t("analytics.afterFeesDescription")}
                             referenceCurrency={referenceCurrency}
+                            formatMoney={formatMoney}
                         />
                         <PerfCard
-                            label="After Inflation"
+                            label={t("analytics.afterInflation")}
                             data={perfInflation}
                             loading={currencyLoading || inflLoading}
-                            description="Real purchasing power gain"
+                            description={t("analytics.afterInflationDescription")}
                             referenceCurrency={referenceCurrency}
+                            formatMoney={formatMoney}
                         />
                     </div>
                 </section>
 
                 {perf && (
-                    <section aria-label="Period details" className={styles.section}>
-                        <h2 className={styles.sectionTitle}>Period Details</h2>
+                    <section aria-label={t("analytics.periodDetailsAria")} className={styles.section}>
+                        <h2 className={styles.sectionTitle}>{t("analytics.periodDetails")}</h2>
                         <Card>
-                            <table aria-label="Performance breakdown">
+                            <table aria-label={t("analytics.performanceBreakdownAria")}>
                                 <thead>
                                     <tr>
-                                        <th scope="col">Metric</th>
+                                        <th scope="col">{t("analytics.metric")}</th>
                                         <th scope="col" style={{ textAlign: "right" }}>
-                                            Gross
+                                            {t("analytics.gross")}
                                         </th>
                                         <th scope="col" style={{ textAlign: "right" }}>
-                                            After Fees
+                                            {t("analytics.afterFees")}
                                         </th>
                                         <th scope="col" style={{ textAlign: "right" }}>
-                                            After Inflation
+                                            {t("analytics.afterInflation")}
                                         </th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <td>Start Value</td>
+                                        <td>{t("analytics.startValue")}</td>
                                         <td
                                             style={{
                                                 textAlign: "right",
@@ -140,11 +148,13 @@ export default function AnalyticsPage() {
                                                 fontFamily: "var(--font-mono)",
                                             }}
                                         >
-                                            {perfInflation ? formatMoney(perfInflation.startValue, referenceCurrency) : "—"}
+                                            {perfInflation
+                                                ? formatMoney(perfInflation.startValue, referenceCurrency)
+                                                : "—"}
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td>End Value</td>
+                                        <td>{t("analytics.endValue")}</td>
                                         <td
                                             style={{
                                                 textAlign: "right",
@@ -167,11 +177,13 @@ export default function AnalyticsPage() {
                                                 fontFamily: "var(--font-mono)",
                                             }}
                                         >
-                                            {perfInflation ? formatMoney(perfInflation.endValue, referenceCurrency) : "—"}
+                                            {perfInflation
+                                                ? formatMoney(perfInflation.endValue, referenceCurrency)
+                                                : "—"}
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td>Gain / Loss</td>
+                                        <td>{t("analytics.gainLoss")}</td>
                                         <td
                                             style={{
                                                 textAlign: "right",
@@ -201,11 +213,13 @@ export default function AnalyticsPage() {
                                                         : "var(--danger)",
                                             }}
                                         >
-                                            {perfInflation ? formatMoney(perfInflation.gainLoss, referenceCurrency) : "—"}
+                                            {perfInflation
+                                                ? formatMoney(perfInflation.gainLoss, referenceCurrency)
+                                                : "—"}
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td>Return</td>
+                                        <td>{t("analytics.return")}</td>
                                         <td
                                             style={{
                                                 textAlign: "right",
@@ -258,6 +272,7 @@ function PerfCard({
     error,
     description,
     referenceCurrency,
+    formatMoney,
 }: {
     label: string;
     data?: PortfolioPerformance;
@@ -265,8 +280,10 @@ function PerfCard({
     error?: boolean;
     description?: string;
     referenceCurrency: string;
+    formatMoney: (amount: number, currency: string) => string;
 }) {
     const positive = (data?.gainLossBasisPoints ?? 0) >= 0;
+    const { t } = useI18n();
 
     return (
         <Card className={styles.perfCard}>
@@ -284,7 +301,7 @@ function PerfCard({
                     />
                 </>
             ) : error ? (
-                <ErrorState message="No data available" />
+                <ErrorState message={t("analytics.noData")} />
             ) : (
                 <>
                     <p className={`${styles.perfValue} ${positive ? styles.positive : styles.negative}`}>

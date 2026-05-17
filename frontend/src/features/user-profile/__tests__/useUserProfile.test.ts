@@ -11,6 +11,7 @@ jest.mock("swr", () => ({
             lastName: "Doe",
             displayName: "johndoe",
             preferredCurrency: "EUR",
+            preferredLanguage: "ENG",
             birthDate: null,
         },
         error: null,
@@ -31,6 +32,7 @@ const mockPreferences = {
     lastName: "Doe",
     displayName: "johndoe",
     preferredCurrency: "EUR",
+    preferredLanguage: "ENG",
     birthDate: null,
 };
 
@@ -115,6 +117,7 @@ describe("useUserProfile", () => {
             lastName: "Doe",
             displayName: "johndoe",
             preferredCurrency: "EUR",
+            preferredLanguage: "ENG",
             birthDate: null,
         });
         expect(result.current.isLoading).toBe(false);

@@ -61,20 +61,20 @@
 
 ### user-profile
 
-**Purpose:** Stores display name, first/last name, preferred currency, birth date.
+**Purpose:** Stores display name, first/last name, preferred currency, preferred display language, birth date.
 
 **Domain rules:**
 - `firstName`, `lastName`, `displayName` must not be blank
 - Profile ID equals the auth user ID (same UUID, no auto-increment)
-- Profile is created during registration with placeholder values (`"Unknown"` names, `USD` currency)
+- Profile is created during registration with placeholder values (`"Unknown"` names, `USD` currency, `ENG` language)
 
 **Key use cases:** `CreateUserProfile`, `GetUserProfile`, `UpdateUserPreferences`
 
 **Frontend integration:**
-- `GET /api/users/me` → returns `UserProfile`; used in `AppShell` to show `displayName` in sidebar and in `/profile` page to pre-fill the form
-- `PUT /api/users/me/preferences` → updates name, display name, preferred currency, birth date
+- `GET /api/users/me` → returns `UserProfile`; used in `AppShell` to show `displayName`, select the i18n dictionary, and in `/profile` page to pre-fill the form
+- `PUT /api/users/me/preferences` → updates name, display name, preferred currency, preferred language, birth date
 - The profile form is pre-populated via `useEffect` watching the SWR data; updates trigger `mutate()` to refresh
-- Preferred currency from the profile is **not** yet auto-applied to analytics pages (those default to `EUR`)
+- Preferred language values are `ENG`, `FRA`, `ESP`, and `ITA`; frontend maps them to locale tags for dictionaries and formatting
 
 ---
 
@@ -314,10 +314,21 @@
 **Purpose:** Formatting utilities for display values.
 
 **Rules:**
-- `formatMoney` always uses `fr-FR` locale (comma decimal separator, space thousands separator)
-- `formatDate` always uses `fr-FR` locale (e.g. "15 janv. 2024")
+- `formatMoney` accepts a locale override; `useFormatters()` applies the current profile language locale
+- `formatDate` accepts a locale override; `useFormatters()` applies the current profile language locale
 - `formatBasisPoints` always prefixes `+` for non-negative values; divides by 100 to get percentage
 - `today()` and `monthsAgo(n)` always return `YYYY-MM-DD` strings (ISO 8601 date-only)
+
+### `src/shared/i18n`
+
+**Purpose:** Profile-driven dictionaries and formatting helpers for frontend internationalization.
+
+**Rules:**
+- Supported display languages are `ENG`, `FRA`, `ESP`, and `ITA`; backend stores the code on `UserProfile.preferredLanguage`.
+- All authenticated UI user-facing copy must go through `useI18n().t(...)`: visible labels, headings, buttons, placeholders, hints, errors, empty states, table headers, modals, and accessibility text.
+- Dynamic copy must use named placeholders such as `{date}`, `{currency}`, `{page}`, `{total}`, `{accountName}`, and `{institutionName}` instead of manual string concatenation.
+- Display labels for known enums (account type/status, institution type, transaction type) live in dictionaries; persisted enum values remain untranslated in API payloads.
+- Technical/user data remains raw: currency codes, BIC/SWIFT values, IDs, and user-entered names.
 
 ---
 

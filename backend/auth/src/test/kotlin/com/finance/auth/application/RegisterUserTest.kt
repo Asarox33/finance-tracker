@@ -4,6 +4,7 @@ import com.finance.auth.InMemoryUserRepository
 import com.finance.auth.NoOpCreateUserProfilePort
 import com.finance.auth.PlainPasswordEncoder
 import com.finance.auth.VALID_PASSWORD
+import com.finance.shared.DisplayLanguage
 import com.finance.shared.error.InvalidRequestException
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -27,6 +28,7 @@ class RegisterUserTest {
     fun createsUserProfileAfterRegistration() {
         useCase.execute(RegisterUser.Command("user@example.com", VALID_PASSWORD))
         assertEquals(1, createUserProfilePort.created.size)
+        assertEquals(DisplayLanguage.ENG, createUserProfilePort.created.single().preferredLanguage)
     }
 
     @Test

@@ -1,6 +1,6 @@
-export function formatMoney(amount: number, currency: string, fractionDigits = 2): string {
+export function formatMoney(amount: number, currency: string, fractionDigits = 2, locale = "fr-FR"): string {
     const value = amount / Math.pow(10, fractionDigits);
-    return new Intl.NumberFormat("fr-FR", {
+    return new Intl.NumberFormat(locale, {
         style: "currency",
         currency,
         currencyDisplay: "code",
@@ -9,8 +9,8 @@ export function formatMoney(amount: number, currency: string, fractionDigits = 2
     }).format(value);
 }
 
-export function formatDate(date: string): string {
-    return new Intl.DateTimeFormat("fr-FR", {
+export function formatDate(date: string, locale = "fr-FR"): string {
+    return new Intl.DateTimeFormat(locale, {
         day: "2-digit",
         month: "short",
         year: "numeric",

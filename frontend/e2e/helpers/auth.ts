@@ -1,6 +1,7 @@
 import type { Page } from "@playwright/test";
+import type { DisplayLanguage } from "@/shared/types";
 
-export function mockUserProfile(page: Page) {
+export function mockUserProfile(page: Page, preferredLanguage: DisplayLanguage = "ENG") {
     return page.route("**/api/users/me", (route) =>
         route.fulfill({
             status: 200,
@@ -11,6 +12,7 @@ export function mockUserProfile(page: Page) {
                 lastName: "Doe",
                 displayName: "johndoe",
                 preferredCurrency: "EUR",
+                preferredLanguage,
                 birthDate: null,
             }),
         })

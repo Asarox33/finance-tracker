@@ -1,6 +1,7 @@
 "use client";
 
 import clsx from "clsx";
+import { useI18n } from "@/shared/i18n";
 import styles from "./ui.module.css";
 
 export function Card({ children, className }: { children: React.ReactNode; className?: string }) {
@@ -78,10 +79,12 @@ export function EmptyState({ title, description }: { title: string; description?
 }
 
 export function ErrorState({ message }: { message?: string }) {
+    const { t } = useI18n();
+
     return (
         <div className={styles.errorState} role="alert">
             <span aria-hidden="true">⚠</span>
-            {message ?? "Something went wrong. Please try again."}
+            {message ?? t("errors.generic")}
         </div>
     );
 }

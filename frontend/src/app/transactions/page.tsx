@@ -5,7 +5,7 @@ import { useAccounts } from "@/features/accounts/hooks/useAccounts";
 import { useTransactions } from "@/features/transactions/hooks/useTransactions";
 import { transactionsApi } from "@/features/transactions/api/transactionsApi";
 import { Badge, Button, Card, EmptyState, ErrorState, PageHeader, Skeleton } from "@/shared/components/ui";
-import { formatDate, formatMoney } from "@/lib/format";
+import { useFormatters, useI18n, type TranslationKey } from "@/shared/i18n";
 import type { Transaction, TransactionType } from "@/shared/types";
 import styles from "./page.module.css";
 
@@ -34,6 +34,7 @@ const TYPE_VARIANTS: Record<string, "success" | "danger" | "warning" | "default"
 };
 
 export default function TransactionsPage() {
+    const { t } = useI18n();
     const { data: accounts } = useAccounts();
     const [selectedAccount, setSelectedAccount] = useState<string>("");
     const [page, setPage] = useState(0);
@@ -43,12 +44,12 @@ export default function TransactionsPage() {
     return (
         <div className={styles.page}>
             <PageHeader
-                title="Transactions"
-                description="View and manage your transaction history"
+                title={t("transactions.title")}
+                description={t("transactions.description")}
                 action={
                     selectedAccount ? (
                         <Button onClick={() => setShowForm(true)} variant="primary">
-                            + New transaction
+                            {t("transactions.new")}
                         </Button>
                     ) : undefined
                 }
@@ -56,7 +57,7 @@ export default function TransactionsPage() {
             <div className={styles.body}>
                 <div className={styles.filters}>
                     <div className={styles.filterField}>
-                        <label htmlFor="account-select">Account</label>
+                        <label htmlFor="account-select">{t("transactions.account")}</label>
                         <select
                             id="account-select"
                             value={selectedAccount}
@@ -65,14 +66,14 @@ export default function TransactionsPage() {
                                 setPage(0);
                                 setShowForm(false);
                             }}
-                            aria-label="Select account to view transactions"
+                            aria-label={t("transactions.selectAccountAria")}
                         >
-                            <option value="">Select an account…</option>
+                            <option value="">{t("transactions.selectAccountOption")}</option>
                             {accounts?.items
                                 .filter((a) => a.status === "ACTIVE")
                                 .map((a) => (
                                     <option key={a.id} value={a.id}>
-                                        {a.name} ({a.currency})
+                                        {t("transactions.accountOption", { accountName: a.name, currency: a.currency })}
                                     </option>
                                 ))}
                         </select>
@@ -93,8 +94,8 @@ export default function TransactionsPage() {
 
                 {!selectedAccount && (
                     <EmptyState
-                        title="Select an account"
-                        description="Choose an account above to view its transactions"
+                        title={t("transactions.selectAccountTitle")}
+                        description={t("transactions.selectAccountDescription")}
                     />
                 )}
 
@@ -112,19 +113,19 @@ export default function TransactionsPage() {
                     <>
                         {data.items.length === 0 && !showForm ? (
                             <EmptyState
-                                title="No transactions"
-                                description="Record your first transaction for this account"
+                                title={t("transactions.emptyTitle")}
+                                description={t("transactions.emptyDescription")}
                             />
                         ) : (
                             <Card>
-                                <table aria-label="Transaction list">
+                                <table aria-label={t("transactions.tableAria")}>
                                     <thead>
                                         <tr>
-                                            <th scope="col">Date</th>
-                                            <th scope="col">Label</th>
-                                            <th scope="col">Type</th>
+                                            <th scope="col">{t("transactions.date")}</th>
+                                            <th scope="col">{t("transactions.label")}</th>
+                                            <th scope="col">{t("transactions.type")}</th>
                                             <th scope="col" style={{ textAlign: "right" }}>
-                                                Amount
+                                                {t("transactions.amount")}
                                             </th>
                                         </tr>
                                     </thead>
@@ -138,23 +139,23 @@ export default function TransactionsPage() {
                         )}
 
                         {data.totalPages > 1 && (
-                            <nav className={styles.pagination} aria-label="Transaction pages">
+                            <nav className={styles.pagination} aria-label={t("transactions.pagesAria")}>
                                 <button
                                     className={styles.pageBtn}
                                     onClick={() => setPage((p) => p - 1)}
                                     disabled={data.isFirst}
-                                    aria-label="Previous page"
+                                    aria-label={t("common.previousPage")}
                                 >
                                     ←
                                 </button>
                                 <span className={styles.pageInfo} aria-live="polite">
-                                    Page {page + 1} of {data.totalPages}
+                                    {t("common.pageOfTotal", { page: page + 1, total: data.totalPages })}
                                 </span>
                                 <button
                                     className={styles.pageBtn}
                                     onClick={() => setPage((p) => p + 1)}
                                     disabled={data.isLast}
-                                    aria-label="Next page"
+                                    aria-label={t("common.nextPage")}
                                 >
                                     →
                                 </button>
@@ -178,6 +179,7 @@ function AddTransactionForm({
     onSuccess: () => void;
     onCancel: () => void;
 }) {
+    const { t } = useI18n();
     const [type, setType] = useState<TransactionType>("DEPOSIT");
     const [amount, setAmount] = useState("");
     const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
@@ -190,7 +192,7 @@ function AddTransactionForm({
         e.preventDefault();
         const amountFloat = parseFloat(amount);
         if (isNaN(amountFloat) || amountFloat === 0) {
-            setError("Amount must be a non-zero number");
+            setError(t("transactions.amountValidationError"));
             return;
         }
         setLoading(true);
@@ -209,7 +211,7 @@ function AddTransactionForm({
             });
             onSuccess();
         } catch (err) {
-            setError((err as { message?: string }).message ?? "Failed to record transaction");
+            setError((err as { message?: string }).message ?? t("transactions.createError"));
         } finally {
             setLoading(false);
         }
@@ -217,8 +219,8 @@ function AddTransactionForm({
 
     return (
         <Card className={styles.formCard}>
-            <h2 className={styles.formTitle}>New transaction</h2>
-            <form onSubmit={handleSubmit} noValidate aria-label="Add transaction form">
+            <h2 className={styles.formTitle}>{t("transactions.formTitle")}</h2>
+            <form onSubmit={handleSubmit} noValidate aria-label={t("transactions.formAria")}>
                 {error && (
                     <div role="alert" className={styles.formError}>
                         {error}
@@ -227,16 +229,16 @@ function AddTransactionForm({
 
                 <div className={styles.formGrid}>
                     <div className={styles.field}>
-                        <label htmlFor="tx-type">Type</label>
+                        <label htmlFor="tx-type">{t("transactions.type")}</label>
                         <select
                             id="tx-type"
                             value={type}
                             onChange={(e) => setType(e.target.value as TransactionType)}
                             disabled={loading}
                         >
-                            {TRANSACTION_TYPES.map((t) => (
-                                <option key={t} value={t}>
-                                    {t}
+                            {TRANSACTION_TYPES.map((transactionType) => (
+                                <option key={transactionType} value={transactionType}>
+                                    {t(`transactionType.${transactionType}` as TranslationKey)}
                                 </option>
                             ))}
                         </select>
@@ -244,7 +246,7 @@ function AddTransactionForm({
 
                     <div className={styles.field}>
                         <label htmlFor="tx-amount">
-                            Amount ({currency})
+                            {t("transactions.amountWithCurrency", { currency })}
                             <span
                                 style={{
                                     fontWeight: 400,
@@ -252,7 +254,7 @@ function AddTransactionForm({
                                     marginLeft: "0.5rem",
                                 }}
                             >
-                                use − for withdrawals
+                                {t("transactions.withdrawalHint")}
                             </span>
                         </label>
                         <input
@@ -263,14 +265,14 @@ function AddTransactionForm({
                             aria-required="true"
                             value={amount}
                             onChange={(e) => setAmount(e.target.value)}
-                            placeholder="100.00"
+                            placeholder={t("transactions.amountPlaceholder")}
                             disabled={loading}
                             style={{ fontFamily: "var(--font-mono)" }}
                         />
                     </div>
 
                     <div className={styles.field}>
-                        <label htmlFor="tx-date">Date</label>
+                        <label htmlFor="tx-date">{t("transactions.date")}</label>
                         <input
                             id="tx-date"
                             type="date"
@@ -283,7 +285,7 @@ function AddTransactionForm({
                     </div>
 
                     <div className={styles.field}>
-                        <label htmlFor="tx-label">Label</label>
+                        <label htmlFor="tx-label">{t("transactions.label")}</label>
                         <input
                             id="tx-label"
                             type="text"
@@ -291,21 +293,21 @@ function AddTransactionForm({
                             aria-required="true"
                             value={label}
                             onChange={(e) => setLabel(e.target.value)}
-                            placeholder="e.g. Monthly salary"
+                            placeholder={t("transactions.labelPlaceholder")}
                             disabled={loading}
                         />
                     </div>
 
                     <div className={styles.field} style={{ gridColumn: "1 / -1" }}>
                         <label htmlFor="tx-notes">
-                            Notes{" "}
+                            {t("transactions.notes")}{" "}
                             <span
                                 style={{
                                     color: "var(--text-dim)",
                                     fontWeight: 400,
                                 }}
                             >
-                                (optional)
+                                {t("common.optional")}
                             </span>
                         </label>
                         <input
@@ -313,7 +315,7 @@ function AddTransactionForm({
                             type="text"
                             value={notes}
                             onChange={(e) => setNotes(e.target.value)}
-                            placeholder="Additional details…"
+                            placeholder={t("transactions.notesPlaceholder")}
                             disabled={loading}
                         />
                     </div>
@@ -321,10 +323,10 @@ function AddTransactionForm({
 
                 <div className={styles.formActions}>
                     <Button type="button" variant="ghost" onClick={onCancel} disabled={loading}>
-                        Cancel
+                        {t("common.cancel")}
                     </Button>
                     <Button type="submit" variant="primary" loading={loading}>
-                        Record transaction
+                        {t("transactions.record")}
                     </Button>
                 </div>
             </form>
@@ -334,6 +336,9 @@ function AddTransactionForm({
 
 function TransactionRow({ tx }: { tx: Transaction }) {
     const positive = ["DEPOSIT", "DIVIDEND", "SELL"].includes(tx.type);
+    const { formatDate, formatMoney } = useFormatters();
+    const { t } = useI18n();
+
     return (
         <tr>
             <td
@@ -359,7 +364,9 @@ function TransactionRow({ tx }: { tx: Transaction }) {
                 )}
             </td>
             <td>
-                <Badge variant={TYPE_VARIANTS[tx.type] ?? "default"}>{tx.type}</Badge>
+                <Badge variant={TYPE_VARIANTS[tx.type] ?? "default"}>
+                    {t(`transactionType.${tx.type}` as TranslationKey)}
+                </Badge>
                 {tx.appliedFxRate && (
                     <span
                         style={{
@@ -368,7 +375,7 @@ function TransactionRow({ tx }: { tx: Transaction }) {
                             color: "var(--text-muted)",
                         }}
                     >
-                        FX
+                        {t("transactions.fx")}
                     </span>
                 )}
             </td>

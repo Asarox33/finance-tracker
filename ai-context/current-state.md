@@ -60,11 +60,11 @@ Features are integrated as vertical slices. Status is **functional** where marke
 
 **Shared / lib**
 
-- ✅ `AppShell` — nav includes Dashboard, Accounts, **Institutions**, Transactions, Analytics; auth guard; **loading shell** while auth is resolving; **session timeout modal** (idle + access expiry, 15s grace, refresh on “Stay signed in”); responsive sidebar
+- ✅ `AppShell` — nav includes Dashboard, Accounts, **Institutions**, Transactions, Analytics; auth guard; **loading shell** while auth is resolving; profile-driven `ENG` / `FRA` / `ESP` / `ITA` i18n provider; **session timeout modal** (idle + access expiry, 15s grace, refresh on “Stay signed in”); responsive sidebar
 - ✅ `ThemeToggle`, shared UI primitives (`ui.tsx`)
 - ✅ `http.ts` — access JWT in `localStorage`, `credentials: "include"`, **refresh on 401** via cookie, `ensureSession()` for auth guard; **unit tests:** `src/lib/__tests__/http.test.ts`
-- ✅ `format.ts`, `currencies.ts`, `countries.ts` (used by accounts / profile / institutions)
-- ✅ `fr-FR` hardcoded for money and dates in `format.ts`
+- ✅ `format.ts`, `currencies.ts`, `countries.ts` (used by accounts / profile / institutions); money/date formatters accept locale overrides
+- ✅ `shared/i18n` — typed dictionaries for `ENG`, `FRA`, `ESP`, `ITA`; authenticated UI copy, accessibility labels, placeholders, modals, enum labels, and money/date formatting are dictionary/locale driven
 
 #### Routes (App Router)
 
@@ -79,7 +79,7 @@ Features are integrated as vertical slices. Status is **functional** where marke
 | `/institutions` | List, filters, pagination, create institution (`flag-icons` for country flags) |
 | `/transactions` | Account selector, paginated table, create form; **no date-range UI**; **no asset selector** |
 | `/analytics` | Period presets, performance variants; reference currency from profile `preferredCurrency` |
-| `/profile` | Profile and preferences |
+| `/profile` | Profile and preferences, including preferred currency and display language |
 
 #### Frontend Test Coverage (Jest)
 
@@ -156,17 +156,13 @@ Features are integrated as vertical slices. Status is **functional** where marke
 - **No UI** for optional `from` / `to` on `transactionsApi.list` (API supports it).
 - **No `assetId`** in create form for BUY/SELL.
 
-#### Analytics / dashboard
-
-- **Reference currency hardcoded `EUR`** in `dashboard/page.tsx`, `analytics/page.tsx`, and related hooks usage — not wired to `UserProfile.preferredCurrency`.
-
 #### Product polish
 
 - No React **error boundary**.
 - `useSessionTimeout` runs whenever `AppShell` mounts (including rare cases with token on public routes).
 - **Per-user access session length (2–10 min)** in `user-profile` not implemented; global default/max **10 min** via `auth.jwt.access-expiration-ms` / `TokenService.MAX_ACCESS_EXPIRATION_MS`.
 - No optimistic mutations for creates/closes/updates.
-- `fr-FR` only in formatters.
+- Public auth pages (`/login`, `/login/register`, `/login/reset`) still use English copy; authenticated pages are covered by the profile-driven dictionaries.
 
 #### E2E gaps
 

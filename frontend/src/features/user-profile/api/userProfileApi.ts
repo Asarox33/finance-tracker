@@ -1,11 +1,12 @@
 import { http } from "@/lib/http";
-import type { UserProfile } from "@/shared/types";
+import type { DisplayLanguage, UserProfile } from "@/shared/types";
 
 export interface UpdatePreferencesRequest {
     firstName: string;
     lastName: string;
     displayName: string;
     preferredCurrency: string;
+    preferredLanguage: DisplayLanguage;
     birthDate: string | null;
 }
 
