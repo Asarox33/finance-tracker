@@ -139,6 +139,45 @@
     color: #94a3b8;
 }
 
+[data-theme="light"] .typeChecking,
+[data-theme="light"] .typeBank {
+    background: #d6eee5;
+    color: #0f766e;
+}
+
+[data-theme="light"] .typeSavings {
+    background: #dceccf;
+    color: #166534;
+}
+
+[data-theme="light"] .typeBrokerage,
+[data-theme="light"] .typeBroker {
+    background: #f0dfbd;
+    color: #8a4b0b;
+}
+
+[data-theme="light"] .typeCrypto,
+[data-theme="light"] .typeCryptoExchange {
+    background: #eadcf5;
+    color: #6b3fa0;
+}
+
+[data-theme="light"] .typeRealEstate {
+    background: #f1d5ce;
+    color: #9f2f2f;
+}
+
+[data-theme="light"] .typeRetirement,
+[data-theme="light"] .typeInsurance {
+    background: #d7e3ef;
+    color: #255f9e;
+}
+
+[data-theme="light"] .typeOther {
+    background: #e2ded5;
+    color: #475569;
+}
+
 .onboardingCard {
     max-width: 680px;
 }

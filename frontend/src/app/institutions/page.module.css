@@ -170,6 +170,31 @@
     color: #94a3b8;
 }
 
+[data-theme="light"] .typeBank {
+    background: #d6eee5;
+    color: #0f766e;
+}
+
+[data-theme="light"] .typeBroker {
+    background: #f0dfbd;
+    color: #8a4b0b;
+}
+
+[data-theme="light"] .typeInsurance {
+    background: #d7e3ef;
+    color: #255f9e;
+}
+
+[data-theme="light"] .typeCryptoExchange {
+    background: #eadcf5;
+    color: #6b3fa0;
+}
+
+[data-theme="light"] .typeOther {
+    background: #e2ded5;
+    color: #475569;
+}
+
 .countryLine {
     display: flex;
     align-items: center;
