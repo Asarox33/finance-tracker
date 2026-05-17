@@ -5,7 +5,7 @@ test.describe("Auth flows", () => {
         await page.goto("/login");
         await expect(page.getByRole("heading", { name: "Finance Tracker" })).toBeVisible();
         await expect(page.getByLabel("Email address")).toBeVisible();
-        await expect(page.getByLabel("Password")).toBeVisible();
+        await expect(page.getByLabel("Password", { exact: true })).toBeVisible();
         await expect(page.getByRole("button", { name: "Sign in" })).toBeVisible();
         await expect(page.getByRole("link", { name: "Forgot password?" })).toBeVisible();
         await expect(page.getByRole("link", { name: "Create account" })).toBeVisible();
@@ -21,9 +21,24 @@ test.describe("Auth flows", () => {
         await page.keyboard.press("Tab"); // Email input
         await expect(page.getByLabel("Email address")).toBeFocused();
         await page.keyboard.press("Tab");
-        await expect(page.getByLabel("Password")).toBeFocused();
+        await expect(page.getByLabel("Password", { exact: true })).toBeFocused();
+        await page.keyboard.press("Tab");
+        await expect(page.getByRole("button", { name: "Show password" })).toBeFocused();
         await page.keyboard.press("Tab");
         await expect(page.getByRole("button", { name: "Sign in" })).toBeFocused();
+    });
+
+    test("password reveal only shows while the eye button is pressed", async ({ page }) => {
+        await page.goto("/login");
+        const password = page.getByLabel("Password", { exact: true });
+        const reveal = page.getByRole("button", { name: "Show password" });
+        await password.fill("SecretPassword123!");
+        await expect(password).toHaveAttribute("type", "password");
+        await reveal.hover();
+        await page.mouse.down();
+        await expect(password).toHaveAttribute("type", "text");
+        await page.mouse.up();
+        await expect(password).toHaveAttribute("type", "password");
     });
 
     test("login shows error on bad credentials", async ({ page }) => {
@@ -36,7 +51,7 @@ test.describe("Auth flows", () => {
         );
         await page.goto("/login");
         await page.getByLabel("Email address").fill("bad@example.com");
-        await page.getByLabel("Password").fill("WrongPassword123!");
+        await page.getByLabel("Password", { exact: true }).fill("WrongPassword123!");
         await page.getByRole("button", { name: "Sign in" }).click();
         await expect(
             page.locator("[role='alert'][aria-live='assertive']:not(#__next-route-announcer__)")
@@ -55,7 +70,7 @@ test.describe("Auth flows", () => {
         );
         await page.goto("/login");
         await page.getByLabel("Email address").fill("locked@example.com");
-        await page.getByLabel("Password").fill("Password123!");
+        await page.getByLabel("Password", { exact: true }).fill("Password123!");
         await page.getByRole("button", { name: "Sign in" }).click();
         await expect(
             page.locator("[role='alert'][aria-live='assertive']:not(#__next-route-announcer__)")

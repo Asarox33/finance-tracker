@@ -60,6 +60,7 @@ test.describe("Profile page", () => {
             })
         );
         await page.goto("/profile");
+        await page.getByLabel("Display name").fill("johnny");
         await page.getByRole("button", { name: "Save changes" }).click();
         await expect(page.getByRole("status")).toContainText("updated successfully");
     });

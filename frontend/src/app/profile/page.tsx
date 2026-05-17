@@ -1,6 +1,6 @@
 "use client";
 
-import { type FormEvent, useEffect, useState } from "react";
+import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { useUpdatePreferences, useUserProfile } from "@/features/user-profile/hooks/useUserProfile";
 import { Button, Card, ErrorState, PageHeader, Skeleton } from "@/shared/components/ui";
 import { useI18n, type TranslationKey } from "@/shared/i18n";
@@ -27,6 +27,7 @@ export default function ProfilePage() {
     const [currency, setCurrency] = useState("EUR");
     const [language, setLanguage] = useState<DisplayLanguage>("ENG");
     const [birthDate, setBirthDate] = useState("");
+    const [clientError, setClientError] = useState<string | null>(null);
 
     useEffect(() => {
         if (profile) {
@@ -39,13 +40,45 @@ export default function ProfilePage() {
         }
     }, [profile]);
 
+    const hasChanges = useMemo(() => {
+        if (!profile) return false;
+        return (
+            firstName !== profile.firstName ||
+            lastName !== profile.lastName ||
+            displayName !== profile.displayName ||
+            currency !== profile.preferredCurrency ||
+            language !== profile.preferredLanguage ||
+            birthDate !== (profile.birthDate ?? "")
+        );
+    }, [birthDate, currency, displayName, firstName, language, lastName, profile]);
+
     async function handleSubmit(e: FormEvent) {
         e.preventDefault();
+        setClientError(null);
+        const trimmedFirstName = firstName.trim();
+        const trimmedLastName = lastName.trim();
+        const trimmedDisplayName = displayName.trim();
+        if (!trimmedFirstName) {
+            setClientError(t("profile.firstNameRequired"));
+            return;
+        }
+        if (!trimmedLastName) {
+            setClientError(t("profile.lastNameRequired"));
+            return;
+        }
+        if (!trimmedDisplayName) {
+            setClientError(t("profile.displayNameRequired"));
+            return;
+        }
+        if (birthDate && birthDate > new Date().toISOString().split("T")[0]) {
+            setClientError(t("profile.birthDateFuture"));
+            return;
+        }
         await update(
             {
-                firstName,
-                lastName,
-                displayName,
+                firstName: trimmedFirstName,
+                lastName: trimmedLastName,
+                displayName: trimmedDisplayName,
                 preferredCurrency: currency,
                 preferredLanguage: language,
                 birthDate: birthDate || null,
@@ -73,9 +106,9 @@ export default function ProfilePage() {
                 {profile && (
                     <Card>
                         <form onSubmit={handleSubmit} noValidate aria-label={t("profile.formAria")}>
-                            {saveError && (
+                            {(clientError || saveError) && (
                                 <div role="alert" className={styles.error}>
-                                    {saveError}
+                                    {clientError ?? saveError}
                                 </div>
                             )}
                             {success && (
@@ -202,7 +235,7 @@ export default function ProfilePage() {
                             </fieldset>
 
                             <div className={styles.actions}>
-                                <Button type="submit" variant="primary" loading={saving}>
+                                <Button type="submit" variant="primary" loading={saving} disabled={!hasChanges || saving}>
                                     {t("profile.saveChanges")}
                                 </Button>
                             </div>

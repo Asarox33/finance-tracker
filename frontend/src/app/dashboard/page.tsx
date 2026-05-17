@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo } from "react";
 import { usePerformance, usePortfolioValue } from "@/features/analytics/hooks/useAnalytics";
 import { useAccounts } from "@/features/accounts/hooks/useAccounts";
@@ -15,9 +16,9 @@ export default function DashboardPage() {
     const analyticsCurrency = currencyLoading ? undefined : referenceCurrency;
 
     const { data: portfolio, isLoading: pvLoading, error: pvError } = usePortfolioValue(analyticsCurrency);
-    const { data: perf, isLoading: perfLoading } = usePerformance(analyticsCurrency, 12);
-    const { data: accounts, isLoading: accLoading } = useAccounts();
-    const { data: institutions, isLoading: instLoading } = useInstitutions();
+    const { data: perf, isLoading: perfLoading, error: perfError } = usePerformance(analyticsCurrency, 12);
+    const { data: accounts, isLoading: accLoading, error: accError } = useAccounts();
+    const { data: institutions, isLoading: instLoading, error: instError } = useInstitutions();
     const { formatDate, formatMoney } = useFormatters();
     const { t } = useI18n();
 
@@ -34,6 +35,10 @@ export default function DashboardPage() {
     const perfKpiLoading = currencyLoading || perfLoading;
 
     const gainPositive = (perf?.gainLossBasisPoints ?? 0) >= 0;
+    const breakdownError = pvError || accError || instError;
+    const hasSnapshots = (portfolio?.snapshots.length ?? 0) > 0;
+    const hasInstitutions = (institutions?.items.length ?? 0) > 0;
+    const hasAccounts = (accounts?.items.length ?? 0) > 0;
 
     return (
         <div className={styles.page}>
@@ -61,6 +66,8 @@ export default function DashboardPage() {
                         <p className={styles.kpiLabel}>{t("dashboard.performance12Month")}</p>
                         {perfKpiLoading ? (
                             <Skeleton className={styles.kpiSkel} />
+                        ) : perfError ? (
+                            <ErrorState message={t("dashboard.loadPerformanceError")} />
                         ) : (
                             <>
                                 <p className={`${styles.kpiValue} ${gainPositive ? styles.positive : styles.negative}`}>
@@ -78,6 +85,8 @@ export default function DashboardPage() {
                         <p className={styles.kpiLabel}>{t("dashboard.activeAccounts")}</p>
                         {accLoading ? (
                             <Skeleton className={styles.kpiSkel} />
+                        ) : accError ? (
+                            <ErrorState message={t("dashboard.loadBreakdownError")} />
                         ) : (
                             <p className={styles.kpiValue}>
                                 {accounts?.items.filter((a) => a.status === "ACTIVE").length ?? 0}
@@ -95,6 +104,14 @@ export default function DashboardPage() {
                                 <Skeleton key={i} className={styles.rowSkel} />
                             ))}
                         </div>
+                    ) : breakdownError ? (
+                        <ErrorState message={t("dashboard.loadBreakdownError")} />
+                    ) : !hasSnapshots ? (
+                        <GettingStartedCard
+                            hasInstitutions={hasInstitutions}
+                            hasAccounts={hasAccounts}
+                            hasSnapshots={hasSnapshots}
+                        />
                     ) : (
                         <Card>
                             <table aria-label={t("dashboard.accountValuesAria")}>
@@ -112,20 +129,6 @@ export default function DashboardPage() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {portfolio?.snapshots.length === 0 && (
-                                        <tr>
-                                            <td
-                                                colSpan={5}
-                                                style={{
-                                                    textAlign: "center",
-                                                    color: "var(--text-muted)",
-                                                    padding: "2rem",
-                                                }}
-                                            >
-                                                {t("dashboard.noAccounts")}
-                                            </td>
-                                        </tr>
-                                    )}
                                     {portfolio?.snapshots.map((snap) => {
                                         const account = accountById.get(snap.accountId);
                                         const institution = account
@@ -164,5 +167,58 @@ export default function DashboardPage() {
                 </section>
             </div>
         </div>
+    );
+}
+
+function GettingStartedCard({
+    hasInstitutions,
+    hasAccounts,
+    hasSnapshots,
+}: {
+    hasInstitutions: boolean;
+    hasAccounts: boolean;
+    hasSnapshots: boolean;
+}) {
+    const { t } = useI18n();
+    const steps = [
+        {
+            href: "/institutions",
+            complete: hasInstitutions,
+            label: t("dashboard.onboardingInstitution"),
+        },
+        {
+            href: "/accounts",
+            complete: hasAccounts,
+            label: t("dashboard.onboardingAccount"),
+        },
+        {
+            href: "/transactions",
+            complete: hasSnapshots,
+            label: t("dashboard.onboardingTransaction"),
+        },
+    ];
+
+    return (
+        <Card className={styles.onboardingCard}>
+            <div className={styles.onboardingIntro}>
+                <h3 className={styles.onboardingTitle}>{t("dashboard.onboardingTitle")}</h3>
+                <p className={styles.onboardingDescription}>{t("dashboard.onboardingDescription")}</p>
+            </div>
+            <ol className={styles.onboardingList}>
+                {steps.map((step, index) => (
+                    <li key={step.href} className={styles.onboardingItem}>
+                        <span
+                            className={step.complete ? styles.onboardingDone : styles.onboardingNumber}
+                            aria-hidden="true"
+                        >
+                            {step.complete ? "✓" : index + 1}
+                        </span>
+                        <Link href={step.href} className={styles.onboardingLink}>
+                            {step.label}
+                        </Link>
+                    </li>
+                ))}
+            </ol>
+        </Card>
     );
 }

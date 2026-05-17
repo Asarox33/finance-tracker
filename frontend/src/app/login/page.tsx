@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useLogin } from "@/features/auth/hooks/useAuth";
 import { useI18n } from "@/shared/i18n";
+import PasswordRevealButton from "@/shared/components/PasswordRevealButton";
 import styles from "./page.module.css";
 
 function LoginForm() {
@@ -14,11 +15,25 @@ function LoginForm() {
     const registered = searchParams.get("registered") === "1";
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [clientError, setClientError] = useState<string | null>(null);
+    const [showPassword, setShowPassword] = useState(false);
 
     async function handleSubmit(e: FormEvent) {
         e.preventDefault();
-        await login(email, password);
+        setClientError(null);
+        const trimmedEmail = email.trim();
+        if (!trimmedEmail) {
+            setClientError(t("auth.emailRequired"));
+            return;
+        }
+        if (!password) {
+            setClientError(t("auth.passwordRequired"));
+            return;
+        }
+        await login(trimmedEmail, password);
     }
+
+    const displayError = clientError ?? error?.message;
 
     return (
         <main className={styles.main}>
@@ -38,18 +53,18 @@ function LoginForm() {
                             {t("auth.registeredSuccess")}
                         </div>
                     )}
-                    {error && (
+                    {displayError && (
                         <div
                             role="alert"
                             aria-live="assertive"
-                            className={error.locked ? styles.errorLocked : styles.error}
+                            className={error?.locked ? styles.errorLocked : styles.error}
                         >
-                            {error.locked && (
+                            {error?.locked && (
                                 <span className={styles.lockIcon} aria-hidden="true">
                                     ⊘
                                 </span>
                             )}
-                            <span>{error.message}</span>
+                            <span>{displayError}</span>
                         </div>
                     )}
 
@@ -70,17 +85,25 @@ function LoginForm() {
 
                     <div className={styles.field}>
                         <label htmlFor="password">{t("auth.password")}</label>
-                        <input
-                            id="password"
-                            type="password"
-                            autoComplete="current-password"
-                            required
-                            aria-required="true"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            placeholder={t("auth.passwordPlaceholder")}
-                            disabled={loading || !!error?.locked}
-                        />
+                        <div className={styles.passwordField}>
+                            <input
+                                id="password"
+                                type={showPassword ? "text" : "password"}
+                                autoComplete="current-password"
+                                required
+                                aria-required="true"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                placeholder={t("auth.passwordPlaceholder")}
+                                disabled={loading || !!error?.locked}
+                            />
+                            <PasswordRevealButton
+                                revealed={showPassword}
+                                setRevealed={setShowPassword}
+                                disabled={loading || !!error?.locked}
+                                className={styles.passwordToggle}
+                            />
+                        </div>
                     </div>
 
                     <button

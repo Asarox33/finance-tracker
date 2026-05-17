@@ -53,10 +53,10 @@ Features are integrated as vertical slices. Status is **functional** where marke
 | Auth (login / register / reset) | `/login`, `/login/register`, `/login/reset` | ✅ | ✅ | ✅ (`useAuth`, `authApi`, `format`) | ✅ `login.spec.ts` |
 | User profile | `/profile` | ✅ | ✅ | ✅ (`userProfileApi`, `useUserProfile`) | ✅ `profile.spec.ts` |
 | Institutions | `/institutions` | ✅ | ✅ | ✅ (`institutionsApi`, `useInstitutions`) | ✅ `institutions.spec.ts` |
-| Accounts | `/accounts` | ✅ | ✅ | ✅ (`accountsApi`, `useAccounts`) | — |
-| Transactions | `/transactions` | ✅ | ✅ | ✅ (`transactionsApi`, `useTransactions`) | — |
-| Analytics | `/analytics` | ✅ | ✅ | ✅ (`analyticsApi`, `useAnalytics`) | — |
-| Dashboard | `/dashboard` | — (composes hooks) | — | — | — |
+| Accounts | `/accounts` | ✅ | ✅ | ✅ (`accountsApi`, `useAccounts`) | ✅ `accounts.spec.ts` |
+| Transactions | `/transactions` | ✅ | ✅ | ✅ (`transactionsApi`, `useTransactions`) | ✅ `transactions.spec.ts` |
+| Analytics | `/analytics` | ✅ | ✅ | ✅ (`analyticsApi`, `useAnalytics`) | ✅ `analytics.spec.ts` |
+| Dashboard | `/dashboard` | — (composes hooks) | — | — | ✅ `dashboard.spec.ts` |
 
 **Shared / lib**
 
@@ -74,9 +74,9 @@ Features are integrated as vertical slices. Status is **functional** where marke
 | `/login` | Sign-in, locked-account handling |
 | `/login/register` | Registration |
 | `/login/reset` | Password reset (request → OTP + new password → success) |
-| `/dashboard` | Portfolio KPIs, 12-month performance, account breakdown (reference currency from profile `preferredCurrency`) |
-| `/accounts` | Account cards, create form, close account; **`useAccounts()` fixed to page 0** — no pagination UI |
-| `/institutions` | List, filters, pagination, create institution (`flag-icons` for country flags) |
+| `/dashboard` | Portfolio KPIs, 12-month performance, account breakdown, and contextual getting-started checklist while setup is incomplete (reference currency from profile `preferredCurrency`) |
+| `/accounts` | Account cards, create form with institution picker, close account; **`useAccounts()` fixed to page 0** — no pagination UI |
+| `/institutions` | Debounced list filters, localized country-name sorted dropdowns, clear filters, pagination, create institution with client validation, type/country cards (`flag-icons` for country flags) |
 | `/transactions` | Account selector, paginated table, create form; **no date-range UI**; **no asset selector** |
 | `/analytics` | Period presets, performance variants; reference currency from profile `preferredCurrency` |
 | `/profile` | Profile and preferences, including preferred currency and display language |
@@ -100,6 +100,10 @@ Features are integrated as vertical slices. Status is **functional** where marke
 | `e2e/login.spec.ts` | Login, register, reset flows, keyboard nav, errors |
 | `e2e/profile.spec.ts` | Profile form, preferences, sidebar |
 | `e2e/institutions.spec.ts` | Institutions list (mocked API), navigation |
+| `e2e/accounts.spec.ts` | Account list/create/close flows with mocked institutions |
+| `e2e/transactions.spec.ts` | Transaction account selector, list/create flows |
+| `e2e/analytics.spec.ts` | Analytics translated labels with mocked API |
+| `e2e/dashboard.spec.ts` | Dashboard translated labels and empty state with mocked API |
 | `e2e/accessibility.spec.ts` | Landmarks, ARIA, skip link, reset step |
 
 `npm run test:e2e` uses **`--trace on`** (see `frontend/package.json`).
@@ -145,7 +149,7 @@ Features are integrated as vertical slices. Status is **functional** where marke
 
 #### Account creation UX
 
-- Create-account form still uses a **plain text field for `institutionId` (UUID)** despite a full **Institutions** feature elsewhere — **picker / search integration is the main STEP 9 gap for accounts**.
+- Create-account form now uses an institution picker backed by `useInstitutions(0, undefined, undefined, 200)`. It is still a first-page dropdown, not a paginated/searchable picker for very large institution lists.
 
 #### Accounts list pagination
 
@@ -166,7 +170,7 @@ Features are integrated as vertical slices. Status is **functional** where marke
 
 #### E2E gaps
 
-- No Playwright specs for **accounts**, **transactions**, **analytics**, or **dashboard** (only login, profile, institutions, a11y).
+- Playwright specs exist for auth, profile, institutions, accounts, transactions, analytics, dashboard, and accessibility. Coverage remains mocked and smoke-level for the later STEP 9 slices.
 
 ---
 
@@ -187,17 +191,16 @@ Features are integrated as vertical slices. Status is **functional** where marke
 
 High value for the current **STEP 9** programme (`CLAUDE.md`):
 
-1. **Accounts ↔ Institutions** — Replace UUID text field with institution search/picker (reuse list API or compact autocomplete); align with row **5** in the STEP 9 table.
+1. **Accounts picker scale** — Replace the first-page institution dropdown with search/pagination if institution volume grows beyond the current picker cap.
 2. **Accounts pagination UI** — Wire `page` state to `useAccounts(page)` with prev/next (pattern already on `/transactions` and `/institutions`).
-3. **Profile-driven currency** — Feed `preferredCurrency` into dashboard, analytics, and transaction display defaults where `EUR` is hardcoded.
-4. **Transactions** — Expose date-range filters; add optional asset selector when backend expects `assetId` for BUY/SELL.
+3. **Transactions** — Expose date-range filters; add optional asset selector when backend expects `assetId` for BUY/SELL.
 
 Quality / engineering:
 
-5. **E2E** — Add Playwright coverage for accounts, transactions, analytics, dashboard (start with mocked API routes like `institutions.spec.ts`).
-6. **Backend** — Fix double-query in `AssetPriceRepositoryAdapter`; consider pushing fee date filters to SQL; revisit analytics caps or document limits in product copy.
-7. **CI/CD** — Add `.github/workflows` using `npm ci` + `npm run lint` + `npm run build` for frontend; `cd backend && .\gradlew.bat clean build` (with Docker service for IT, or `-PskipIT=true` split jobs per team policy).
-8. **Versions** — After bumping dependencies, update **`current-state.md` § *Dependency Versions*** only (do not reintroduce pin matrices into `CLAUDE.md` or `architecture.md`).
+4. **E2E depth** — Broaden mocked smoke specs into interaction/error coverage for accounts, transactions, analytics, and dashboard.
+5. **Backend** — Fix double-query in `AssetPriceRepositoryAdapter`; consider pushing fee date filters to SQL; revisit analytics caps or document limits in product copy.
+6. **CI/CD** — Add `.github/workflows` using `npm ci` + `npm run lint` + `npm run build` for frontend; `cd backend && .\gradlew.bat clean build` (with Docker service for IT, or `-PskipIT=true` split jobs per team policy).
+7. **Versions** — After bumping dependencies, update **`current-state.md` § *Dependency Versions*** only (do not reintroduce pin matrices into `CLAUDE.md` or `architecture.md`).
 
 Not built (unchanged product backlog):
 

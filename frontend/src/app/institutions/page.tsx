@@ -1,29 +1,40 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useInstitutions } from "@/features/institutions/hooks/useInstitutions";
 import { INSTITUTION_TYPES, institutionsApi, type InstitutionType } from "@/features/institutions/api/institutionsApi";
-import { Button, Card, EmptyState, ErrorState, PageHeader, Skeleton } from "@/shared/components/ui";
+import { Badge, Button, Card, EmptyState, ErrorState, PageHeader, Skeleton } from "@/shared/components/ui";
 import { useI18n, type TranslationKey } from "@/shared/i18n";
 import type { Institution } from "@/shared/types";
 import { COUNTRIES } from "@/lib/countries";
 import styles from "./page.module.css";
 import "flag-icons/css/flag-icons.min.css";
 
+const BIC_PATTERN = /^[A-Z]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/;
+
 export default function InstitutionsPage() {
     const { t, locale } = useI18n();
     const [page, setPage] = useState(0);
-    const [nameFilter, setNameFilter] = useState("");
+    const [nameSearch, setNameSearch] = useState("");
     const [countryFilter, setCountryFilter] = useState("");
     const [showForm, setShowForm] = useState(false);
+    const debouncedNameFilter = useDebouncedValue(nameSearch.trim(), 250);
+    const hasActiveFilters = debouncedNameFilter.length > 0 || countryFilter.length > 0;
+    const countries = useLocalizedCountries(locale);
 
     const { data, isLoading, error, mutate } = useInstitutions(
         page,
-        nameFilter || undefined,
+        debouncedNameFilter || undefined,
         countryFilter || undefined
     );
 
-    function handleFilterChange() {
+    useEffect(() => {
+        setPage(0);
+    }, [debouncedNameFilter, countryFilter]);
+
+    function clearFilters() {
+        setNameSearch("");
+        setCountryFilter("");
         setPage(0);
     }
 
@@ -45,11 +56,8 @@ export default function InstitutionsPage() {
                         <input
                             id="filter-name"
                             type="search"
-                            value={nameFilter}
-                            onChange={(e) => {
-                                setNameFilter(e.target.value);
-                                handleFilterChange();
-                            }}
+                            value={nameSearch}
+                            onChange={(e) => setNameSearch(e.target.value)}
                             placeholder={t("institutions.searchPlaceholder")}
                             aria-label={t("institutions.filterNameAria")}
                         />
@@ -59,24 +67,27 @@ export default function InstitutionsPage() {
                         <select
                             id="filter-country"
                             value={countryFilter}
-                            onChange={(e) => {
-                                setCountryFilter(e.target.value);
-                                handleFilterChange();
-                            }}
+                            onChange={(e) => setCountryFilter(e.target.value)}
                             aria-label={t("institutions.filterCountryAria")}
                         >
                             <option value="">{t("institutions.allCountries")}</option>
-                            {COUNTRIES.map((c) => (
+                            {countries.map((c) => (
                                 <option key={c.code} value={c.code}>
-                                    {formatCountryName(c.code, locale, c.name)}
+                                    {c.name}
                                 </option>
                             ))}
                         </select>
                     </div>
+                    {hasActiveFilters && (
+                        <Button type="button" variant="ghost" onClick={clearFilters}>
+                            {t("institutions.clearFilters")}
+                        </Button>
+                    )}
                 </div>
 
                 {showForm && (
                     <AddInstitutionForm
+                        countries={countries}
                         onSuccess={() => {
                             setShowForm(false);
                             mutate();
@@ -97,8 +108,12 @@ export default function InstitutionsPage() {
 
                 {!isLoading && !error && data?.items.length === 0 && !showForm && (
                     <EmptyState
-                        title={t("institutions.emptyTitle")}
-                        description={t("institutions.emptyDescription")}
+                        title={hasActiveFilters ? t("institutions.emptyFilteredTitle") : t("institutions.emptyTitle")}
+                        description={
+                            hasActiveFilters
+                                ? t("institutions.emptyFilteredDescription")
+                                : t("institutions.emptyDescription")
+                        }
                     />
                 )}
 
@@ -140,8 +155,16 @@ export default function InstitutionsPage() {
     );
 }
 
-function AddInstitutionForm({ onSuccess, onCancel }: { onSuccess: () => void; onCancel: () => void }) {
-    const { t, locale } = useI18n();
+function AddInstitutionForm({
+    countries,
+    onSuccess,
+    onCancel,
+}: {
+    countries: { code: string; name: string }[];
+    onSuccess: () => void;
+    onCancel: () => void;
+}) {
+    const { t } = useI18n();
     const [name, setName] = useState("");
     const [country, setCountry] = useState("");
     const [type, setType] = useState<InstitutionType>("BANK");
@@ -152,13 +175,27 @@ function AddInstitutionForm({ onSuccess, onCancel }: { onSuccess: () => void; on
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
         setError(null);
+        const trimmedName = name.trim();
+        const trimmedBic = bic.trim().toUpperCase();
+        if (!trimmedName) {
+            setError(t("institutions.nameRequired"));
+            return;
+        }
+        if (!country) {
+            setError(t("institutions.countryRequired"));
+            return;
+        }
+        if (trimmedBic && !BIC_PATTERN.test(trimmedBic)) {
+            setError(t("institutions.bicInvalid"));
+            return;
+        }
         setLoading(true);
         try {
             await institutionsApi.create({
-                name,
+                name: trimmedName,
                 country,
                 type,
-                ...(bic ? { bic: bic.toUpperCase() } : {}),
+                ...(trimmedBic ? { bic: trimmedBic } : {}),
             });
             onSuccess();
         } catch (err) {
@@ -221,9 +258,9 @@ function AddInstitutionForm({ onSuccess, onCancel }: { onSuccess: () => void; on
                             disabled={loading}
                         >
                             <option value="">{t("institutions.selectCountry")}</option>
-                            {COUNTRIES.map((c) => (
+                            {countries.map((c) => (
                                 <option key={c.code} value={c.code}>
-                                    {formatCountryName(c.code, locale, c.name)}
+                                    {c.name}
                                 </option>
                             ))}
                         </select>
@@ -277,16 +314,20 @@ function AddInstitutionForm({ onSuccess, onCancel }: { onSuccess: () => void; on
 }
 
 function InstitutionCard({ institution }: { institution: Institution }) {
-    const { locale } = useI18n();
+    const { t, locale } = useI18n();
+    const countryName = formatCountryName(institution.country, locale, institution.country);
 
     return (
         <Card className={styles.institutionCard}>
             <div className={styles.cardHeader}>
-                <p className={styles.cardName}>{institution.name}</p>
-                <span
-                    className={`fi fi-${institution.country.toLowerCase()}`}
-                    title={formatCountryName(institution.country, locale, institution.country)}
-                />
+                <div>
+                    <p className={styles.cardName}>{institution.name}</p>
+                    <p className={styles.countryLine}>
+                        <span className={`fi fi-${institution.country.toLowerCase()}`} title={countryName} />{" "}
+                        {countryName}
+                    </p>
+                </div>
+                <Badge>{t(`institutionType.${institution.type}` as TranslationKey)}</Badge>
             </div>
 
             <div className={styles.cardMeta}>
@@ -298,4 +339,24 @@ function InstitutionCard({ institution }: { institution: Institution }) {
 
 function formatCountryName(code: string, locale: string, fallback: string): string {
     return new Intl.DisplayNames([locale], { type: "region" }).of(code) ?? fallback;
+}
+
+function useLocalizedCountries(locale: string): { code: string; name: string }[] {
+    return useMemo(() => {
+        return COUNTRIES.map((country) => ({
+            code: country.code,
+            name: formatCountryName(country.code, locale, country.name),
+        })).sort((a, b) => a.name.localeCompare(b.name, locale, { sensitivity: "base" }));
+    }, [locale]);
+}
+
+function useDebouncedValue<T>(value: T, delayMs: number): T {
+    const [debounced, setDebounced] = useState(value);
+
+    useEffect(() => {
+        const timer = window.setTimeout(() => setDebounced(value), delayMs);
+        return () => window.clearTimeout(timer);
+    }, [value, delayMs]);
+
+    return debounced;
 }

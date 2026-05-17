@@ -90,8 +90,8 @@
 **Key use cases:** `CreateInstitution`, `GetInstitution`, `ListInstitutions`
 
 **Frontend integration:**
-- **`/institutions`** — list with name/country filters, pagination, create form; feature code in `src/features/institutions/` (API + hooks + tests); E2E in `e2e/institutions.spec.ts`
-- **Account creation (`/accounts`)** still uses a **manual `institutionId` UUID text field** — integrate a picker or deep-link from the institutions list (primary STEP 9 UX gap)
+- **`/institutions`** — list with debounced name/country filters, localized country-name sorted dropdowns, clear-filters action, pagination, create form with client validation, and cards showing institution type, readable country, flag, and optional BIC. Feature code lives in `src/features/institutions/` (API + hooks + tests); E2E in `e2e/institutions.spec.ts`.
+- **Account creation (`/accounts`)** uses a first-page institution picker backed by `useInstitutions(0, undefined, undefined, 200)`. Upgrade to a searchable/paginated picker if institution volume outgrows that cap.
 
 ---
 
@@ -130,8 +130,8 @@
 **Frontend integration:**
 - `GET /api/accounts?page=0&pageSize=20` → `PageResult<Account>`; displayed as a card grid on `/accounts`
 - **`useAccounts(page)`** exists, but the **page UI always uses page 0** — no list pagination controls on `/accounts` yet
-- `POST /api/accounts` → creates account; requires `institutionId`, `name`, `type`, `currency` — **`institutionId` is still typed as a raw UUID** in the form (see institution module above)
-- `DELETE /api/accounts/:id` → closes account (204); requires browser `confirm()` dialog
+- `POST /api/accounts` → creates account; requires `institutionId`, `name`, `type`, `currency`; the form selects the institution from the institutions API instead of asking for a raw UUID
+- `DELETE /api/accounts/:id` → closes account (204); uses the shared confirmation dialog
 - Account types shown: `CHECKING`, `SAVINGS`, `BROKERAGE`, `CRYPTO`, `REAL_ESTATE`, `RETIREMENT`, `OTHER`
 - Currency picker uses full ISO 4217 list from `src/lib/currencies.ts`
 - `ACTIVE` accounts are filterable in the transaction page's account selector
@@ -278,10 +278,11 @@
 - `GET /api/analytics/portfolio-value?asOf=YYYY-MM-DD&referenceCurrency=EUR` → `PortfolioValue` with `totalValue`, `currency`, `asOf`, `snapshots[]`
 - `GET /api/analytics/performance?from=...&to=...&referenceCurrency=EUR` → `PortfolioPerformance` with `startValue`, `endValue`, `gainLoss`, `gainLossBasisPoints`, `currency`, `from`, `to`
 - Same shape for `performance-after-fees` and `performance-after-inflation`
-- Dashboard uses `usePortfolioValue("EUR")` and `usePerformance("EUR", 12)` for its KPI cards
+- Dashboard uses `useReferenceCurrency()` to feed profile `preferredCurrency` into `usePortfolioValue()` and `usePerformance(..., 12)` for KPI cards
+- Dashboard shows a contextual getting-started checklist while setup is incomplete (institution, account, transaction/portfolio snapshot), instead of duplicating permanent sidebar navigation
 - Analytics page adds period selector (3M/6M/1Y/3Y) that changes the `months` parameter; `monthsAgo(n)` and `today()` compute the date range
 - All three performance variants are shown side-by-side in a comparison grid and detail table
-- Reference currency is hardcoded to `"EUR"` in all analytics pages; it does not yet read from user profile preferences
+- Dashboard and analytics read reference currency from user profile preferences; hooks still default to `"EUR"` only when called without a currency argument
 
 ---
 

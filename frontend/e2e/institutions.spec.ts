@@ -141,6 +141,13 @@ test.describe("Institutions page", () => {
         await expect(page.getByRole("combobox", { name: "Filter by country" })).toBeVisible();
     });
 
+    test("country filters are sorted by localized country name", async ({ page }) => {
+        await page.goto("/institutions");
+        await expect(page.locator("#filter-country option").nth(1)).toHaveText("Afghanistan");
+        await page.getByRole("button", { name: "+ New institution" }).click();
+        await expect(page.locator("#inst-country option").nth(1)).toHaveText("Afghanistan");
+    });
+
     test("institution list has list role for accessibility", async ({ page }) => {
         await page.goto("/institutions");
         await expect(page.getByRole("list", { name: "Institution list" })).toBeVisible();

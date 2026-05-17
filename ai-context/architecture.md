@@ -74,9 +74,9 @@ frontend/src/
 │   │   ├── page.tsx              # Login form
 │   │   ├── register/page.tsx     # Registration form
 │   │   └── reset/page.tsx        # Password reset (3-step: request→confirm→done)
-│   ├── dashboard/                # Portfolio KPIs + account breakdown table
-│   ├── accounts/                 # Account list + create + close
-│   ├── institutions/             # Institution list, filters, create
+│   ├── dashboard/                # Portfolio KPIs + quick links + account breakdown / empty state
+│   ├── accounts/                 # Account list + create with institution picker + close
+│   ├── institutions/             # Institution list, debounced filters, create, type/country cards
 │   ├── transactions/             # Transaction list + create (per account)
 │   ├── analytics/                # Performance comparison + period details
 │   └── profile/                  # User profile edit form
@@ -213,7 +213,7 @@ Modules never depend on each other's infrastructure layer — only on applicatio
 
 | Frontend Feature | API Endpoints Used |
 |---|---|
-| Auth | `POST /api/auth/login`, `POST /api/auth/register`, `POST /api/auth/password-reset/request`, `POST /api/auth/password-reset/confirm` |
+| Auth | `POST /api/auth/login`, `POST /api/auth/register`, `POST /api/auth/refresh` (internal session refresh), `POST /api/auth/logout`, `POST /api/auth/password-reset/request`, `POST /api/auth/password-reset/confirm` |
 | User Profile | `GET /api/users/me`, `PUT /api/users/me/preferences` (includes preferred currency and display language) |
 | Institutions | `GET /api/institutions?page&pageSize&name&country`, `GET /api/institutions/:id`, `POST /api/institutions` |
 | Accounts | `GET /api/accounts`, `GET /api/accounts/:id`, `POST /api/accounts`, `DELETE /api/accounts/:id` |

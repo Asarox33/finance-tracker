@@ -35,7 +35,9 @@ test("dashboard renders translated labels", async ({ page }) => {
 
     await page.goto("/dashboard");
     await expect(page.getByRole("heading", { name: "Tableau de bord" })).toBeVisible();
-    await expect(page.getByText("Valeur du portefeuille")).toBeVisible();
-    await expect(page.getByRole("table", { name: "Valeurs des comptes" })).toBeVisible();
-    await expect(page.getByText("Aucun compte pour le moment")).toBeVisible();
+    await expect(page.getByText("Valeur du portefeuille", { exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Bien démarrer" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Ajouter votre première institution" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Ajouter un compte" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Enregistrer une transaction" })).toBeVisible();
 });

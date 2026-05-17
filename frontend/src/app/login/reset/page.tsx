@@ -4,6 +4,7 @@ import { type FormEvent, useState } from "react";
 import Link from "next/link";
 import { usePasswordReset } from "@/features/auth/hooks/useAuth";
 import { useI18n } from "@/shared/i18n";
+import PasswordRevealButton from "@/shared/components/PasswordRevealButton";
 import styles from "../page.module.css";
 
 export default function ResetPage() {
@@ -14,20 +15,39 @@ export default function ResetPage() {
     const [newPassword, setNewPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [clientError, setClientError] = useState<string | null>(null);
+    const [showPasswords, setShowPasswords] = useState(false);
 
     async function handleRequest(e: FormEvent) {
         e.preventDefault();
-        await requestReset(email);
+        setClientError(null);
+        const trimmedEmail = email.trim();
+        if (!trimmedEmail) {
+            setClientError(t("auth.emailRequired"));
+            return;
+        }
+        await requestReset(trimmedEmail);
     }
 
     async function handleConfirm(e: FormEvent) {
         e.preventDefault();
         setClientError(null);
+        if (otp.length !== 6) {
+            setClientError(t("auth.otpInvalid"));
+            return;
+        }
+        if (!newPassword) {
+            setClientError(t("auth.passwordRequired"));
+            return;
+        }
+        if (newPassword.length < 12) {
+            setClientError(t("auth.passwordTooShort"));
+            return;
+        }
         if (newPassword !== confirmPassword) {
             setClientError(t("auth.passwordMismatch"));
             return;
         }
-        await confirmReset(email, otp, newPassword);
+        await confirmReset(email.trim(), otp, newPassword);
     }
 
     const displayError = clientError ?? error;
@@ -111,25 +131,33 @@ export default function ResetPage() {
                                     {t("auth.passwordMinHint")}
                                 </span>
                             </label>
-                            <input
-                                id="newPassword"
-                                type="password"
-                                autoComplete="new-password"
-                                required
-                                aria-required="true"
-                                minLength={12}
-                                value={newPassword}
-                                onChange={(e) => setNewPassword(e.target.value)}
-                                placeholder={t("auth.passwordPlaceholder")}
-                                disabled={loading}
-                            />
+                            <div className={styles.passwordField}>
+                                <input
+                                    id="newPassword"
+                                    type={showPasswords ? "text" : "password"}
+                                    autoComplete="new-password"
+                                    required
+                                    aria-required="true"
+                                    minLength={12}
+                                    value={newPassword}
+                                    onChange={(e) => setNewPassword(e.target.value)}
+                                    placeholder={t("auth.passwordPlaceholder")}
+                                    disabled={loading}
+                                />
+                                <PasswordRevealButton
+                                    revealed={showPasswords}
+                                    setRevealed={setShowPasswords}
+                                    disabled={loading}
+                                    className={styles.passwordToggle}
+                                />
+                            </div>
                         </div>
 
                         <div className={styles.field}>
                             <label htmlFor="confirmPassword">{t("auth.confirmNewPassword")}</label>
                             <input
                                 id="confirmPassword"
-                                type="password"
+                                type={showPasswords ? "text" : "password"}
                                 autoComplete="new-password"
                                 required
                                 aria-required="true"

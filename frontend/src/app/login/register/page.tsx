@@ -4,6 +4,7 @@ import { type FormEvent, useState } from "react";
 import Link from "next/link";
 import { useRegister } from "@/features/auth/hooks/useAuth";
 import { useI18n } from "@/shared/i18n";
+import PasswordRevealButton from "@/shared/components/PasswordRevealButton";
 import styles from "../page.module.css";
 
 export default function RegisterPage() {
@@ -13,15 +14,29 @@ export default function RegisterPage() {
     const [password, setPassword] = useState("");
     const [confirm, setConfirm] = useState("");
     const [clientError, setClientError] = useState<string | null>(null);
+    const [showPasswords, setShowPasswords] = useState(false);
 
     async function handleSubmit(e: FormEvent) {
         e.preventDefault();
         setClientError(null);
+        const trimmedEmail = email.trim();
+        if (!trimmedEmail) {
+            setClientError(t("auth.emailRequired"));
+            return;
+        }
+        if (!password) {
+            setClientError(t("auth.passwordRequired"));
+            return;
+        }
+        if (password.length < 12) {
+            setClientError(t("auth.passwordTooShort"));
+            return;
+        }
         if (password !== confirm) {
             setClientError(t("auth.passwordMismatch"));
             return;
         }
-        await register(email, password, language);
+        await register(trimmedEmail, password, language);
     }
 
     const displayError = clientError ?? error;
@@ -74,25 +89,33 @@ export default function RegisterPage() {
                                 {t("auth.passwordPolicy")}
                             </span>
                         </label>
-                        <input
-                            id="password"
-                            type="password"
-                            autoComplete="new-password"
-                            required
-                            aria-required="true"
-                            minLength={12}
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            placeholder={t("auth.passwordPlaceholder")}
-                            disabled={loading}
-                        />
+                        <div className={styles.passwordField}>
+                            <input
+                                id="password"
+                                type={showPasswords ? "text" : "password"}
+                                autoComplete="new-password"
+                                required
+                                aria-required="true"
+                                minLength={12}
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                placeholder={t("auth.passwordPlaceholder")}
+                                disabled={loading}
+                            />
+                            <PasswordRevealButton
+                                revealed={showPasswords}
+                                setRevealed={setShowPasswords}
+                                disabled={loading}
+                                className={styles.passwordToggle}
+                            />
+                        </div>
                     </div>
 
                     <div className={styles.field}>
                         <label htmlFor="confirm">{t("auth.confirmPassword")}</label>
                         <input
                             id="confirm"
-                            type="password"
+                            type={showPasswords ? "text" : "password"}
                             autoComplete="new-password"
                             required
                             aria-required="true"
