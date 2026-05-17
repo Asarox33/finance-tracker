@@ -6,6 +6,7 @@ import com.finance.account.application.CloseAccount
 import com.finance.account.application.CreateAccount
 import com.finance.account.application.GetAccount
 import com.finance.account.application.ListUserAccounts
+import com.finance.account.application.ReactivateAccount
 import com.finance.account.domain.Account
 import com.finance.account.domain.AccountType
 import com.finance.shared.Currency
@@ -33,7 +34,8 @@ class AccountController(
     private val createAccount: CreateAccount,
     private val getAccount: GetAccount,
     private val listUserAccounts: ListUserAccounts,
-    private val closeAccount: CloseAccount
+    private val closeAccount: CloseAccount,
+    private val reactivateAccount: ReactivateAccount
 ) {
     data class CreateAccountRequest @JsonCreator constructor(
         @param:JsonProperty("institutionId")
@@ -99,13 +101,15 @@ class AccountController(
     fun listMine(
         @AuthenticationPrincipal userId: String,
         @RequestParam(defaultValue = "0") page: Int,
-        @RequestParam(defaultValue = "20") pageSize: Int
+        @RequestParam(defaultValue = "20") pageSize: Int,
+        @RequestParam(defaultValue = "true") includeClosed: Boolean
     ): PageResult<AccountResponse> {
         val result = listUserAccounts.execute(
             ListUserAccounts.Query(
                 userId = UUID.fromString(userId),
                 page = page,
-                pageSize = pageSize
+                pageSize = pageSize,
+                includeClosed = includeClosed
             )
         )
         return PageResult.of(result.items.map { it.toResponse() }, page, pageSize, result.totalItems)
@@ -123,6 +127,20 @@ class AccountController(
                 requestingUserId = UUID.fromString(userId)
             )
         )
+    }
+
+    @PostMapping("/{accountId}/reactivate")
+    fun reactivate(
+        @AuthenticationPrincipal userId: String,
+        @PathVariable accountId: UUID
+    ): AccountResponse {
+        reactivateAccount.execute(
+            ReactivateAccount.Command(
+                accountId = accountId,
+                requestingUserId = UUID.fromString(userId)
+            )
+        )
+        return getAccount.execute(accountId).toResponse()
     }
 
     private fun Account.toResponse() = AccountResponse(

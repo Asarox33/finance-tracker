@@ -2,16 +2,20 @@ package com.finance.transaction.application
 
 import com.finance.shared.Currency
 import com.finance.shared.error.InvalidRequestException
+import com.finance.shared.error.NotFoundException
 import com.finance.transaction.domain.Transaction
 import com.finance.transaction.domain.TransactionRepository
 import com.finance.transaction.domain.TransactionType
+import com.finance.transaction.domain.ports.AccountAccessPort
 import java.time.LocalDate
 import java.util.UUID
 
 class RecordTransaction(
-    private val transactionRepository: TransactionRepository
+    private val transactionRepository: TransactionRepository,
+    private val accountAccessPort: AccountAccessPort
 ) {
     data class Command(
+        val requestingUserId: UUID,
         val accountId: UUID,
         val assetId: UUID?,
         val type: TransactionType,
@@ -32,6 +36,9 @@ class RecordTransaction(
     fun execute(command: Command): Result {
         if (command.label.isBlank()) throw InvalidRequestException("Transaction label must not be blank")
         if (command.amount == 0L) throw InvalidRequestException("Transaction amount must not be zero")
+        val account = accountAccessPort.findAccountForUser(command.accountId, command.requestingUserId)
+            ?: throw NotFoundException("Account not found: ${command.accountId}")
+        if (!account.active) throw InvalidRequestException("Cannot record transactions for a closed account")
 
         val fxFields = listOf(
             command.appliedFxRate,

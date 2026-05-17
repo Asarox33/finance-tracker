@@ -6,6 +6,7 @@ jest.mock("@/features/accounts/api/accountsApi", () => ({
     accountsApi: {
         list: jest.fn(),
         get: jest.fn(),
+        reactivate: jest.fn(),
     },
 }));
 
@@ -58,13 +59,19 @@ describe("useAccounts", () => {
     it("calls accountsApi.list with default page", () => {
         (apiModule.accountsApi.list as jest.Mock).mockResolvedValue(mockPageResult);
         renderHook(() => useAccounts());
-        expect(apiModule.accountsApi.list).toHaveBeenCalledWith(0);
+        expect(apiModule.accountsApi.list).toHaveBeenCalledWith(0, 20, true);
     });
 
     it("calls accountsApi.list with provided page", () => {
         (apiModule.accountsApi.list as jest.Mock).mockResolvedValue(mockPageResult);
         renderHook(() => useAccounts(2));
-        expect(apiModule.accountsApi.list).toHaveBeenCalledWith(2);
+        expect(apiModule.accountsApi.list).toHaveBeenCalledWith(2, 20, true);
+    });
+
+    it("calls accountsApi.list with includeClosed flag", () => {
+        (apiModule.accountsApi.list as jest.Mock).mockResolvedValue(mockPageResult);
+        renderHook(() => useAccounts(0, false));
+        expect(apiModule.accountsApi.list).toHaveBeenCalledWith(0, 20, false);
     });
 });
 

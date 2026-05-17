@@ -46,7 +46,9 @@ function getInstitutionDisplay(
 
 export default function AccountsPage() {
     const { t } = useI18n();
-    const { data, isLoading, error, mutate } = useAccounts();
+    const [page, setPage] = useState(0);
+    const [showClosed, setShowClosed] = useState(false);
+    const { data, isLoading, error, mutate } = useAccounts(page, showClosed);
     const {
         data: institutionsPage,
         isLoading: institutionsLoading,
@@ -64,6 +66,8 @@ export default function AccountsPage() {
     const [pendingCloseAccount, setPendingCloseAccount] = useState<Account | null>(null);
     const [closeSubmitting, setCloseSubmitting] = useState(false);
     const [closeError, setCloseError] = useState<string | null>(null);
+    const [reactivatingAccountId, setReactivatingAccountId] = useState<string | null>(null);
+    const [accountActionError, setAccountActionError] = useState<string | null>(null);
     const [showForm, setShowForm] = useState(false);
 
     const pendingInstitutionName = useMemo(() => {
@@ -80,6 +84,7 @@ export default function AccountsPage() {
         if (!pendingCloseAccount) return;
         setCloseSubmitting(true);
         setCloseError(null);
+        setAccountActionError(null);
         try {
             await accountsApi.close(pendingCloseAccount.id);
             await mutate();
@@ -89,7 +94,23 @@ export default function AccountsPage() {
         } finally {
             setCloseSubmitting(false);
         }
-    }, [pendingCloseAccount, mutate, dismissCloseModal]);
+    }, [pendingCloseAccount, mutate, dismissCloseModal, t]);
+
+    const reactivateAccount = useCallback(
+        async (account: Account) => {
+            setReactivatingAccountId(account.id);
+            setAccountActionError(null);
+            try {
+                await accountsApi.reactivate(account.id);
+                await mutate();
+            } catch {
+                setAccountActionError(t("accounts.reactivateError"));
+            } finally {
+                setReactivatingAccountId(null);
+            }
+        },
+        [mutate, t]
+    );
 
     return (
         <div className={styles.page}>
@@ -133,11 +154,29 @@ export default function AccountsPage() {
                     <AddAccountForm
                         onSuccess={() => {
                             setShowForm(false);
+                            setPage(0);
                             mutate();
                         }}
                         onCancel={() => setShowForm(false)}
                     />
                 )}
+
+                <div className={styles.toolbar}>
+                    <label className={styles.switchControl}>
+                        <input
+                            type="checkbox"
+                            checked={showClosed}
+                            onChange={(e) => {
+                                setShowClosed(e.target.checked);
+                                setPage(0);
+                            }}
+                        />
+                        <span className={styles.switchTrack} aria-hidden="true">
+                            <span className={styles.switchThumb} />
+                        </span>
+                        <span>{t("accounts.showClosed")}</span>
+                    </label>
+                </div>
 
                 {isLoading && (
                     <div className={styles.skels}>
@@ -147,8 +186,12 @@ export default function AccountsPage() {
                     </div>
                 )}
                 {error && <ErrorState />}
+                {accountActionError && <ErrorState message={accountActionError} />}
                 {!isLoading && data?.items.length === 0 && !showForm && (
-                    <EmptyState title={t("accounts.emptyTitle")} description={t("accounts.emptyDescription")} />
+                    <EmptyState
+                        title={showClosed ? t("accounts.emptyAllTitle") : t("accounts.emptyTitle")}
+                        description={showClosed ? t("accounts.emptyAllDescription") : t("accounts.emptyDescription")}
+                    />
                 )}
                 <div className={styles.grid}>
                     {data?.items.map((account) => {
@@ -170,14 +213,40 @@ export default function AccountsPage() {
                                 account={account}
                                 institutionLine={institutionDisplay.text}
                                 institutionLinePending={institutionDisplay.pending}
+                                reactivating={reactivatingAccountId === account.id}
                                 onRequestClose={() => {
                                     setCloseError(null);
+                                    setAccountActionError(null);
                                     setPendingCloseAccount(account);
                                 }}
+                                onRequestReactivate={() => reactivateAccount(account)}
                             />
                         );
                     })}
                 </div>
+                {data && data.totalPages > 1 && (
+                    <nav className={styles.pagination} aria-label={t("accounts.pagesAria")}>
+                        <button
+                            className={styles.pageBtn}
+                            onClick={() => setPage((current) => current - 1)}
+                            disabled={data.isFirst}
+                            aria-label={t("common.previousPage")}
+                        >
+                            {"<"}
+                        </button>
+                        <span className={styles.pageInfo} aria-live="polite">
+                            {t("common.pageOfTotal", { page: page + 1, total: data.totalPages })}
+                        </span>
+                        <button
+                            className={styles.pageBtn}
+                            onClick={() => setPage((current) => current + 1)}
+                            disabled={data.isLast}
+                            aria-label={t("common.nextPage")}
+                        >
+                            {">"}
+                        </button>
+                    </nav>
+                )}
             </div>
         </div>
     );
@@ -357,19 +426,23 @@ function AccountCard({
     account,
     institutionLine,
     institutionLinePending,
+    reactivating,
     onRequestClose,
+    onRequestReactivate,
 }: {
     account: Account;
     institutionLine: string;
     institutionLinePending: boolean;
+    reactivating: boolean;
     onRequestClose: () => void;
+    onRequestReactivate: () => void;
 }) {
     const { t } = useI18n();
 
     return (
         <Card className={styles.accountCard}>
             <div className={styles.accountHeader}>
-                <div>
+                <div className={styles.accountTitleBlock}>
                     <p className={styles.accountName}>{account.name}</p>
                     <p className={styles.accountType}>{t(`accountType.${account.type}` as TranslationKey)}</p>
                     <p
@@ -395,6 +468,19 @@ function AccountCard({
                         aria-label={t("accounts.closeAccountAria", { accountName: account.name })}
                     >
                         {t("accounts.closeAccount")}
+                    </Button>
+                </div>
+            )}
+            {account.status === "CLOSED" && (
+                <div className={styles.accountActions}>
+                    <Button
+                        variant="secondary"
+                        size="sm"
+                        loading={reactivating}
+                        onClick={onRequestReactivate}
+                        aria-label={t("accounts.reactivateAccountAria", { accountName: account.name })}
+                    >
+                        {t("accounts.reactivateAccount")}
                     </Button>
                 </div>
             )}

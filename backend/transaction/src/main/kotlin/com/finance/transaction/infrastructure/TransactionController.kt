@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.finance.shared.Currency
 import com.finance.shared.PageResult
+import com.finance.transaction.application.DeleteTransaction
 import com.finance.transaction.application.GetTransaction
 import com.finance.transaction.application.ListAccountTransactions
 import com.finance.transaction.application.RecordTransaction
@@ -16,6 +17,7 @@ import jakarta.validation.constraints.Size
 import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.http.HttpStatus
 import org.springframework.security.core.annotation.AuthenticationPrincipal
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -32,7 +34,8 @@ import java.util.UUID
 class TransactionController(
     private val recordTransaction: RecordTransaction,
     private val getTransaction: GetTransaction,
-    private val listAccountTransactions: ListAccountTransactions
+    private val listAccountTransactions: ListAccountTransactions,
+    private val deleteTransaction: DeleteTransaction
 ) {
     data class RecordTransactionRequest @JsonCreator constructor(
         @param:JsonProperty("accountId")
@@ -111,11 +114,12 @@ class TransactionController(
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     fun record(
-        @AuthenticationPrincipal _userId: String,
+        @AuthenticationPrincipal userId: String,
         @Valid @RequestBody request: RecordTransactionRequest
     ): TransactionResponse {
         val transactionId = recordTransaction.execute(
             RecordTransaction.Command(
+                requestingUserId = UUID.fromString(userId),
                 accountId = request.accountId,
                 assetId = request.assetId,
                 type = request.type,
@@ -131,19 +135,19 @@ class TransactionController(
                 appliedFxTargetCurrency = request.appliedFxTargetCurrency
             )
         ).transactionId
-        return getTransaction.execute(transactionId).toResponse()
+        return getTransaction.execute(transactionId, UUID.fromString(userId)).toResponse()
     }
 
     @GetMapping("/{transactionId}")
     fun get(
-        @AuthenticationPrincipal _userId: String,
+        @AuthenticationPrincipal userId: String,
         @PathVariable transactionId: UUID
     ): TransactionResponse =
-        getTransaction.execute(transactionId).toResponse()
+        getTransaction.execute(transactionId, UUID.fromString(userId)).toResponse()
 
     @GetMapping
     fun list(
-        @AuthenticationPrincipal _userId: String,
+        @AuthenticationPrincipal userId: String,
         @RequestParam accountId: UUID,
         @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") from: LocalDate?,
         @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") to: LocalDate?,
@@ -151,9 +155,18 @@ class TransactionController(
         @RequestParam(defaultValue = "20") pageSize: Int
     ): PageResult<TransactionResponse> {
         val result = listAccountTransactions.execute(
-            ListAccountTransactions.Query(accountId, from, to, page, pageSize)
+            ListAccountTransactions.Query(UUID.fromString(userId), accountId, from, to, page, pageSize)
         )
         return PageResult.of(result.items.map { it.toResponse() }, page, pageSize, result.totalItems)
+    }
+
+    @DeleteMapping("/{transactionId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    fun delete(
+        @AuthenticationPrincipal userId: String,
+        @PathVariable transactionId: UUID
+    ) {
+        deleteTransaction.execute(DeleteTransaction.Command(transactionId, UUID.fromString(userId)))
     }
 
     private fun Transaction.toResponse() = TransactionResponse(

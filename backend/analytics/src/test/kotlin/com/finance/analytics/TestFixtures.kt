@@ -20,7 +20,7 @@ class StubAccountPort(private val accounts: List<AccountSummary> = emptyList()) 
 }
 
 class StubTransactionPort(private val transactions: List<TransactionSummary> = emptyList()) : TransactionPort {
-    override fun findByAccountId(accountId: UUID, from: LocalDate, to: LocalDate): List<TransactionSummary> =
+    override fun findByAccountId(userId: UUID, accountId: UUID, from: LocalDate, to: LocalDate): List<TransactionSummary> =
         transactions.filter { it.accountId == accountId && !it.date.isAfter(to) }
 }
 

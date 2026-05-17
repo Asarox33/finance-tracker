@@ -43,7 +43,8 @@ test.beforeEach(async ({ page }) => {
 test.describe("Institutions page", () => {
     test("renders institution list", async ({ page }) => {
         await page.goto("/institutions");
-        await expect(page.getByRole("heading", { name: "Institutions" })).toBeVisible();
+        await expect(page.getByRole("heading", { name: "Institutions", exact: true })).toBeVisible();
+        await expect(page.getByText("Shared institution repository")).toBeVisible();
         await expect(page.getByText("BNP Paribas")).toBeVisible();
         await expect(page.getByText("Deutsche Bank")).toBeVisible();
     });
@@ -164,7 +165,7 @@ test.describe("Institutions page", () => {
     test("renders translated labels in French", async ({ page }) => {
         await mockUserProfile(page, "FRA");
         await page.goto("/institutions");
-        await expect(page.getByRole("heading", { name: "Institutions" })).toBeVisible();
+        await expect(page.getByRole("heading", { name: "Institutions", exact: true })).toBeVisible();
         await expect(page.getByRole("button", { name: "+ Nouvelle institution" })).toBeVisible();
         await expect(page.getByRole("searchbox", { name: "Filtrer par nom d'institution" })).toBeVisible();
         await page.getByRole("button", { name: "+ Nouvelle institution" }).click();

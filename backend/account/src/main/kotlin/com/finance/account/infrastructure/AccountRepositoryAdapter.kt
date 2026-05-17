@@ -2,6 +2,7 @@ package com.finance.account.infrastructure
 
 import com.finance.account.domain.Account
 import com.finance.account.domain.AccountRepository
+import com.finance.account.domain.AccountStatus
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Component
 import java.util.UUID
@@ -37,6 +38,17 @@ class AccountRepositoryAdapter(
 
     override fun countByUserId(userId: UUID): Long =
         jpaRepo.countByUserId(userId)
+
+    override fun findByUserIdAndStatus(
+        userId: UUID,
+        status: AccountStatus,
+        page: Int,
+        pageSize: Int
+    ): List<Account> =
+        jpaRepo.findByUserIdAndStatus(userId, status, PageRequest.of(page, pageSize)).content.map { it.toDomain() }
+
+    override fun countByUserIdAndStatus(userId: UUID, status: AccountStatus): Long =
+        jpaRepo.countByUserIdAndStatus(userId, status)
 }
 
 private fun JpaAccountEntity.toDomain() = Account(

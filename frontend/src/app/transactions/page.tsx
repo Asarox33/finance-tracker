@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useAccounts } from "@/features/accounts/hooks/useAccounts";
 import { useTransactions } from "@/features/transactions/hooks/useTransactions";
 import { transactionsApi } from "@/features/transactions/api/transactionsApi";
+import ConfirmDialog from "@/shared/components/ConfirmDialog";
 import { Badge, Button, Card, EmptyState, ErrorState, PageHeader, Skeleton } from "@/shared/components/ui";
 import { useFormatters, useI18n, type TranslationKey } from "@/shared/i18n";
 import type { Transaction, TransactionType } from "@/shared/types";
@@ -38,11 +39,66 @@ export default function TransactionsPage() {
     const { data: accounts } = useAccounts();
     const [selectedAccount, setSelectedAccount] = useState<string>("");
     const [page, setPage] = useState(0);
+    const [from, setFrom] = useState("");
+    const [to, setTo] = useState("");
     const [showForm, setShowForm] = useState(false);
-    const { data, isLoading, error, mutate } = useTransactions(selectedAccount, page);
+    const [detailTransaction, setDetailTransaction] = useState<Transaction | null>(null);
+    const [detailLoadingId, setDetailLoadingId] = useState<string | null>(null);
+    const [detailError, setDetailError] = useState<string | null>(null);
+    const [pendingDeleteTransaction, setPendingDeleteTransaction] = useState<Transaction | null>(null);
+    const [deleteSubmitting, setDeleteSubmitting] = useState(false);
+    const [deleteError, setDeleteError] = useState<string | null>(null);
+    const { data, isLoading, error, mutate } = useTransactions(selectedAccount, page, from || undefined, to || undefined);
+
+    async function openTransactionDetail(tx: Transaction) {
+        setDetailLoadingId(tx.id);
+        setDetailError(null);
+        try {
+            setDetailTransaction(await transactionsApi.get(tx.id));
+        } catch {
+            setDetailError(t("transactions.detailError"));
+        } finally {
+            setDetailLoadingId(null);
+        }
+    }
+
+    async function confirmDeleteTransaction() {
+        if (!pendingDeleteTransaction) return;
+        setDeleteSubmitting(true);
+        setDeleteError(null);
+        try {
+            await transactionsApi.delete(pendingDeleteTransaction.id);
+            await mutate();
+            setPendingDeleteTransaction(null);
+            if (detailTransaction?.id === pendingDeleteTransaction.id) setDetailTransaction(null);
+        } catch {
+            setDeleteError(t("transactions.deleteError"));
+        } finally {
+            setDeleteSubmitting(false);
+        }
+    }
 
     return (
         <div className={styles.page}>
+            <ConfirmDialog
+                open={pendingDeleteTransaction !== null}
+                title={t("transactions.deleteTitle")}
+                description={
+                    pendingDeleteTransaction
+                        ? t("transactions.deleteDescription", { transactionLabel: pendingDeleteTransaction.label })
+                        : null
+                }
+                cancelLabel={t("common.cancel")}
+                confirmLabel={t("transactions.deleteTransaction")}
+                confirmVariant="danger"
+                loading={deleteSubmitting}
+                errorMessage={deleteError}
+                onConfirm={confirmDeleteTransaction}
+                onCancel={() => {
+                    setPendingDeleteTransaction(null);
+                    setDeleteError(null);
+                }}
+            />
             <PageHeader
                 title={t("transactions.title")}
                 description={t("transactions.description")}
@@ -65,6 +121,7 @@ export default function TransactionsPage() {
                                 setSelectedAccount(e.target.value);
                                 setPage(0);
                                 setShowForm(false);
+                                setDetailTransaction(null);
                             }}
                             aria-label={t("transactions.selectAccountAria")}
                         >
@@ -78,6 +135,43 @@ export default function TransactionsPage() {
                                 ))}
                         </select>
                     </div>
+                    <div className={styles.filterField}>
+                        <label htmlFor="tx-from">{t("transactions.fromDate")}</label>
+                        <input
+                            id="tx-from"
+                            type="date"
+                            value={from}
+                            onChange={(e) => {
+                                setFrom(e.target.value);
+                                setPage(0);
+                            }}
+                        />
+                    </div>
+                    <div className={styles.filterField}>
+                        <label htmlFor="tx-to">{t("transactions.toDate")}</label>
+                        <input
+                            id="tx-to"
+                            type="date"
+                            value={to}
+                            onChange={(e) => {
+                                setTo(e.target.value);
+                                setPage(0);
+                            }}
+                        />
+                    </div>
+                    {(from || to) && (
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            onClick={() => {
+                                setFrom("");
+                                setTo("");
+                                setPage(0);
+                            }}
+                        >
+                            {t("transactions.clearDateFilters")}
+                        </Button>
+                    )}
                 </div>
 
                 {showForm && selectedAccount && (
@@ -108,6 +202,18 @@ export default function TransactionsPage() {
                 )}
 
                 {selectedAccount && error && <ErrorState />}
+                {detailError && <ErrorState message={detailError} />}
+
+                {detailTransaction && (
+                    <TransactionDetail
+                        tx={detailTransaction}
+                        onClose={() => setDetailTransaction(null)}
+                        onDelete={() => {
+                            setDeleteError(null);
+                            setPendingDeleteTransaction(detailTransaction);
+                        }}
+                    />
+                )}
 
                 {selectedAccount && !isLoading && data && (
                     <>
@@ -127,11 +233,21 @@ export default function TransactionsPage() {
                                             <th scope="col" style={{ textAlign: "right" }}>
                                                 {t("transactions.amount")}
                                             </th>
+                                            <th scope="col">{t("transactions.actions")}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {data.items.map((tx) => (
-                                            <TransactionRow key={tx.id} tx={tx} />
+                                            <TransactionRow
+                                                key={tx.id}
+                                                tx={tx}
+                                                detailLoading={detailLoadingId === tx.id}
+                                                onViewDetails={() => openTransactionDetail(tx)}
+                                                onDelete={() => {
+                                                    setDeleteError(null);
+                                                    setPendingDeleteTransaction(tx);
+                                                }}
+                                            />
                                         ))}
                                     </tbody>
                                 </table>
@@ -334,7 +450,77 @@ function AddTransactionForm({
     );
 }
 
-function TransactionRow({ tx }: { tx: Transaction }) {
+function TransactionDetail({ tx, onClose, onDelete }: { tx: Transaction; onClose: () => void; onDelete: () => void }) {
+    const { formatDate, formatMoney } = useFormatters();
+    const { t } = useI18n();
+
+    return (
+        <Card className={styles.detailCard}>
+            <div className={styles.detailHeader}>
+                <div>
+                    <h2 className={styles.formTitle}>{t("transactions.detailTitle")}</h2>
+                    <p className={styles.detailSubtitle}>{tx.label}</p>
+                </div>
+                <Button type="button" variant="ghost" size="sm" onClick={onClose}>
+                    {t("transactions.closeDetails")}
+                </Button>
+            </div>
+            <dl className={styles.detailGrid}>
+                <div>
+                    <dt>{t("transactions.date")}</dt>
+                    <dd>{formatDate(tx.date)}</dd>
+                </div>
+                <div>
+                    <dt>{t("transactions.type")}</dt>
+                    <dd>{t(`transactionType.${tx.type}` as TranslationKey)}</dd>
+                </div>
+                <div>
+                    <dt>{t("transactions.amount")}</dt>
+                    <dd>{formatMoney(tx.amount, tx.currency)}</dd>
+                </div>
+                <div>
+                    <dt>{t("transactions.asset")}</dt>
+                    <dd>{tx.assetId ?? t("common.optional")}</dd>
+                </div>
+                <div>
+                    <dt>{t("transactions.notes")}</dt>
+                    <dd>{tx.notes || t("common.optional")}</dd>
+                </div>
+                <div>
+                    <dt>{t("transactions.fx")}</dt>
+                    <dd>
+                        {tx.appliedFxRate
+                            ? t("transactions.fxDetail", {
+                                  rate: tx.appliedFxRate,
+                                  scale: tx.appliedFxRateScale ?? "",
+                                  date: tx.appliedFxRateDate ?? "",
+                                  sourceCurrency: tx.appliedFxSourceCurrency ?? "",
+                                  targetCurrency: tx.appliedFxTargetCurrency ?? "",
+                              })
+                            : t("transactions.noFx")}
+                    </dd>
+                </div>
+            </dl>
+            <div className={styles.formActions}>
+                <Button type="button" variant="danger" onClick={onDelete}>
+                    {t("transactions.deleteTransaction")}
+                </Button>
+            </div>
+        </Card>
+    );
+}
+
+function TransactionRow({
+    tx,
+    detailLoading,
+    onViewDetails,
+    onDelete,
+}: {
+    tx: Transaction;
+    detailLoading: boolean;
+    onViewDetails: () => void;
+    onDelete: () => void;
+}) {
     const positive = ["DEPOSIT", "DIVIDEND", "SELL"].includes(tx.type);
     const { formatDate, formatMoney } = useFormatters();
     const { t } = useI18n();
@@ -394,6 +580,16 @@ function TransactionRow({ tx }: { tx: Transaction }) {
                     {positive ? "+" : ""}
                     {formatMoney(tx.amount, tx.currency)}
                 </span>
+            </td>
+            <td>
+                <div className={styles.rowActions}>
+                    <Button type="button" variant="secondary" size="sm" loading={detailLoading} onClick={onViewDetails}>
+                        {t("transactions.details")}
+                    </Button>
+                    <Button type="button" variant="danger" size="sm" onClick={onDelete}>
+                        {t("transactions.deleteTransaction")}
+                    </Button>
+                </div>
             </td>
         </tr>
     );

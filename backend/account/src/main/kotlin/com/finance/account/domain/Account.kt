@@ -21,4 +21,9 @@ data class Account(
         if (status == AccountStatus.CLOSED) throw BusinessRuleViolationException("Account is already closed")
         return copy(status = AccountStatus.CLOSED)
     }
+
+    fun reactivate(): Account {
+        if (status == AccountStatus.ACTIVE) throw BusinessRuleViolationException("Account is already active")
+        return copy(status = AccountStatus.ACTIVE)
+    }
 }

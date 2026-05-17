@@ -2,6 +2,7 @@ package com.finance.transaction.infrastructure
 
 import com.finance.transaction.domain.Transaction
 import com.finance.transaction.domain.TransactionRepository
+import com.finance.transaction.domain.TransactionStatus
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Component
 import java.time.LocalDate
@@ -23,6 +24,7 @@ class TransactionRepositoryAdapter(
             date = transaction.date,
             label = transaction.label,
             notes = transaction.notes,
+            status = transaction.status,
             appliedFxRate = transaction.appliedFxRate,
             appliedFxRateScale = transaction.appliedFxRateScale,
             appliedFxRateDate = transaction.appliedFxRateDate,
@@ -36,10 +38,14 @@ class TransactionRepositoryAdapter(
         jpaRepo.findById(id).orElse(null)?.toDomain()
 
     override fun findByAccountId(accountId: UUID, page: Int, pageSize: Int): List<Transaction> =
-        jpaRepo.findByAccountId(accountId, PageRequest.of(page, pageSize)).content.map { it.toDomain() }
+        jpaRepo.findByAccountIdAndStatus(
+            accountId,
+            TransactionStatus.ACTIVE,
+            PageRequest.of(page, pageSize)
+        ).content.map { it.toDomain() }
 
     override fun countByAccountId(accountId: UUID): Long =
-        jpaRepo.countByAccountId(accountId)
+        jpaRepo.countByAccountIdAndStatus(accountId, TransactionStatus.ACTIVE)
 
     override fun findByAccountIdAndDateBetween(
         accountId: UUID,
@@ -48,15 +54,15 @@ class TransactionRepositoryAdapter(
         page: Int,
         pageSize: Int
     ): List<Transaction> =
-        jpaRepo.findByAccountIdAndDateBetween(
-            accountId, from, to, PageRequest.of(page, pageSize)
+        jpaRepo.findByAccountIdAndStatusAndDateBetween(
+            accountId, TransactionStatus.ACTIVE, from, to, PageRequest.of(page, pageSize)
         ).content.map { it.toDomain() }
 
     override fun countByAccountIdAndDateBetween(
         accountId: UUID,
         from: LocalDate,
         to: LocalDate
-    ): Long = jpaRepo.countByAccountIdAndDateBetween(accountId, from, to)
+    ): Long = jpaRepo.countByAccountIdAndStatusAndDateBetween(accountId, TransactionStatus.ACTIVE, from, to)
 }
 
 private fun JpaTransactionEntity.toDomain() = Transaction(
@@ -69,6 +75,7 @@ private fun JpaTransactionEntity.toDomain() = Transaction(
     date = date,
     label = label,
     notes = notes,
+    status = status,
     appliedFxRate = appliedFxRate,
     appliedFxRateScale = appliedFxRateScale,
     appliedFxRateDate = appliedFxRateDate,

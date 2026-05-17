@@ -24,7 +24,7 @@ class ComputePortfolioValue(
         val accounts = accountPort.findActiveByUserId(query.userId)
 
         val snapshots = accounts.map { account ->
-            val transactions = transactionPort.findByAccountId(account.id, LocalDate.MIN, query.asOf)
+            val transactions = transactionPort.findByAccountId(query.userId, account.id, LocalDate.MIN, query.asOf)
             val valueInAccountCurrency = transactions.sumOf { it.amount }
 
             val valueInRef = if (account.currency == query.referenceCurrency) {

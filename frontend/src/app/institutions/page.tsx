@@ -50,6 +50,11 @@ export default function InstitutionsPage() {
                 }
             />
             <div className={styles.body}>
+                <Card className={styles.sharedNotice}>
+                    <h2>{t("institutions.sharedRepositoryTitle")}</h2>
+                    <p>{t("institutions.sharedRepositoryDescription")}</p>
+                </Card>
+
                 <div className={styles.toolbar} role="search" aria-label={t("institutions.filterAria")}>
                     <div className={styles.filterField}>
                         <label htmlFor="filter-name">{t("institutions.searchByName")}</label>

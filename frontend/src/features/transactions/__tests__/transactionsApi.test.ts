@@ -103,6 +103,15 @@ describe("transactionsApi", () => {
         expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining("/transactions/tx-1"), expect.anything());
     });
 
+    it("deletes a transaction with DELETE", async () => {
+        mockResponse(null, 204);
+        await transactionsApi.delete("tx-1");
+        expect(mockFetch).toHaveBeenCalledWith(
+            expect.stringContaining("/transactions/tx-1"),
+            expect.objectContaining({ method: "DELETE" })
+        );
+    });
+
     it("creates a transaction with POST", async () => {
         mockResponse(mockTransaction, 201);
         await transactionsApi.create({

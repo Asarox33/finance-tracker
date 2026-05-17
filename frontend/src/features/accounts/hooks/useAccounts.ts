@@ -3,8 +3,10 @@
 import useSWR from "swr";
 import { accountsApi } from "../api/accountsApi";
 
-export function useAccounts(page = 0) {
-    const { data, error, isLoading, mutate } = useSWR(["accounts", page], () => accountsApi.list(page));
+export function useAccounts(page = 0, includeClosed = true) {
+    const { data, error, isLoading, mutate } = useSWR(["accounts", page, includeClosed], () =>
+        accountsApi.list(page, 20, includeClosed)
+    );
     return { data, error, isLoading, mutate };
 }
 

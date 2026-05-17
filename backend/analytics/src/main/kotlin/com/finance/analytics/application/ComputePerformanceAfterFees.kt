@@ -29,12 +29,12 @@ class ComputePerformanceAfterFees(
         val accounts = accountPort.findActiveByUserId(query.userId)
 
         val startValue = accounts.sumOf { account ->
-            val txs = transactionPort.findByAccountId(account.id, LocalDate.MIN, query.from)
+            val txs = transactionPort.findByAccountId(query.userId, account.id, LocalDate.MIN, query.from)
             convertToRef(txs.sumOf { it.amount }, account.currency, query.referenceCurrency, query.from)
         }
 
         val endValue = accounts.sumOf { account ->
-            val txs = transactionPort.findByAccountId(account.id, LocalDate.MIN, query.to)
+            val txs = transactionPort.findByAccountId(query.userId, account.id, LocalDate.MIN, query.to)
             convertToRef(txs.sumOf { it.amount }, account.currency, query.referenceCurrency, query.to)
         }
 

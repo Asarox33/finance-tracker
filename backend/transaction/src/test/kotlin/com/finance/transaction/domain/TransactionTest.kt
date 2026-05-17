@@ -60,6 +60,12 @@ class TransactionTest {
         }
     }
 
+    @Test
+    fun marksTransactionAsDeleted() {
+        val tx = transaction().delete()
+        assertEquals(TransactionStatus.DELETED, tx.status)
+    }
+
     private fun transaction(
         label: String = "Monthly salary",
         amount: Long = 10000L,
@@ -69,10 +75,19 @@ class TransactionTest {
         appliedFxSourceCurrency: Currency? = null,
         appliedFxTargetCurrency: Currency? = null
     ) = Transaction(
-        UUID.randomUUID(), UUID.randomUUID(), null,
-        TransactionType.DEPOSIT, amount, Currency.EUR,
-        LocalDate.of(2024, 1, 15), label, null,
-        appliedFxRate, appliedFxRateScale, appliedFxRateDate,
-        appliedFxSourceCurrency, appliedFxTargetCurrency
+        id = UUID.randomUUID(),
+        accountId = UUID.randomUUID(),
+        assetId = null,
+        type = TransactionType.DEPOSIT,
+        amount = amount,
+        currency = Currency.EUR,
+        date = LocalDate.of(2024, 1, 15),
+        label = label,
+        notes = null,
+        appliedFxRate = appliedFxRate,
+        appliedFxRateScale = appliedFxRateScale,
+        appliedFxRateDate = appliedFxRateDate,
+        appliedFxSourceCurrency = appliedFxSourceCurrency,
+        appliedFxTargetCurrency = appliedFxTargetCurrency
     )
 }

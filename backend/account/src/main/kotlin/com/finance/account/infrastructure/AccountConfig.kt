@@ -4,6 +4,7 @@ import com.finance.account.application.CloseAccount
 import com.finance.account.application.CreateAccount
 import com.finance.account.application.GetAccount
 import com.finance.account.application.ListUserAccounts
+import com.finance.account.application.ReactivateAccount
 import com.finance.account.domain.AccountRepository
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -26,4 +27,8 @@ class AccountConfig {
     @Bean
     fun closeAccount(accountRepository: AccountRepository): CloseAccount =
         CloseAccount(accountRepository)
+
+    @Bean
+    fun reactivateAccount(accountRepository: AccountRepository): ReactivateAccount =
+        ReactivateAccount(accountRepository)
 }

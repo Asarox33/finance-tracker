@@ -15,6 +15,7 @@ data class Transaction(
     val date: LocalDate,
     val label: String,
     val notes: String?,
+    val status: TransactionStatus = TransactionStatus.ACTIVE,
     val appliedFxRate: Long? = null,
     val appliedFxRateScale: Int? = null,
     val appliedFxRateDate: LocalDate? = null,
@@ -32,4 +33,9 @@ data class Transaction(
     }
 
     fun hasFxRate(): Boolean = appliedFxRate != null
+
+    fun delete(): Transaction {
+        if (status == TransactionStatus.DELETED) throw BusinessRuleViolationException("Transaction is already deleted")
+        return copy(status = TransactionStatus.DELETED)
+    }
 }

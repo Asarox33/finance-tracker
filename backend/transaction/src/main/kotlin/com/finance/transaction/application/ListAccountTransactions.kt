@@ -1,15 +1,19 @@
 package com.finance.transaction.application
 
 import com.finance.shared.PageResult
+import com.finance.shared.error.NotFoundException
 import com.finance.transaction.domain.Transaction
 import com.finance.transaction.domain.TransactionRepository
+import com.finance.transaction.domain.ports.AccountAccessPort
 import java.time.LocalDate
 import java.util.UUID
 
 class ListAccountTransactions(
-    private val transactionRepository: TransactionRepository
+    private val transactionRepository: TransactionRepository,
+    private val accountAccessPort: AccountAccessPort
 ) {
     data class Query(
+        val requestingUserId: UUID,
         val accountId: UUID,
         val from: LocalDate? = null,
         val to: LocalDate? = null,
@@ -18,6 +22,8 @@ class ListAccountTransactions(
     )
 
     fun execute(query: Query): PageResult<Transaction> {
+        accountAccessPort.findAccountForUser(query.accountId, query.requestingUserId)
+            ?: throw NotFoundException("Account not found: ${query.accountId}")
         val from = query.from
         val to = query.to
         return if (from != null && to != null) {

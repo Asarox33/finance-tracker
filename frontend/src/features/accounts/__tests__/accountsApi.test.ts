@@ -54,6 +54,23 @@ describe("accountsApi", () => {
         );
     });
 
+    it("lists accounts with includeClosed query param", async () => {
+        mockResponse({
+            items: [],
+            totalItems: 0,
+            totalPages: 0,
+            page: 0,
+            pageSize: 20,
+            isEmpty: true,
+            isFirst: true,
+            isLast: true,
+        });
+        await accountsApi.list(1, 20, false);
+        const url = mockFetch.mock.calls[0][0] as string;
+        expect(url).toContain("page=1");
+        expect(url).toContain("includeClosed=false");
+    });
+
     it("gets a single account", async () => {
         const id = "abc-123";
         mockResponse({
@@ -76,6 +93,23 @@ describe("accountsApi", () => {
         expect(mockFetch).toHaveBeenCalledWith(
             expect.stringContaining("/accounts/acc-1"),
             expect.objectContaining({ method: "DELETE" })
+        );
+    });
+
+    it("reactivates an account with POST", async () => {
+        mockResponse({
+            id: "acc-1",
+            name: "Test",
+            type: "SAVINGS",
+            currency: "EUR",
+            status: "ACTIVE",
+            userId: "u1",
+            institutionId: "i1",
+        });
+        await accountsApi.reactivate("acc-1");
+        expect(mockFetch).toHaveBeenCalledWith(
+            expect.stringContaining("/accounts/acc-1/reactivate"),
+            expect.objectContaining({ method: "POST" })
         );
     });
 

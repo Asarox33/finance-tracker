@@ -13,5 +13,5 @@ data class TransactionSummary(
 )
 
 interface TransactionPort {
-    fun findByAccountId(accountId: UUID, from: LocalDate, to: LocalDate): List<TransactionSummary>
+    fun findByAccountId(userId: UUID, accountId: UUID, from: LocalDate, to: LocalDate): List<TransactionSummary>
 }

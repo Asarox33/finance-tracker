@@ -75,9 +75,9 @@ Features are integrated as vertical slices. Status is **functional** where marke
 | `/login/register` | Registration |
 | `/login/reset` | Password reset (request → OTP + new password → success) |
 | `/dashboard` | Portfolio KPIs, 12-month performance, account breakdown, and contextual getting-started checklist while setup is incomplete (reference currency from profile `preferredCurrency`) |
-| `/accounts` | Account cards, create form with institution picker, close account; **`useAccounts()` fixed to page 0** — no pagination UI |
-| `/institutions` | Debounced list filters, localized country-name sorted dropdowns, clear filters, pagination, create institution with client validation, type/country cards (`flag-icons` for country flags) |
-| `/transactions` | Account selector, paginated table, create form; **no date-range UI**; **no asset selector** |
+| `/accounts` | Account cards, create form with institution picker, close/reactivate account, show-closed toggle, pagination |
+| `/institutions` | Debounced list filters, localized country-name sorted dropdowns, clear filters, pagination, shared-repository notice, create institution with client validation, type/country cards (`flag-icons` for country flags) |
+| `/transactions` | Account selector, date-range filters, paginated table, create form, detail view, soft-delete action; **no asset selector** |
 | `/analytics` | Period presets, performance variants; reference currency from profile `preferredCurrency` |
 | `/profile` | Profile and preferences, including preferred currency and display language |
 
@@ -139,7 +139,9 @@ Features are integrated as vertical slices. Status is **functional** where marke
 
 #### CRUD surface
 
-- Only **account** has a user-facing close (soft delete). No general update/delete APIs for most other entities from the UI perspective.
+- **Account** has user-facing close/reactivate lifecycle actions. Close is a soft archive, not a permanent delete.
+- **Transaction** has user-facing soft delete; normal list/detail/analytics ignore deleted transactions.
+- Most other entities still have no general update/delete UI.
 
 #### Registration profile
 
@@ -151,14 +153,14 @@ Features are integrated as vertical slices. Status is **functional** where marke
 
 - Create-account form now uses an institution picker backed by `useInstitutions(0, undefined, undefined, 200)`. It is still a first-page dropdown, not a paginated/searchable picker for very large institution lists.
 
-#### Accounts list pagination
-
-- `useAccounts(page)` supports paging, but **`/accounts` always calls `useAccounts()` with default page 0** — no next/prev controls.
-
 #### Transactions
 
-- **No UI** for optional `from` / `to` on `transactionsApi.list` (API supports it).
 - **No `assetId`** in create form for BUY/SELL.
+
+#### Institution repository quality
+
+- Institutions are shared reference data across users and the UI now explains why the list may already be partially filled.
+- Future guardrail: prevent shared institution pollution with per-user creation rate limits, stronger duplicate normalization, audit/moderation tooling, or a “suggested institution” review state before global visibility.
 
 #### Product polish
 
@@ -192,8 +194,8 @@ Features are integrated as vertical slices. Status is **functional** where marke
 High value for the current **STEP 9** programme (`CLAUDE.md`):
 
 1. **Accounts picker scale** — Replace the first-page institution dropdown with search/pagination if institution volume grows beyond the current picker cap.
-2. **Accounts pagination UI** — Wire `page` state to `useAccounts(page)` with prev/next (pattern already on `/transactions` and `/institutions`).
-3. **Transactions** — Expose date-range filters; add optional asset selector when backend expects `assetId` for BUY/SELL.
+2. **Institutions quality guardrails** — Add rate limits, normalization/duplicate detection, and moderation/review before a user-created institution becomes globally visible.
+3. **Transactions** — Add optional asset selector when backend expects `assetId` for BUY/SELL.
 
 Quality / engineering:
 

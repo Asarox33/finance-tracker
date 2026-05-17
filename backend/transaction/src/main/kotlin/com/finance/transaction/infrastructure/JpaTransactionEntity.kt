@@ -1,6 +1,7 @@
 package com.finance.transaction.infrastructure
 
 import com.finance.shared.Currency
+import com.finance.transaction.domain.TransactionStatus
 import com.finance.transaction.domain.TransactionType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
@@ -42,6 +43,10 @@ class JpaTransactionEntity(
 
     @Column(columnDefinition = "TEXT")
     var notes: String?,
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    var status: TransactionStatus = TransactionStatus.ACTIVE,
 
     @Column(name = "applied_fx_rate")
     var appliedFxRate: Long?,

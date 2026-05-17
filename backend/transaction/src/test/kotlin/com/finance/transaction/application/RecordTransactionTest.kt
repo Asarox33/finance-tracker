@@ -2,7 +2,10 @@ package com.finance.transaction.application
 
 import com.finance.shared.Currency
 import com.finance.shared.error.InvalidRequestException
+import com.finance.shared.error.NotFoundException
 import com.finance.transaction.InMemoryTransactionRepository
+import com.finance.transaction.StubAccountAccessPort
+import com.finance.transaction.accountAccessSummary
 import com.finance.transaction.domain.TransactionType
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertThrows
@@ -14,7 +17,9 @@ import java.util.UUID
 class RecordTransactionTest {
 
     private val repository = InMemoryTransactionRepository()
-    private val useCase = RecordTransaction(repository)
+    private val userId = UUID.randomUUID()
+    private val accountId = UUID.randomUUID()
+    private val useCase = RecordTransaction(repository, StubAccountAccessPort(listOf(accountAccessSummary(accountId, userId))))
 
     @Test
     fun recordsTransactionSuccessfully() {
@@ -58,7 +63,32 @@ class RecordTransactionTest {
         assertNotNull(result.transactionId)
     }
 
+    @Test
+    fun rejectsAccountOwnedByAnotherUser() {
+        val otherAccountId = UUID.randomUUID()
+        val useCase = RecordTransaction(
+            repository,
+            StubAccountAccessPort(listOf(accountAccessSummary(otherAccountId, UUID.randomUUID())))
+        )
+        assertThrows(NotFoundException::class.java) {
+            useCase.execute(command(accountId = otherAccountId))
+        }
+    }
+
+    @Test
+    fun rejectsClosedAccount() {
+        val closedAccountId = UUID.randomUUID()
+        val useCase = RecordTransaction(
+            repository,
+            StubAccountAccessPort(listOf(accountAccessSummary(closedAccountId, userId, active = false)))
+        )
+        assertThrows(InvalidRequestException::class.java) {
+            useCase.execute(command(accountId = closedAccountId))
+        }
+    }
+
     private fun command(
+        accountId: UUID = this.accountId,
         label: String = "Monthly salary",
         amount: Long = 10000L,
         appliedFxRate: Long? = null,
@@ -67,7 +97,8 @@ class RecordTransactionTest {
         appliedFxSourceCurrency: Currency? = null,
         appliedFxTargetCurrency: Currency? = null
     ) = RecordTransaction.Command(
-        accountId = UUID.randomUUID(),
+        requestingUserId = userId,
+        accountId = accountId,
         assetId = null,
         type = TransactionType.DEPOSIT,
         amount = amount,

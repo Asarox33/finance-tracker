@@ -25,4 +25,6 @@ export const transactionsApi = {
         label: string;
         notes?: string;
     }) => http.post<Transaction>("/transactions", body),
+
+    delete: (id: string) => http.delete<void>(`/transactions/${id}`),
 };

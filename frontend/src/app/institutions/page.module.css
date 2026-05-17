@@ -23,6 +23,22 @@
     min-width: 200px;
 }
 
+.sharedNotice {
+    border-color: var(--accent);
+}
+
+.sharedNotice h2 {
+    font-family: var(--font-display), serif;
+    font-size: 1rem;
+    margin-bottom: 0.35rem;
+}
+
+.sharedNotice p {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    line-height: 1.5;
+}
+
 .formCard {
     border-color: var(--accent);
 }

@@ -75,9 +75,9 @@ frontend/src/
 │   │   ├── register/page.tsx     # Registration form
 │   │   └── reset/page.tsx        # Password reset (3-step: request→confirm→done)
 │   ├── dashboard/                # Portfolio KPIs + quick links + account breakdown / empty state
-│   ├── accounts/                 # Account list + create with institution picker + close
-│   ├── institutions/             # Institution list, debounced filters, create, type/country cards
-│   ├── transactions/             # Transaction list + create (per account)
+│   ├── accounts/                 # Account list + create + close/reactivate
+│   ├── institutions/             # Shared institution list, debounced filters, create, type/country cards
+│   ├── transactions/             # Transaction list + create + detail + soft delete
 │   ├── analytics/                # Performance comparison + period details
 │   └── profile/                  # User profile edit form
 ├── features/                     # Business feature modules
@@ -86,7 +86,7 @@ frontend/src/
 │   │   ├── hooks/useAuth.ts      # useLogin, useRegister, usePasswordReset, useLogout
 │   │   └── __tests__/
 │   ├── accounts/
-│   │   ├── api/accountsApi.ts    # list, get, create, close
+│   │   ├── api/accountsApi.ts    # list, get, create, close, reactivate
 │   │   ├── hooks/useAccounts.ts  # useAccounts, useAccount
 │   │   └── __tests__/
 │   ├── institutions/
@@ -98,7 +98,7 @@ frontend/src/
 │   │   ├── hooks/useAnalytics.ts # usePortfolioValue, usePerformance, usePerformanceAfterFees, usePerformanceAfterInflation
 │   │   └── __tests__/
 │   ├── transactions/
-│   │   ├── api/transactionsApi.ts # list, get, create
+│   │   ├── api/transactionsApi.ts # list, get, create, delete
 │   │   ├── hooks/useTransactions.ts
 │   │   └── __tests__/
 │   └── user-profile/
@@ -216,8 +216,8 @@ Modules never depend on each other's infrastructure layer — only on applicatio
 | Auth | `POST /api/auth/login`, `POST /api/auth/register`, `POST /api/auth/refresh` (internal session refresh), `POST /api/auth/logout`, `POST /api/auth/password-reset/request`, `POST /api/auth/password-reset/confirm` |
 | User Profile | `GET /api/users/me`, `PUT /api/users/me/preferences` (includes preferred currency and display language) |
 | Institutions | `GET /api/institutions?page&pageSize&name&country`, `GET /api/institutions/:id`, `POST /api/institutions` |
-| Accounts | `GET /api/accounts`, `GET /api/accounts/:id`, `POST /api/accounts`, `DELETE /api/accounts/:id` |
-| Transactions | `GET /api/transactions?accountId=...`, `GET /api/transactions/:id`, `POST /api/transactions` |
+| Accounts | `GET /api/accounts?includeClosed=...`, `GET /api/accounts/:id`, `POST /api/accounts`, `DELETE /api/accounts/:id`, `POST /api/accounts/:id/reactivate` |
+| Transactions | `GET /api/transactions?accountId=...&from=...&to=...`, `GET /api/transactions/:id`, `POST /api/transactions`, `DELETE /api/transactions/:id` (soft delete) |
 | Analytics | `GET /api/analytics/portfolio-value`, `GET /api/analytics/performance`, `GET /api/analytics/performance-after-fees`, `GET /api/analytics/performance-after-inflation` |
 
 ---

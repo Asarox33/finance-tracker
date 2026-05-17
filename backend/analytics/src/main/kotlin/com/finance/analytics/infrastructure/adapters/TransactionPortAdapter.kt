@@ -11,9 +11,10 @@ import java.util.UUID
 class TransactionPortAdapter(
     private val listAccountTransactions: ListAccountTransactions
 ) : TransactionPort {
-    override fun findByAccountId(accountId: UUID, from: LocalDate, to: LocalDate): List<TransactionSummary> {
+    override fun findByAccountId(userId: UUID, accountId: UUID, from: LocalDate, to: LocalDate): List<TransactionSummary> {
         val result = listAccountTransactions.execute(
             ListAccountTransactions.Query(
+                requestingUserId = userId,
                 accountId = accountId,
                 from = if (from == LocalDate.MIN) null else from,
                 to = to,

@@ -15,6 +15,10 @@ class InMemoryAccountRepository : AccountRepository {
         store.values.filter { it.userId == userId }.drop(page * pageSize).take(pageSize)
     override fun countByUserId(userId: UUID): Long =
         store.values.count { it.userId == userId }.toLong()
+    override fun findByUserIdAndStatus(userId: UUID, status: AccountStatus, page: Int, pageSize: Int): List<Account> =
+        store.values.filter { it.userId == userId && it.status == status }.drop(page * pageSize).take(pageSize)
+    override fun countByUserIdAndStatus(userId: UUID, status: AccountStatus): Long =
+        store.values.count { it.userId == userId && it.status == status }.toLong()
 }
 
 fun testAccount(

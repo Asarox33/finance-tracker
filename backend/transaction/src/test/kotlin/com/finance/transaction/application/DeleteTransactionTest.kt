@@ -11,36 +11,37 @@ import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import java.util.UUID
 
-class GetTransactionTest {
+class DeleteTransactionTest {
 
     private val repository = InMemoryTransactionRepository()
     private val userId = UUID.randomUUID()
     private val accountId = UUID.randomUUID()
-    private val useCase = GetTransaction(repository, StubAccountAccessPort(listOf(accountAccessSummary(accountId, userId))))
+    private val useCase = DeleteTransaction(
+        repository,
+        StubAccountAccessPort(listOf(accountAccessSummary(accountId, userId)))
+    )
 
     @Test
-    fun returnsExistingTransaction() {
+    fun softDeletesTransactionSuccessfully() {
         val id = UUID.randomUUID()
         repository.save(testTransaction(id = id, accountId = accountId))
-        assertEquals(id, useCase.execute(id, userId).id)
+        useCase.execute(DeleteTransaction.Command(id, userId))
+        assertEquals(TransactionStatus.DELETED, repository.findById(id)!!.status)
     }
 
     @Test
     fun throwsNotFoundForUnknownTransaction() {
-        assertThrows(NotFoundException::class.java) { useCase.execute(UUID.randomUUID(), userId) }
+        assertThrows(NotFoundException::class.java) {
+            useCase.execute(DeleteTransaction.Command(UUID.randomUUID(), userId))
+        }
     }
 
     @Test
     fun throwsNotFoundForTransactionOwnedByAnotherUser() {
         val id = UUID.randomUUID()
         repository.save(testTransaction(id = id, accountId = UUID.randomUUID()))
-        assertThrows(NotFoundException::class.java) { useCase.execute(id, userId) }
-    }
-
-    @Test
-    fun throwsNotFoundForDeletedTransaction() {
-        val id = UUID.randomUUID()
-        repository.save(testTransaction(id = id, accountId = accountId, status = TransactionStatus.DELETED))
-        assertThrows(NotFoundException::class.java) { useCase.execute(id, userId) }
+        assertThrows(NotFoundException::class.java) {
+            useCase.execute(DeleteTransaction.Command(id, userId))
+        }
     }
 }
