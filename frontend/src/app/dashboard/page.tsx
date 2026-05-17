@@ -37,8 +37,17 @@ export default function DashboardPage() {
     const gainPositive = (perf?.gainLossBasisPoints ?? 0) >= 0;
     const breakdownError = pvError || accError || instError;
     const hasSnapshots = (portfolio?.snapshots.length ?? 0) > 0;
+    const nonZeroSnapshotCount =
+        portfolio?.snapshots.filter(
+            (snapshot) => snapshot.valueInAccountCurrency !== 0 || snapshot.valueInReferenceCurrency !== 0
+        ).length ?? 0;
+    const hasPortfolioActivity = nonZeroSnapshotCount > 0;
     const hasInstitutions = (institutions?.items.length ?? 0) > 0;
-    const hasAccounts = (accounts?.items.length ?? 0) > 0;
+    const activeAccountsCount = accounts?.items.filter((a) => a.status === "ACTIVE").length ?? 0;
+    const showingGettingStarted =
+        !breakdownLoading && !breakdownError && (!hasInstitutions || activeAccountsCount === 0 || !hasPortfolioActivity);
+    const showAccountBreakdown = !breakdownLoading && !breakdownError && hasSnapshots;
+    const showAccountBreakdownTitle = breakdownLoading || Boolean(breakdownError) || showAccountBreakdown;
 
     return (
         <div className={styles.page}>
@@ -96,8 +105,18 @@ export default function DashboardPage() {
                     </Card>
                 </section>
 
+                {showingGettingStarted && (
+                    <GettingStartedCard
+                        hasInstitutions={hasInstitutions}
+                        hasAccounts={activeAccountsCount > 0}
+                        hasSnapshots={hasPortfolioActivity}
+                    />
+                )}
+
                 <section aria-label={t("dashboard.accountBreakdownAria")} className={styles.section}>
-                    <h2 className={styles.sectionTitle}>{t("dashboard.accountBreakdown")}</h2>
+                    {showAccountBreakdownTitle && (
+                        <h2 className={styles.sectionTitle}>{t("dashboard.accountBreakdown")}</h2>
+                    )}
                     {breakdownLoading ? (
                         <div className={styles.skels}>
                             {[1, 2, 3].map((i) => (
@@ -106,13 +125,7 @@ export default function DashboardPage() {
                         </div>
                     ) : breakdownError ? (
                         <ErrorState message={t("dashboard.loadBreakdownError")} />
-                    ) : !hasSnapshots ? (
-                        <GettingStartedCard
-                            hasInstitutions={hasInstitutions}
-                            hasAccounts={hasAccounts}
-                            hasSnapshots={hasSnapshots}
-                        />
-                    ) : (
+                    ) : showAccountBreakdown ? (
                         <Card>
                             <table aria-label={t("dashboard.accountValuesAria")}>
                                 <thead>
@@ -163,7 +176,7 @@ export default function DashboardPage() {
                                 </tbody>
                             </table>
                         </Card>
-                    )}
+                    ) : null}
                 </section>
             </div>
         </div>
