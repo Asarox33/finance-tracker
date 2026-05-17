@@ -122,6 +122,7 @@ describe("useRegister", () => {
         expect(authApiModule.authApi.register).toHaveBeenCalledWith({
             email: "test@example.com",
             password: "Password123!",
+            preferredLanguage: "ENG",
         });
     });
 

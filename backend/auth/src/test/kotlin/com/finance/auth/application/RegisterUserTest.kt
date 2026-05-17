@@ -32,6 +32,18 @@ class RegisterUserTest {
     }
 
     @Test
+    fun createsUserProfileWithRequestedLanguage() {
+        useCase.execute(
+            RegisterUser.Command(
+                email = "user@example.com",
+                rawPassword = VALID_PASSWORD,
+                preferredLanguage = DisplayLanguage.FRA
+            )
+        )
+        assertEquals(DisplayLanguage.FRA, createUserProfilePort.created.single().preferredLanguage)
+    }
+
+    @Test
     fun rejectsDuplicateEmail() {
         useCase.execute(RegisterUser.Command("user@example.com", VALID_PASSWORD))
         assertThrows(InvalidRequestException::class.java) {

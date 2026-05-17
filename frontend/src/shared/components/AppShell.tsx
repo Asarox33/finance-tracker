@@ -28,6 +28,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
     const { logout } = useLogout();
     const { profile } = useUserProfile();
+    const { setLanguage } = useI18n();
 
     const { isAuthenticated, isLoading } = useAuthGuard();
 
@@ -38,6 +39,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             router.replace("/login");
         }
     }, [isLoading, isAuthenticated, router]);
+
+    useEffect(() => {
+        if (profile?.preferredLanguage) {
+            setLanguage(profile.preferredLanguage);
+        }
+    }, [profile?.preferredLanguage, setLanguage]);
 
     if (isLoading) {
         return (

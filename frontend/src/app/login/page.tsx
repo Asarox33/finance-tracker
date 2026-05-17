@@ -4,9 +4,11 @@ import { type FormEvent, Suspense, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useLogin } from "@/features/auth/hooks/useAuth";
+import { useI18n } from "@/shared/i18n";
 import styles from "./page.module.css";
 
 function LoginForm() {
+    const { t } = useI18n();
     const { login, loading, error } = useLogin();
     const searchParams = useSearchParams();
     const registered = searchParams.get("registered") === "1";
@@ -26,14 +28,14 @@ function LoginForm() {
                     <span className={styles.logo} aria-hidden="true">
                         ◈
                     </span>
-                    <h1 className={styles.title}>Finance Tracker</h1>
-                    <p className={styles.subtitle}>Sign in to your account</p>
+                    <h1 className={styles.title}>{t("auth.loginTitle")}</h1>
+                    <p className={styles.subtitle}>{t("auth.loginSubtitle")}</p>
                 </header>
 
-                <form onSubmit={handleSubmit} noValidate aria-label="Login form">
+                <form onSubmit={handleSubmit} noValidate aria-label={t("auth.loginFormAria")}>
                     {registered && (
                         <div role="status" className={styles.success}>
-                            Account created — you can now sign in.
+                            {t("auth.registeredSuccess")}
                         </div>
                     )}
                     {error && (
@@ -52,7 +54,7 @@ function LoginForm() {
                     )}
 
                     <div className={styles.field}>
-                        <label htmlFor="email">Email address</label>
+                        <label htmlFor="email">{t("auth.email")}</label>
                         <input
                             id="email"
                             type="email"
@@ -61,13 +63,13 @@ function LoginForm() {
                             aria-required="true"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            placeholder="you@example.com"
+                            placeholder={t("auth.emailPlaceholder")}
                             disabled={loading || !!error?.locked}
                         />
                     </div>
 
                     <div className={styles.field}>
-                        <label htmlFor="password">Password</label>
+                        <label htmlFor="password">{t("auth.password")}</label>
                         <input
                             id="password"
                             type="password"
@@ -76,7 +78,7 @@ function LoginForm() {
                             aria-required="true"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            placeholder="••••••••••••"
+                            placeholder={t("auth.passwordPlaceholder")}
                             disabled={loading || !!error?.locked}
                         />
                     </div>
@@ -88,14 +90,14 @@ function LoginForm() {
                         aria-busy={loading}
                     >
                         {loading && <span className={styles.spinner} aria-hidden="true" />}
-                        {loading ? "Signing in…" : "Sign in"}
+                        {loading ? t("auth.signingIn") : t("auth.signIn")}
                     </button>
                 </form>
 
                 <footer className={styles.footer}>
-                    <Link href="/login/reset">Forgot password ?</Link>
+                    <Link href="/login/reset">{t("auth.forgotPassword")}</Link>
                     <span style={{ color: "var(--text-dim)" }}>·</span>
-                    <Link href="/login/register">Create account</Link>
+                    <Link href="/login/register">{t("auth.createAccount")}</Link>
                 </footer>
             </div>
         </main>

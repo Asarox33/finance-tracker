@@ -8,6 +8,7 @@ import com.finance.auth.application.RegisterUser
 import com.finance.auth.application.RequestPasswordReset
 import com.finance.auth.application.ResetPassword
 import com.finance.auth.application.RevokeRefreshToken
+import com.finance.shared.DisplayLanguage
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
@@ -51,7 +52,11 @@ class AuthController(
             example = "MyStrongPassword123!"
         )
         @field:Size(min = 12, max = 128)
-        val password: String
+        val password: String,
+
+        @param:JsonProperty("preferredLanguage")
+        @field:Schema(example = "ENG")
+        val preferredLanguage: DisplayLanguage = DisplayLanguage.ENG
     )
 
     data class RegisterResponse(val userId: UUID)
@@ -112,7 +117,11 @@ class AuthController(
     @Transactional
     fun register(@Valid @RequestBody request: RegisterRequest): RegisterResponse {
         val result = registerUser.execute(
-            RegisterUser.Command(email = request.email, rawPassword = request.password)
+            RegisterUser.Command(
+                email = request.email,
+                rawPassword = request.password,
+                preferredLanguage = request.preferredLanguage
+            )
         )
         return RegisterResponse(userId = result.userId)
     }

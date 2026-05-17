@@ -4,7 +4,8 @@ import { useState } from "react";
 import { authApi } from "../api/authApi";
 import * as httpModule from "@/lib/http";
 import { setToken, setUserId } from "@/lib/http";
-import type { ApiError } from "@/shared/types";
+import { useI18n } from "@/shared/i18n";
+import type { ApiError, DisplayLanguage } from "@/shared/types";
 import { useRouter } from "next/navigation";
 
 export interface LoginError {
@@ -24,6 +25,7 @@ function extractUserId(token: string): string | null {
 
 export function useLogin() {
     const router = useRouter();
+    const { t } = useI18n();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<LoginError | null>(null);
 
@@ -41,8 +43,8 @@ export function useLogin() {
             const locked = apiErr?.message?.toLowerCase().includes("locked") ?? false;
             setError({
                 message: locked
-                    ? "Account locked — too many failed attempts. Please try again later."
-                    : (apiErr.message ?? "Login failed"),
+                    ? t("auth.lockedError")
+                    : (apiErr.message ?? t("auth.loginFallback")),
                 locked,
             });
         } finally {
@@ -55,17 +57,18 @@ export function useLogin() {
 
 export function useRegister() {
     const router = useRouter();
+    const { language, t } = useI18n();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    async function register(email: string, password: string) {
+    async function register(email: string, password: string, preferredLanguage: DisplayLanguage = language) {
         setLoading(true);
         setError(null);
         try {
-            await authApi.register({ email, password });
+            await authApi.register({ email, password, preferredLanguage });
             router.push("/login?registered=1");
         } catch (err) {
-            setError((err as ApiError).message ?? "Registration failed");
+            setError((err as ApiError).message ?? t("auth.registrationFallback"));
         } finally {
             setLoading(false);
         }
@@ -75,6 +78,7 @@ export function useRegister() {
 }
 
 export function usePasswordReset() {
+    const { t } = useI18n();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [step, setStep] = useState<"request" | "confirm" | "done">("request");
@@ -86,7 +90,7 @@ export function usePasswordReset() {
             await authApi.requestPasswordReset({ email });
             setStep("confirm");
         } catch (err) {
-            setError((err as ApiError).message ?? "Request failed");
+            setError((err as ApiError).message ?? t("auth.requestFallback"));
         } finally {
             setLoading(false);
         }
@@ -99,7 +103,7 @@ export function usePasswordReset() {
             await authApi.confirmPasswordReset({ email, otp, newPassword });
             setStep("done");
         } catch (err) {
-            setError((err as ApiError).message ?? "Reset failed");
+            setError((err as ApiError).message ?? t("auth.resetFallback"));
         } finally {
             setLoading(false);
         }

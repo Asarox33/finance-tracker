@@ -62,12 +62,24 @@ describe("authApi", () => {
         const result = await authApi.register({
             email: "new@example.com",
             password: "Password123!",
+            preferredLanguage: "FRA",
         });
         expect(result.userId).toBe("user-123");
         expect(mockFetch).toHaveBeenCalledWith(
             expect.stringContaining("/auth/register"),
             expect.objectContaining({ method: "POST" })
         );
+    });
+
+    it("sends preferred language on register", async () => {
+        mockResponse({ userId: "user-123" }, 201);
+        await authApi.register({
+            email: "new@example.com",
+            password: "Password123!",
+            preferredLanguage: "ITA",
+        });
+        const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+        expect(body.preferredLanguage).toBe("ITA");
     });
 
     it("calls password reset request endpoint", async () => {

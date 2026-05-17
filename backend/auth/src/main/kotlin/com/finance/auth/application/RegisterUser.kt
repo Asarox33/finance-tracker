@@ -13,7 +13,11 @@ class RegisterUser(
     private val passwordEncoder: PasswordEncoder,
     private val createUserProfile: CreateUserProfilePort
 ) {
-    data class Command(val email: String, val rawPassword: String)
+    data class Command(
+        val email: String,
+        val rawPassword: String,
+        val preferredLanguage: DisplayLanguage = DisplayLanguage.ENG
+    )
     data class Result(val userId: UUID)
 
     fun execute(command: Command): Result {
@@ -43,7 +47,7 @@ class RegisterUser(
                 lastName = "Unknown",
                 displayName = "New user",
                 preferredCurrency = Currency.USD,
-                preferredLanguage = DisplayLanguage.ENG,
+                preferredLanguage = command.preferredLanguage,
                 birthDate = null
             )
         )

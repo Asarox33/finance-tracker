@@ -190,9 +190,9 @@ The `analytics` module differs: it has **no DB of its own** and depends on other
 ### Internationalization
 
 - `UserProfile.preferredLanguage` stores the user display language as `ENG`, `FRA`, `ESP`, or `ITA`.
-- `AppShell` mounts the shared i18n provider for authenticated pages using the profile language.
+- The root layout mounts the shared i18n provider. Public selection is stored in a `preferred_language` cookie; authenticated pages sync the root provider from the profile language.
 - `src/shared/i18n` owns typed dictionaries, language-to-locale mapping, placeholder interpolation, and `useFormatters()` for locale-aware money/date formatting.
-- Authenticated UI copy, accessibility labels, placeholders, modals, and enum display labels are dictionary-driven. Public auth pages still use English copy.
+- UI copy, accessibility labels, placeholders, modals, and enum display labels are dictionary-driven. Registration sends the selected public language so new profiles inherit it.
 
 ---
 

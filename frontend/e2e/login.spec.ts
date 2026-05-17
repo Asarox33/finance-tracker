@@ -7,12 +7,16 @@ test.describe("Auth flows", () => {
         await expect(page.getByLabel("Email address")).toBeVisible();
         await expect(page.getByLabel("Password")).toBeVisible();
         await expect(page.getByRole("button", { name: "Sign in" })).toBeVisible();
-        await expect(page.getByRole("link", { name: "Forgot password ?" })).toBeVisible();
+        await expect(page.getByRole("link", { name: "Forgot password?" })).toBeVisible();
         await expect(page.getByRole("link", { name: "Create account" })).toBeVisible();
     });
 
     test("login form is fully keyboard navigable", async ({ page }) => {
         await page.goto("/login");
+        await page.keyboard.press("Tab"); // English language flag
+        await page.keyboard.press("Tab"); // French language flag
+        await page.keyboard.press("Tab"); // Spanish language flag
+        await page.keyboard.press("Tab"); // Italian language flag
         await page.keyboard.press("Tab"); // ThemeToggle (fixed, outside form)
         await page.keyboard.press("Tab"); // Email input
         await expect(page.getByLabel("Email address")).toBeFocused();
@@ -69,24 +73,42 @@ test.describe("Auth flows", () => {
     });
 
     test("register redirects to login on success", async ({ page }) => {
-        await page.route("**/api/auth/register", (route) =>
-            route.fulfill({
+        let preferredLanguage: string | undefined;
+        await page.route("**/api/auth/register", (route) => {
+            preferredLanguage = JSON.parse(route.request().postData() ?? "{}").preferredLanguage;
+            return route.fulfill({
                 status: 201,
                 contentType: "application/json",
                 body: JSON.stringify({ userId: "new-user-id" }),
-            })
-        );
+            });
+        });
         await page.goto("/login/register");
-        await page.getByLabel("Email address").fill("new@example.com");
+        await page.getByRole("button", { name: "Display language: French" }).click();
+        await page.getByLabel("Adresse e-mail").fill("new@example.com");
         await page
-            .getByLabel(/^Password/)
+            .getByLabel(/^Mot de passe/)
             .first()
             .fill("MyStrongPassword123!");
-        await page.getByLabel("Confirm password").fill("MyStrongPassword123!");
-        await page.getByRole("button", { name: "Create account" }).click();
+        await page.getByLabel("Confirmer le mot de passe").fill("MyStrongPassword123!");
+        await page.getByRole("button", { name: "Créer un compte" }).click();
         await expect(page).toHaveURL(/\/login\?registered=1/, {
             timeout: 5000,
         });
+        expect(preferredLanguage).toBe("FRA");
+    });
+
+    test("public auth pages can be translated before login", async ({ page }) => {
+        await page.goto("/login");
+        await page.getByRole("button", { name: "Display language: French" }).click();
+        await expect(page.getByText("Thème clair")).toBeVisible();
+        await page.getByRole("button", { name: "Passer au thème clair" }).click();
+        await expect(page.getByText("Thème sombre")).toBeVisible();
+        await expect(page.getByText("Connectez-vous à votre compte")).toBeVisible();
+        await expect(page.getByRole("button", { name: "Se connecter" })).toBeVisible();
+        await page.goto("/login/register");
+        await expect(page.getByRole("heading", { name: "Créer un compte" })).toBeVisible();
+        await page.goto("/login/reset");
+        await expect(page.getByRole("heading", { name: "Réinitialiser le mot de passe" })).toBeVisible();
     });
 
     test("reset request page renders correctly", async ({ page }) => {

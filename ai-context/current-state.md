@@ -64,7 +64,7 @@ Features are integrated as vertical slices. Status is **functional** where marke
 - ✅ `ThemeToggle`, shared UI primitives (`ui.tsx`)
 - ✅ `http.ts` — access JWT in `localStorage`, `credentials: "include"`, **refresh on 401** via cookie, `ensureSession()` for auth guard; **unit tests:** `src/lib/__tests__/http.test.ts`
 - ✅ `format.ts`, `currencies.ts`, `countries.ts` (used by accounts / profile / institutions); money/date formatters accept locale overrides
-- ✅ `shared/i18n` — typed dictionaries for `ENG`, `FRA`, `ESP`, `ITA`; authenticated UI copy, accessibility labels, placeholders, modals, enum labels, and money/date formatting are dictionary/locale driven
+- ✅ `shared/i18n` — typed dictionaries for `ENG`, `FRA`, `ESP`, `ITA`; UI copy, accessibility labels, placeholders, modals, enum labels, and money/date formatting are dictionary/locale driven. Public language selection is stored in a `preferred_language` cookie; authenticated pages sync it from `UserProfile.preferredLanguage`.
 
 #### Routes (App Router)
 
@@ -162,7 +162,7 @@ Features are integrated as vertical slices. Status is **functional** where marke
 - `useSessionTimeout` runs whenever `AppShell` mounts (including rare cases with token on public routes).
 - **Per-user access session length (2–10 min)** in `user-profile` not implemented; global default/max **10 min** via `auth.jwt.access-expiration-ms` / `TokenService.MAX_ACCESS_EXPIRATION_MS`.
 - No optimistic mutations for creates/closes/updates.
-- Public auth pages (`/login`, `/login/register`, `/login/reset`) still use English copy; authenticated pages are covered by the profile-driven dictionaries.
+- Root metadata remains static English (`Finance Tracker` title/description); page UI copy is dictionary-driven.
 
 #### E2E gaps
 

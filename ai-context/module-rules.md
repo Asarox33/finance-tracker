@@ -325,6 +325,7 @@
 
 **Rules:**
 - Supported display languages are `ENG`, `FRA`, `ESP`, and `ITA`; backend stores the code on `UserProfile.preferredLanguage`.
+- Public language choice is stored in a `preferred_language` cookie and sent with registration so new profiles use the selected language by default.
 - All authenticated UI user-facing copy must go through `useI18n().t(...)`: visible labels, headings, buttons, placeholders, hints, errors, empty states, table headers, modals, and accessibility text.
 - Dynamic copy must use named placeholders such as `{date}`, `{currency}`, `{page}`, `{total}`, `{accountName}`, and `{institutionName}` instead of manual string concatenation.
 - Display labels for known enums (account type/status, institution type, transaction type) live in dictionaries; persisted enum values remain untranslated in API payloads.

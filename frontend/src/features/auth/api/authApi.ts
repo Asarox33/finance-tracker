@@ -1,4 +1,5 @@
 import { http } from "@/lib/http";
+import type { DisplayLanguage } from "@/shared/types";
 
 export interface LoginRequest {
     email: string;
@@ -12,6 +13,7 @@ export interface LoginResponse {
 export interface RegisterRequest {
     email: string;
     password: string;
+    preferredLanguage: DisplayLanguage;
 }
 
 export interface RegisterResponse {
