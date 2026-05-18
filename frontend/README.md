@@ -41,7 +41,7 @@ src/
 
 All shells:
 
-```sh
+```text
 npm install
 npm run dev
 ```
@@ -58,7 +58,7 @@ Use `npm install` for local development. CI/CD should use `npm ci` only.
 
 All shells:
 
-```sh
+```text
 npm run dev            # Dev server
 npm run build          # Production build
 npm start              # Start built app

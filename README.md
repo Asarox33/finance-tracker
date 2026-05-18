@@ -90,14 +90,14 @@ The project targets Windows with PowerShell as the default local shell, but the 
 
 Windows PowerShell:
 
-```powershell
+```text
 Set-Location backend
 .\gradlew.bat :app:bootRun
 ```
 
 macOS/Linux:
 
-```bash
+```text
 cd backend
 ./gradlew :app:bootRun
 ```
@@ -106,7 +106,7 @@ cd backend
 
 Run from the `frontend/` directory on any shell:
 
-```sh
+```text
 npm install
 npm run dev
 ```
@@ -135,7 +135,7 @@ Run from the `backend/` directory:
 
 Windows PowerShell:
 
-```powershell
+```text
 .\gradlew.bat build
 .\gradlew.bat build -PskipIT=true
 .\gradlew.bat integrationTest -PskipIT=false
@@ -145,7 +145,7 @@ Windows PowerShell:
 
 macOS/Linux:
 
-```bash
+```text
 ./gradlew build
 ./gradlew build -PskipIT=true
 ./gradlew integrationTest -PskipIT=false
@@ -159,7 +159,7 @@ Backend integration tests use Testcontainers and require Docker. Use `-PskipIT=t
 
 Run from the `frontend/` directory:
 
-```sh
+```text
 npm run lint
 npm run build
 npm test

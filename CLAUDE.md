@@ -308,14 +308,14 @@ CI is the source of truth for dependency resolution. No "works on my machine" as
 
 Windows:
 
-```bat
+```text
 cd backend
 .\gradlew.bat clean build
 ```
 
 macOS/Linux:
 
-```bash
+```text
 cd backend
 ./gradlew clean build
 ```
@@ -327,7 +327,7 @@ cd backend
 
 **Package manager:** **npm only** — do **not** use Yarn or pnpm. In **CI/CD**, use **`npm ci` only** (never `npm install`). On **developer machines**, normal workflow is **`npm install`** in `frontend/`; see [`AGENTS.md`](AGENTS.md).
 
-```sh
+```text
 cd frontend
 npm ci
 npm run lint

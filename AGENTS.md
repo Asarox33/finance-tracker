@@ -23,14 +23,14 @@ This repository targets **Windows** with **PowerShell** as the default shell for
 
 Windows PowerShell:
 
-```powershell
+```text
 Set-Location backend
 .\gradlew.bat :app:bootRun
 ```
 
 macOS/Linux:
 
-```bash
+```text
 cd backend
 ./gradlew :app:bootRun
 ```
@@ -39,7 +39,7 @@ cd backend
 
 Run from `frontend/` on any shell:
 
-```sh
+```text
 npm install
 npm run dev
 ```
@@ -70,7 +70,7 @@ Run from **`backend/`**:
 
 ### Windows PowerShell
 
-```powershell
+```text
 .\gradlew.bat build                              # unit + IT by default (needs Docker for Testcontainers)
 .\gradlew.bat build -PskipIT=true                # unit tests only
 .\gradlew.bat integrationTest -PskipIT=false   # integration tests only (needs Docker)
@@ -80,7 +80,7 @@ Run from **`backend/`**:
 
 ### macOS/Linux
 
-```bash
+```text
 ./gradlew build                            # unit + IT by default (needs Docker for Testcontainers)
 ./gradlew build -PskipIT=true              # unit tests only
 ./gradlew integrationTest -PskipIT=false   # integration tests only (needs Docker)
