@@ -1,14 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import type { ReactNode } from "react";
 import { usePerformance, usePortfolioValue } from "@/features/analytics/hooks/useAnalytics";
 import { useAccounts } from "@/features/accounts/hooks/useAccounts";
 import { useInstitutions } from "@/features/institutions/hooks/useInstitutions";
 import { useReferenceCurrency } from "@/shared/hooks/useReferenceCurrency";
 import { Card, ErrorState, PageHeader, Skeleton } from "@/shared/components/ui";
 import { useFormatters, useI18n, type TranslationKey } from "@/shared/i18n";
-import type { AccountType } from "@/shared/types";
+import type { Account, AccountSnapshot, AccountType, Institution } from "@/shared/types";
 import { formatBasisPoints, today } from "@/lib/format";
 import styles from "./page.module.css";
 
@@ -30,9 +31,21 @@ const INSTITUTION_TYPE_CLASSES: Record<string, string> = {
     OTHER: styles.typeOther,
 };
 
+type BreakdownSortKey = "account" | "institution" | "accountValue" | "referenceValue";
+type SortDirection = "asc" | "desc";
+
+interface BreakdownSort {
+    key: BreakdownSortKey;
+    direction: SortDirection;
+}
+
 export default function DashboardPage() {
     const { referenceCurrency, isLoading: currencyLoading } = useReferenceCurrency();
     const analyticsCurrency = currencyLoading ? undefined : referenceCurrency;
+    const [breakdownSort, setBreakdownSort] = useState<BreakdownSort>({
+        key: "referenceValue",
+        direction: "desc",
+    });
 
     const { data: portfolio, isLoading: pvLoading, error: pvError } = usePortfolioValue(analyticsCurrency);
     const { data: perf, isLoading: perfLoading, error: perfError } = usePerformance(analyticsCurrency, 12);
@@ -67,6 +80,21 @@ export default function DashboardPage() {
         !breakdownLoading && !breakdownError && (!hasInstitutions || activeAccountsCount === 0 || !hasPortfolioActivity);
     const showAccountBreakdown = !breakdownLoading && !breakdownError && hasSnapshots;
     const showAccountBreakdownTitle = breakdownLoading || Boolean(breakdownError) || showAccountBreakdown;
+    const sortedSnapshots = useMemo(() => {
+        return [...(portfolio?.snapshots ?? [])].sort((a, b) =>
+            compareSnapshots(a, b, breakdownSort, accountById, institutionById)
+        );
+    }, [accountById, breakdownSort, institutionById, portfolio?.snapshots]);
+
+    const handleBreakdownSort = (key: BreakdownSortKey) => {
+        setBreakdownSort((current) => {
+            if (current.key === key) {
+                return { key, direction: current.direction === "asc" ? "desc" : "asc" };
+            }
+
+            return { key, direction: defaultSortDirection(key) };
+        });
+    };
 
     return (
         <div className={styles.page}>
@@ -146,22 +174,50 @@ export default function DashboardPage() {
                         <ErrorState message={t("dashboard.loadBreakdownError")} />
                     ) : showAccountBreakdown ? (
                         <Card>
-                            <table aria-label={t("dashboard.accountValuesAria")}>
+                            <table className={styles.breakdownTable} aria-label={t("dashboard.accountValuesAria")}>
                                 <thead>
                                     <tr>
-                                        <th scope="col">{t("dashboard.account")}</th>
-                                        <th scope="col">{t("dashboard.institution")}</th>
-                                        <th scope="col" style={{ textAlign: "right" }}>
+                                        <SortHeader
+                                            sortKey="account"
+                                            currentSort={breakdownSort}
+                                            onSort={handleBreakdownSort}
+                                            label={t("dashboard.sortByAccount")}
+                                        >
+                                            {t("dashboard.account")}
+                                        </SortHeader>
+                                        <SortHeader
+                                            sortKey="institution"
+                                            currentSort={breakdownSort}
+                                            onSort={handleBreakdownSort}
+                                            label={t("dashboard.sortByInstitution")}
+                                        >
+                                            {t("dashboard.institution")}
+                                        </SortHeader>
+                                        <SortHeader
+                                            sortKey="accountValue"
+                                            currentSort={breakdownSort}
+                                            onSort={handleBreakdownSort}
+                                            label={t("dashboard.sortByAccountValue")}
+                                            align="right"
+                                        >
                                             {t("dashboard.value")}
+                                        </SortHeader>
+                                        <SortHeader
+                                            sortKey="referenceValue"
+                                            currentSort={breakdownSort}
+                                            onSort={handleBreakdownSort}
+                                            label={t("dashboard.sortByReferenceValue", { currency: referenceCurrency })}
+                                            align="right"
+                                        >
+                                            {t("dashboard.referenceCurrencyValue", { currency: referenceCurrency })}
+                                        </SortHeader>
+                                        <th scope="col" className={styles.fixedHeaderCell}>
+                                            {t("dashboard.actions")}
                                         </th>
-                                        <th scope="col" style={{ textAlign: "right" }}>
-                                            {t("dashboard.inCurrency", { currency: referenceCurrency })}
-                                        </th>
-                                        <th scope="col">{t("dashboard.actions")}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {portfolio?.snapshots.map((snap) => {
+                                    {sortedSnapshots.map((snap) => {
                                         const account = accountById.get(snap.accountId);
                                         const institution = account
                                             ? institutionById.get(account.institutionId)
@@ -249,6 +305,96 @@ export default function DashboardPage() {
             </div>
         </div>
     );
+}
+
+function SortHeader({
+    sortKey,
+    currentSort,
+    onSort,
+    label,
+    align = "left",
+    children,
+}: {
+    sortKey: BreakdownSortKey;
+    currentSort: BreakdownSort;
+    onSort: (key: BreakdownSortKey) => void;
+    label: string;
+    align?: "left" | "right";
+    children: ReactNode;
+}) {
+    const active = currentSort.key === sortKey;
+    const directionIndicator = currentSort.direction === "asc" ? "↑" : "↓";
+
+    return (
+        <th
+            scope="col"
+            className={styles.sortableHeaderCell}
+            aria-sort={active ? (currentSort.direction === "asc" ? "ascending" : "descending") : "none"}
+            style={{ textAlign: align }}
+        >
+            <button
+                type="button"
+                className={`${styles.sortHeader} ${align === "right" ? styles.sortHeaderRight : ""} ${
+                    active ? styles.sortHeaderActive : ""
+                }`}
+                onClick={() => onSort(sortKey)}
+                aria-label={label}
+            >
+                <span>{children}</span>
+                {active && (
+                    <span aria-hidden="true" className={styles.sortIndicator}>
+                        {directionIndicator}
+                    </span>
+                )}
+            </button>
+        </th>
+    );
+}
+
+function defaultSortDirection(key: BreakdownSortKey): SortDirection {
+    return key === "accountValue" || key === "referenceValue" ? "desc" : "asc";
+}
+
+function compareSnapshots(
+    a: AccountSnapshot,
+    b: AccountSnapshot,
+    sort: BreakdownSort,
+    accountById: Map<string, Account>,
+    institutionById: Map<string, Institution>
+): number {
+    const direction = sort.direction === "asc" ? 1 : -1;
+    let result = 0;
+
+    switch (sort.key) {
+        case "account":
+            result = compareText(accountById.get(a.accountId)?.name, accountById.get(b.accountId)?.name);
+            break;
+        case "institution": {
+            const aAccount = accountById.get(a.accountId);
+            const bAccount = accountById.get(b.accountId);
+            result = compareText(
+                aAccount ? institutionById.get(aAccount.institutionId)?.name : undefined,
+                bAccount ? institutionById.get(bAccount.institutionId)?.name : undefined
+            );
+            break;
+        }
+        case "accountValue":
+            result = a.valueInAccountCurrency - b.valueInAccountCurrency;
+            break;
+        case "referenceValue":
+            result = a.valueInReferenceCurrency - b.valueInReferenceCurrency;
+            break;
+    }
+
+    if (result !== 0) {
+        return result * direction;
+    }
+
+    return compareText(accountById.get(a.accountId)?.name, accountById.get(b.accountId)?.name) || a.accountId.localeCompare(b.accountId);
+}
+
+function compareText(a?: string, b?: string): number {
+    return (a ?? "").localeCompare(b ?? "", undefined, { sensitivity: "base" });
 }
 
 function GettingStartedCard({

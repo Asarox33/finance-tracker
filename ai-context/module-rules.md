@@ -289,7 +289,7 @@
 - Same shape for `performance-after-fees` and `performance-after-inflation`
 - Dashboard uses `useReferenceCurrency()` to feed profile `preferredCurrency` into `usePortfolioValue()` and `usePerformance(..., 12)` for KPI cards
 - Dashboard shows a contextual getting-started checklist while setup is incomplete (institution, account, transaction/portfolio snapshot), instead of duplicating permanent sidebar navigation
-- Dashboard Account Breakdown rows expose a dedicated link to `/transactions?accountId=<id>`; account-scoped analytics links remain deferred until analytics supports account filters.
+- Dashboard Account Breakdown rows default to sorting by reference-currency value descending, expose sortable account/institution/value column headers, and include a dedicated link to `/transactions?accountId=<id>`; account-scoped analytics links remain deferred until analytics supports account filters.
 - Dashboard currently shows current global state; backlog item: decide whether to add an `asOf` date picker here or keep historical date exploration in Analytics.
 - Analytics page adds period selector (3M/6M/1Y/3Y) that changes the `months` parameter; `monthsAgo(n)` and `today()` compute the date range. Backlog: add YTD.
 - All three performance variants are shown side-by-side in a comparison grid and detail table

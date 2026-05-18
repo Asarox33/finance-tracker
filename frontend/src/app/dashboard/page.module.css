@@ -90,6 +90,62 @@
     white-space: nowrap;
 }
 
+.breakdownTable th {
+    color: color-mix(in srgb, var(--text) 82%, var(--text-muted));
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    padding: 0;
+    text-transform: uppercase;
+    vertical-align: middle;
+}
+
+.breakdownTable .fixedHeaderCell {
+    color: var(--text-muted);
+    padding: 0.75rem 1rem;
+}
+
+.breakdownTable .sortableHeaderCell {
+    color: var(--accent);
+}
+
+.sortHeader {
+    align-items: center;
+    background: transparent;
+    border: 0;
+    border-radius: var(--radius-sm);
+    color: var(--accent);
+    cursor: pointer;
+    display: flex;
+    font: inherit;
+    gap: 0.35rem;
+    justify-content: flex-start;
+    margin: 0.35rem;
+    min-height: 2.05rem;
+    padding: 0.4rem 0.65rem;
+    text-transform: uppercase;
+    transition: background var(--transition), color var(--transition);
+    white-space: nowrap;
+    width: calc(100% - 0.7rem);
+}
+
+.sortHeaderRight {
+    justify-content: flex-end;
+}
+
+.sortHeader:hover,
+.sortHeader:focus-visible,
+.sortHeaderActive {
+    background: color-mix(in srgb, var(--accent) 14%, transparent);
+    color: var(--accent);
+}
+
+.sortIndicator {
+    color: currentColor;
+    font-size: 0.875rem;
+    line-height: 1;
+}
+
 .transactionLink {
     align-items: center;
     background: color-mix(in srgb, var(--accent) 16%, var(--surface-2));
@@ -118,7 +174,7 @@
 [data-theme="light"] .transactionLink {
     background: var(--surface-2);
     border-color: var(--border);
-    color: var(--text);
+    color: var(--accent);
 }
 
 [data-theme="light"] .transactionLink:hover,
