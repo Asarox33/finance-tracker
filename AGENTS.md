@@ -1,6 +1,6 @@
 # AGENTS.md — Context for AI assistants and automation
 
-This repository targets **Windows** with **PowerShell** as the default shell for the whole project. Prefer PowerShell-safe invocations (e.g. `.\gradlew.bat`, not a bare executable name when the current directory must be trusted).
+This repository targets **Windows** with **PowerShell** as the default shell for the whole project. Prefer PowerShell-safe invocations (e.g. `.\gradlew.bat`, not a bare executable name when the current directory must be trusted). macOS/Linux equivalents are included for developers on Unix-like shells.
 
 ---
 
@@ -17,15 +17,29 @@ This repository targets **Windows** with **PowerShell** as the default shell for
 
 ---
 
-## Quick start (local dev, PowerShell)
+## Quick start (local dev)
+
+### Backend
+
+Windows PowerShell:
 
 ```powershell
-# Backend — from backend/ (PostgreSQL reachable; Spring profiles per application*.yml)
 Set-Location backend
 .\gradlew.bat :app:bootRun
+```
 
-# Frontend — from frontend/
-Set-Location ..\frontend
+macOS/Linux:
+
+```bash
+cd backend
+./gradlew :app:bootRun
+```
+
+### Frontend
+
+Run from `frontend/` on any shell:
+
+```sh
 npm install
 npm run dev
 ```
@@ -50,9 +64,11 @@ The `npm run reinstall` script is for **local recovery** (wipes `node_modules` a
 
 ---
 
-## Backend — Gradle (PowerShell)
+## Backend — Gradle
 
 Run from **`backend/`**:
+
+### Windows PowerShell
 
 ```powershell
 .\gradlew.bat build                              # unit + IT by default (needs Docker for Testcontainers)
@@ -62,7 +78,15 @@ Run from **`backend/`**:
 .\gradlew.bat clean build                        # typical CI-style full check
 ```
 
-On Unix shells, use `./gradlew` with the same tasks and properties.
+### macOS/Linux
+
+```bash
+./gradlew build                            # unit + IT by default (needs Docker for Testcontainers)
+./gradlew build -PskipIT=true              # unit tests only
+./gradlew integrationTest -PskipIT=false   # integration tests only (needs Docker)
+./gradlew testAggregateReport              # tests + Kover report (needs Docker)
+./gradlew clean build                      # typical CI-style full check
+```
 
 ---
 

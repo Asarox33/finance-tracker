@@ -13,7 +13,7 @@ This folder holds **architecture and reference** material for humans and AI agen
 | **Per-module** domain rules, use cases, REST ↔ UI notes | [`module-rules.md`](module-rules.md) | Do not copy long module tables into `CLAUDE.md` |
 | **Naming**, test file layout, HTTP codes, formatting, a11y, SWR mock pattern | [`conventions.md`](conventions.md) | `CLAUDE.md` — link for test patterns |
 | **Directory trees**, stack overview, auth flow, API route map, DB schemas | [`architecture.md`](architecture.md) | Keep high-level bullets in `CLAUDE.md` only |
-| **Windows + PowerShell**, `npm install` vs `npm ci`, Gradle command cheat sheet | [`AGENTS.md`](../AGENTS.md) (repo root) | `CLAUDE.md` — link for commands |
+| **Windows + PowerShell**, **macOS/Linux shell equivalents**, `npm install` vs `npm ci`, Gradle command cheat sheet | [`AGENTS.md`](../AGENTS.md) (repo root) | `CLAUDE.md` — link for commands |
 | **Execution modes, STEP pipeline, hexagonal rules, monetary rules, UI primitives list** | [`CLAUDE.md`](../CLAUDE.md) | Do not duplicate the full STEP table in other files |
 
 If two files say the same thing, **delete the duplicate** and leave a pointer in the file that owns the narrower scope.

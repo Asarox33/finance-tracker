@@ -84,19 +84,29 @@ Exact pinned versions are documented in [`ai-context/current-state.md`](ai-conte
 
 ## Quick Start
 
-The project targets Windows with PowerShell as the default local shell. PostgreSQL must be reachable before starting the backend; the `dev` profile includes Flyway seed data.
+The project targets Windows with PowerShell as the default local shell, but the same workflows are available on macOS/Linux. PostgreSQL must be reachable before starting the backend; the `dev` profile includes Flyway seed data.
 
 ### Backend
+
+Windows PowerShell:
 
 ```powershell
 Set-Location backend
 .\gradlew.bat :app:bootRun
 ```
 
+macOS/Linux:
+
+```bash
+cd backend
+./gradlew :app:bootRun
+```
+
 ### Frontend
 
-```powershell
-Set-Location frontend
+Run from the `frontend/` directory on any shell:
+
+```sh
 npm install
 npm run dev
 ```
@@ -123,6 +133,8 @@ Do not commit real secrets. See [`ai-context/current-state.md`](ai-context/curre
 
 Run from the `backend/` directory:
 
+Windows PowerShell:
+
 ```powershell
 .\gradlew.bat build
 .\gradlew.bat build -PskipIT=true
@@ -131,13 +143,23 @@ Run from the `backend/` directory:
 .\gradlew.bat clean build
 ```
 
+macOS/Linux:
+
+```bash
+./gradlew build
+./gradlew build -PskipIT=true
+./gradlew integrationTest -PskipIT=false
+./gradlew testAggregateReport
+./gradlew clean build
+```
+
 Backend integration tests use Testcontainers and require Docker. Use `-PskipIT=true` when Docker is not available and you only need unit tests.
 
 ### Frontend
 
 Run from the `frontend/` directory:
 
-```powershell
+```sh
 npm run lint
 npm run build
 npm test
@@ -148,7 +170,7 @@ Use `npm install` for local development. CI/CD should use `npm ci` only. See [`A
 
 ## Documentation Map
 
-- [`AGENTS.md`](AGENTS.md): local shell, npm policy, Gradle command cheatsheet.
+- [`AGENTS.md`](AGENTS.md): local shell, npm policy, cross-platform Gradle command cheatsheet.
 - [`CLAUDE.md`](CLAUDE.md): execution rules, architecture constraints, STEP pipeline, monetary rules.
 - [`ai-context/README.md`](ai-context/README.md): documentation ownership map.
 - [`ai-context/current-state.md`](ai-context/current-state.md): implemented features, versions, test coverage, known limitations, backlog.

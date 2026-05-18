@@ -39,7 +39,9 @@ src/
 
 ## Setup
 
-```powershell
+All shells:
+
+```sh
 npm install
 npm run dev
 ```
@@ -54,7 +56,9 @@ Use `npm install` for local development. CI/CD should use `npm ci` only.
 
 ## Commands
 
-```powershell
+All shells:
+
+```sh
 npm run dev            # Dev server
 npm run build          # Production build
 npm start              # Start built app

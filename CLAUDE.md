@@ -152,7 +152,7 @@ No `if (env == "dev")` logic in application code. Ever.
 
 - **No version ranges** — `^`, `~`, `latest` are forbidden everywhere
 - All versions must be explicit and pinned
-- Backend: Gradle dependency locking enabled — run `.\gradlew.bat dependencies --write-locks` from `backend/` when changing dependencies (PowerShell)
+- Backend: Gradle dependency locking enabled — run `.\gradlew.bat dependencies --write-locks` from `backend/` on Windows PowerShell, or `./gradlew dependencies --write-locks` from `backend/` on macOS/Linux, when changing dependencies
 - Frontend: `package-lock.json` is mandatory and committed. **Local dev:** `npm install` in `frontend/`. **CI/CD:** `npm ci` only (never `npm install` in pipelines)
 
 ---
@@ -296,7 +296,7 @@ This means frontend code always uses paths like `/accounts`, `/transactions`, et
 
 ## Local run & seed credentials
 
-**Commands (PowerShell):** [`AGENTS.md`](AGENTS.md) § *Quick start*. **Seed user / env vars:** [`ai-context/current-state.md`](ai-context/current-state.md) § *Dev Seed Credentials* and *Environment Variables*.
+**Commands (PowerShell and macOS/Linux):** [`AGENTS.md`](AGENTS.md) § *Quick start*. **Seed user / env vars:** [`ai-context/current-state.md`](ai-context/current-state.md) § *Dev Seed Credentials* and *Environment Variables*.
 
 ---
 
@@ -304,23 +304,30 @@ This means frontend code always uses paths like `/accounts`, `/transactions`, et
 
 CI is the source of truth for dependency resolution. No "works on my machine" assumptions.
 
-### Backend CI (Windows — primary commands in this repo)
+### Backend CI
+
+Windows:
 
 ```bat
 cd backend
 .\gradlew.bat clean build
 ```
 
+macOS/Linux:
+
+```bash
+cd backend
+./gradlew clean build
+```
+
 - Default `skipIT` is **false**: `build` runs **unit tests** and **integration tests** (Testcontainers — **Docker must be running**).
 - Use `-PskipIT=true` on agents or laptops **without** Docker when only unit tests should run.
-
-On Unix, use `./gradlew clean build` from `backend/`.
 
 ### Frontend CI (GitHub Actions — reproducible install)
 
 **Package manager:** **npm only** — do **not** use Yarn or pnpm. In **CI/CD**, use **`npm ci` only** (never `npm install`). On **developer machines**, normal workflow is **`npm install`** in `frontend/`; see [`AGENTS.md`](AGENTS.md).
 
-```powershell
+```sh
 cd frontend
 npm ci
 npm run lint
@@ -333,7 +340,7 @@ No implicit installs in CI. No environment-specific workarounds in application c
 
 ## Testing
 
-- **Gradle and npm scripts (PowerShell):** [`AGENTS.md`](AGENTS.md).
+- **Gradle and npm scripts (PowerShell and macOS/Linux):** [`AGENTS.md`](AGENTS.md).
 - **What exists today (suites, E2E gaps):** [`ai-context/current-state.md`](ai-context/current-state.md).
 - **Mock patterns, SWR guard, JWT in tests, file layout:** [`ai-context/conventions.md`](ai-context/conventions.md) § *Testing Conventions*.
 

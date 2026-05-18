@@ -180,7 +180,7 @@ Features are integrated as vertical slices. Status is **functional** where marke
 
 | Item | State |
 |---|---|
-| **`AGENTS.md`** (repo root) | Present — Windows PowerShell, `npm install` (local) vs `npm ci` (CI), Gradle hints |
+| **`AGENTS.md`** (repo root) | Present — Windows PowerShell and macOS/Linux commands, `npm install` (local) vs `npm ci` (CI), Gradle hints |
 | **`.cursor/rules/agents-context.mdc`** | Present — `alwaysApply: true`, points to `AGENTS.md` + `CLAUDE.md` |
 | **`.github/workflows`** | **Not present** in repo — CI/CD described in `CLAUDE.md` but **no GitHub Actions YAML** yet |
 | **`docker/`** directory | **Not present** — optional full-stack compose referenced in `CLAUDE.md` only when added |
@@ -205,7 +205,7 @@ Quality / engineering:
 
 8. **E2E depth** — Broaden mocked smoke specs into interaction/error coverage for accounts, transactions, analytics, and dashboard.
 9. **Backend** — Fix double-query in `AssetPriceRepositoryAdapter`; consider pushing fee date filters to SQL; revisit analytics caps or document limits in product copy.
-10. **CI/CD** — Add `.github/workflows` using `npm ci` + `npm run lint` + `npm run build` for frontend; `cd backend && .\gradlew.bat clean build` (with Docker service for IT, or `-PskipIT=true` split jobs per team policy).
+10. **CI/CD** — Add `.github/workflows` using `npm ci` + `npm run lint` + `npm run build` for frontend; `cd backend && .\gradlew.bat clean build` on Windows or `cd backend && ./gradlew clean build` on macOS/Linux (with Docker service for IT, or `-PskipIT=true` split jobs per team policy).
 11. **Versions** — After bumping dependencies, update **`current-state.md` § *Dependency Versions*** only (do not reintroduce pin matrices into `CLAUDE.md` or `architecture.md`).
 
 Not built (unchanged product backlog):
