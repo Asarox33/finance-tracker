@@ -43,7 +43,7 @@
 - `SecureOtpGenerator` uses `SecureRandom`
 - `SpringPasswordEncoder` wraps BCrypt
 - `JwtAuthenticationFilter` validates Bearer token; sets `SecurityContextHolder` principal = user UUID string
-- `TokenService` issues **short-lived access JWT** (`auth.jwt.access-expiration-ms`); opaque **refresh tokens** stored hashed in `auth.refresh_tokens` with TTL `auth.refresh.expiration-ms`
+- `TokenService` issues **short-lived access JWT** (`auth.jwt.access-expiration-ms`, default/max 10 min); `RefreshSessionPolicy` caps opaque **refresh tokens** stored hashed in `auth.refresh_tokens` to default/max 10 min via `auth.refresh.expiration-ms`
 - `POST /api/auth/refresh` and `POST /api/auth/logout` skip Bearer validation in `JwtAuthenticationFilter` so an expired access token does not block rotation or sign-out
 
 **Dependencies:** `user-profile` (via `CreateUserProfilePort` — creates a profile on registration)
@@ -52,6 +52,7 @@
 - `POST /api/auth/login` → JSON `{ accessToken }` (JWT) + **httpOnly** refresh cookie `ft_refresh` (path `/api`); frontend stores access token in `localStorage` and sends `credentials: "include"` on API calls
 - `POST /api/auth/refresh` → JSON `{ accessToken }` + new refresh cookie (rotation)
 - `POST /api/auth/logout` → 204 + clears refresh cookie; frontend clears access token from `localStorage`
+- Authenticated pages must force logout after 10 minutes of inactivity; the final warning is 15 seconds, and wake/focus checks must enforce the wall-clock deadline.
 - `POST /api/auth/register` → returns `{ userId }`; frontend redirects to `/login?registered=1`
 - `POST /api/auth/password-reset/request` → 204; frontend advances to OTP entry step
 - `POST /api/auth/password-reset/confirm` → 204; frontend shows success screen
@@ -416,4 +417,4 @@
 **Rules:**
 - Every authenticated layout (`dashboard/layout.tsx`, `accounts/layout.tsx`, etc.) must wrap children in `<AppShell>`
 - Do not add page-specific content to `AppShell`
-- `useSessionTimeout` must remain called inside `AppShell` (it attaches global event listeners)
+- `useSessionTimeout` must remain called inside `AppShell` (it attaches global activity and wake/focus event listeners)

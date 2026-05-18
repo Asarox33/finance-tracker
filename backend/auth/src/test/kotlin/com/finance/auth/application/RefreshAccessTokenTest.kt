@@ -10,8 +10,10 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
+import java.time.Clock
 import java.time.Duration
 import java.time.Instant
+import java.time.ZoneOffset
 import java.util.UUID
 
 class RefreshAccessTokenTest {
@@ -57,6 +59,36 @@ class RefreshAccessTokenTest {
     fun rejectsUnknownRefresh() {
         assertThrows(RefreshTokenInvalidException::class.java) {
             useCase.execute("nope")
+        }
+    }
+
+    @Test
+    fun rejectsRefreshTokenAtExpirationInstant() {
+        val now = Instant.parse("2026-05-18T19:00:00Z")
+        val userId = UUID.randomUUID()
+        users.save(User(userId, "expires@b.com", "hash", true))
+        val opaque = factory.create()
+        refreshRepo.save(
+            RefreshToken(
+                id = UUID.randomUUID(),
+                userId = userId,
+                tokenHash = opaque.tokenHash,
+                expiresAt = now,
+                revokedAt = null,
+                createdAt = now.minusSeconds(600)
+            )
+        )
+        val expiringUseCase = RefreshAccessToken(
+            users,
+            refreshRepo,
+            issuer,
+            factory,
+            Duration.ofMinutes(10),
+            Clock.fixed(now, ZoneOffset.UTC)
+        )
+
+        assertThrows(RefreshTokenInvalidException::class.java) {
+            expiringUseCase.execute(opaque.plainText)
         }
     }
 }

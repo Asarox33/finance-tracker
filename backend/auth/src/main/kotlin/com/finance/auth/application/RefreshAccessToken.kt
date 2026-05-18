@@ -23,7 +23,7 @@ class RefreshAccessToken(
         val existing = refreshTokenRepository.findActiveByTokenHash(hash)
             ?: throw RefreshTokenInvalidException()
 
-        if (existing.expiresAt.isBefore(now)) throw RefreshTokenInvalidException()
+        if (!existing.expiresAt.isAfter(now)) throw RefreshTokenInvalidException()
 
         val user = userRepository.findById(existing.userId) ?: throw RefreshTokenInvalidException()
         if (!user.active) throw RefreshTokenInvalidException()

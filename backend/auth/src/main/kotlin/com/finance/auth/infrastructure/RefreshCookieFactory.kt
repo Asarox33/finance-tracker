@@ -2,15 +2,14 @@ package com.finance.auth.infrastructure
 
 import org.springframework.http.ResponseCookie
 import org.springframework.stereotype.Component
-import java.time.Duration
 import org.springframework.beans.factory.annotation.Value
+import java.time.Duration
 
 @Component
 class RefreshCookieFactory(
-    @param:Value($$"${auth.refresh.expiration-ms}")
-    private val refreshExpirationMs: Long,
+    private val refreshSessionPolicy: RefreshSessionPolicy,
 
-    @param:Value($$"${auth.refresh-cookie.secure}")
+    @param:Value("\${auth.refresh-cookie.secure}")
     private val secure: Boolean
 ) {
 
@@ -18,7 +17,7 @@ class RefreshCookieFactory(
         ResponseCookie.from(COOKIE_NAME, refreshTokenPlain)
             .httpOnly(true)
             .path(COOKIE_PATH)
-            .maxAge(Duration.ofMillis(refreshExpirationMs))
+            .maxAge(refreshSessionPolicy.effectiveRefreshTtl())
             .secure(secure)
             .sameSite("Lax")
             .build()

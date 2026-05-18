@@ -5,13 +5,15 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useLogout } from "@/features/auth/hooks/useAuth";
 import { getAccessTokenExpiryMs, getToken, refreshAccessToken, subscribeAccessTokenChange } from "@/lib/http";
 
-const IDLE_WARNING_MS = 5 * 60 * 1000;
+const IDLE_TIMEOUT_MS = 10 * 60 * 1000;
 const GRACE_COUNTDOWN_SEC = 15;
+const IDLE_WARNING_BEFORE_MS = GRACE_COUNTDOWN_SEC * 1000;
 const JWT_WARNING_BEFORE_MS = 15 * 1000;
 const REFRESH_AHEAD_MS = 2 * 60 * 1000;
 const ACTIVITY_THROTTLE_MS = 1000;
 const PROACTIVE_REFRESH_THROTTLE_MS = 60 * 1000;
 const EVENTS = ["mousedown", "mousemove", "keydown", "scroll", "touchstart"];
+const WAKE_EVENTS = ["focus", "pageshow"];
 
 export type SessionTimeoutReason = "idle" | "jwt";
 
@@ -26,16 +28,23 @@ function hasComfortableTokenLifetime(): boolean {
     return remaining != null && remaining > JWT_WARNING_BEFORE_MS;
 }
 
+function secondsUntil(deadlineAt: number): number {
+    return Math.max(0, Math.ceil((deadlineAt - Date.now()) / 1000));
+}
+
 export function useSessionTimeout() {
     const { logout } = useLogout();
     const logoutRef = useRef(logout);
     logoutRef.current = logout;
 
     const warningOpenRef = useRef(false);
+    const reasonRef = useRef<SessionTimeoutReason>("idle");
     const graceExpiredRef = useRef(false);
     const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const jwtTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const idleDeadlineAtRef = useRef(0);
+    const warningDeadlineAtRef = useRef(0);
     const lastActivityThrottleRef = useRef(0);
     const lastProactiveRefreshRef = useRef(0);
 
@@ -64,13 +73,25 @@ export function useSessionTimeout() {
         }
     }, []);
 
+    const logoutExpiredSession = useCallback(() => {
+        clearCountdown();
+        clearIdleTimer();
+        clearJwtTimer();
+        graceExpiredRef.current = true;
+        warningOpenRef.current = false;
+        setWarningOpen(false);
+        void logoutRef.current();
+    }, [clearCountdown, clearIdleTimer, clearJwtTimer]);
+
     const openWarning = useCallback(
-        (r: SessionTimeoutReason) => {
+        (r: SessionTimeoutReason, deadlineAt = Date.now() + GRACE_COUNTDOWN_SEC * 1000) => {
             if (warningOpenRef.current) return;
             graceExpiredRef.current = false;
             warningOpenRef.current = true;
+            reasonRef.current = r;
+            warningDeadlineAtRef.current = deadlineAt;
             setReason(r);
-            setSecondsLeft(GRACE_COUNTDOWN_SEC);
+            setSecondsLeft(secondsUntil(deadlineAt));
             setWarningOpen(true);
             if (r === "idle") clearJwtTimer();
             else clearIdleTimer();
@@ -120,12 +141,34 @@ export function useSessionTimeout() {
         }
     }, [openWarning, scheduleJwtWarning]);
 
-    const armIdleTimer = useCallback(() => {
+    const checkIdleDeadline = useCallback(() => {
         clearIdleTimer();
-        idleTimerRef.current = setTimeout(() => {
-            openWarning("idle");
-        }, IDLE_WARNING_MS);
-    }, [clearIdleTimer, openWarning]);
+        const now = Date.now();
+        const idleDeadlineAt = idleDeadlineAtRef.current;
+        if (!idleDeadlineAt) return;
+
+        if (now >= idleDeadlineAt) {
+            logoutExpiredSession();
+            return;
+        }
+
+        const warningAt = idleDeadlineAt - IDLE_WARNING_BEFORE_MS;
+        if (now >= warningAt) {
+            openWarning("idle", idleDeadlineAt);
+            return;
+        }
+
+        idleTimerRef.current = setTimeout(checkIdleDeadline, warningAt - now);
+    }, [clearIdleTimer, logoutExpiredSession, openWarning]);
+
+    const armIdleTimer = useCallback(
+        (activityAt = Date.now()) => {
+            clearIdleTimer();
+            idleDeadlineAtRef.current = activityAt + IDLE_TIMEOUT_MS;
+            idleTimerRef.current = setTimeout(checkIdleDeadline, IDLE_TIMEOUT_MS - IDLE_WARNING_BEFORE_MS);
+        },
+        [checkIdleDeadline, clearIdleTimer]
+    );
 
     const closeWarningAndContinue = useCallback(() => {
         clearCountdown();
@@ -139,24 +182,25 @@ export function useSessionTimeout() {
     useEffect(() => {
         if (!warningOpen) return;
         clearCountdown();
-        setSecondsLeft(GRACE_COUNTDOWN_SEC);
+        setSecondsLeft(secondsUntil(warningDeadlineAtRef.current));
         countdownRef.current = setInterval(() => {
-            setSecondsLeft((s) => (s <= 1 ? 0 : s - 1));
+            setSecondsLeft(secondsUntil(warningDeadlineAtRef.current));
         }, 1000);
         return () => clearCountdown();
     }, [warningOpen, clearCountdown]);
 
     useEffect(() => {
         if (!warningOpen || secondsLeft > 0 || graceExpiredRef.current) return;
+        if (reasonRef.current === "idle") {
+            logoutExpiredSession();
+            return;
+        }
         if (getToken() && hasComfortableTokenLifetime()) {
             closeWarningAndContinue();
             return;
         }
-        graceExpiredRef.current = true;
-        warningOpenRef.current = false;
-        setWarningOpen(false);
-        void logoutRef.current();
-    }, [warningOpen, secondsLeft, closeWarningAndContinue]);
+        logoutExpiredSession();
+    }, [warningOpen, secondsLeft, closeWarningAndContinue, logoutExpiredSession]);
 
     const onActivity = useCallback(() => {
         const now = Date.now();
@@ -164,38 +208,47 @@ export function useSessionTimeout() {
         lastActivityThrottleRef.current = now;
 
         if (warningOpenRef.current) {
+            checkIdleDeadline();
             return;
         }
 
         armIdleTimer();
         void tryProactiveRefreshIfNeeded();
         scheduleJwtWarning();
-    }, [armIdleTimer, scheduleJwtWarning, tryProactiveRefreshIfNeeded]);
+    }, [armIdleTimer, checkIdleDeadline, scheduleJwtWarning, tryProactiveRefreshIfNeeded]);
 
     useEffect(() => {
         armIdleTimer();
         void tryProactiveRefreshIfNeeded();
         scheduleJwtWarning();
 
-        const unsubscribe = subscribeAccessTokenChange(() => {
-            if (warningOpenRef.current && hasComfortableTokenLifetime()) {
-                closeWarningAndContinue();
-            } else {
-                scheduleJwtWarning();
-            }
-        });
-
-        const onStorage = (e: StorageEvent) => {
-            if (e.key !== "auth_token") return;
-            if (warningOpenRef.current && hasComfortableTokenLifetime()) {
+        const closeJwtWarningIfTokenIsFresh = () => {
+            if (warningOpenRef.current && reasonRef.current === "jwt" && hasComfortableTokenLifetime()) {
                 closeWarningAndContinue();
             } else {
                 scheduleJwtWarning();
             }
         };
+
+        const unsubscribe = subscribeAccessTokenChange(closeJwtWarningIfTokenIsFresh);
+
+        const onStorage = (e: StorageEvent) => {
+            if (e.key !== "auth_token") return;
+            closeJwtWarningIfTokenIsFresh();
+        };
         window.addEventListener("storage", onStorage);
 
+        const onWake = () => {
+            checkIdleDeadline();
+            scheduleJwtWarning();
+        };
+        const onVisibilityChange = () => {
+            if (document.visibilityState === "visible") onWake();
+        };
+
         EVENTS.forEach((e) => window.addEventListener(e, onActivity, { passive: true }));
+        WAKE_EVENTS.forEach((e) => window.addEventListener(e, onWake));
+        document.addEventListener("visibilitychange", onVisibilityChange);
         return () => {
             clearIdleTimer();
             clearJwtTimer();
@@ -203,12 +256,15 @@ export function useSessionTimeout() {
             unsubscribe();
             window.removeEventListener("storage", onStorage);
             EVENTS.forEach((e) => window.removeEventListener(e, onActivity));
+            WAKE_EVENTS.forEach((e) => window.removeEventListener(e, onWake));
+            document.removeEventListener("visibilitychange", onVisibilityChange);
         };
     }, [
         armIdleTimer,
         scheduleJwtWarning,
         tryProactiveRefreshIfNeeded,
         onActivity,
+        checkIdleDeadline,
         clearIdleTimer,
         clearJwtTimer,
         clearCountdown,
@@ -220,21 +276,13 @@ export function useSessionTimeout() {
         if (ok) {
             closeWarningAndContinue();
         } else {
-            clearCountdown();
-            graceExpiredRef.current = true;
-            warningOpenRef.current = false;
-            setWarningOpen(false);
-            void logoutRef.current();
+            logoutExpiredSession();
         }
-    }, [closeWarningAndContinue, clearCountdown]);
+    }, [closeWarningAndContinue, logoutExpiredSession]);
 
     const signOutNow = useCallback(() => {
-        clearCountdown();
-        graceExpiredRef.current = true;
-        warningOpenRef.current = false;
-        setWarningOpen(false);
-        void logoutRef.current();
-    }, [clearCountdown]);
+        logoutExpiredSession();
+    }, [logoutExpiredSession]);
 
     return {
         warningOpen,

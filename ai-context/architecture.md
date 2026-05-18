@@ -112,7 +112,7 @@ frontend/src/
 │   │   └── ui.tsx                # Card, Skeleton, Badge, Button, PageHeader, EmptyState, ErrorState
 │   ├── hooks/
 │   │   ├── useAuthGuard.ts       # Redirects to /login if unauthenticated
-│   │   ├── useSessionTimeout.ts  # Idle warning (5 min); proactive refresh near JWT exp; modal fallback
+│   │   ├── useSessionTimeout.ts  # Strict 10-min idle timeout; final 15s modal; wake/focus deadline checks
 │   │   └── useTheme.ts           # Dark/light theme with localStorage persistence
 │   ├── i18n/                     # Profile-driven dictionaries, locale mapping, and format hooks
 │   └── types/index.ts            # All shared TypeScript interfaces & types
@@ -177,7 +177,7 @@ The `analytics` module differs: it has **no DB of its own** and depends on other
 
 1. `useLogin` → calls `authApi.login` → stores token + extracts `sub` claim as `user_id` → pushes to `/dashboard`.
 2. `useAuthGuard` (in `AppShell`) → checks `isAuthenticated()` on mount → redirects to `/login` if false.
-3. `useSessionTimeout` (in `AppShell`) → resets a 5-minute inactivity timer on user events → calls `logout()` on expiry.
+3. `useSessionTimeout` (in `AppShell`) → tracks a 10-minute wall-clock inactivity deadline, shows a final 15-second warning, and calls `logout()` on expiry.
 4. `useLogout` → removes token + userId → pushes to `/login`.
 
 ### Theming
@@ -250,7 +250,7 @@ Migration filenames follow the pattern `V<major>_<minor>__<description>.sql`. Sc
 - Public endpoints: `/api/auth/**`, `/actuator/health`, `/actuator/info`, Swagger UI
 - Rate limiting on auth endpoints via `RateLimitingFilter` (Bucket4j, 10 req/min per IP)
 - `X-Correlation-Id` header propagated through MDC via `CorrelationIdFilter`
-- Frontend: short-lived **access JWT** (default **10 min**, max cap on backend) in `localStorage`; **refresh** in httpOnly cookie (default **7 days**); `fetch` with credentials; refresh on 401; **proactive refresh** while active near expiry; session timeout modal (idle + failed refresh) with 15s grace
+- Frontend: short-lived **access JWT** (default/max **10 min**) in `localStorage`; **refresh** in httpOnly cookie (default/max **10 min**); `fetch` with credentials; refresh on 401; **proactive refresh** while active near expiry; strict inactivity timeout uses wall-clock deadlines and revokes the refresh token via logout after 10 minutes
 
 ---
 

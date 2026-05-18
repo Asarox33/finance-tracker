@@ -15,10 +15,8 @@ import com.finance.auth.application.TokenIssuer
 import com.finance.auth.domain.PasswordResetTokenRepository
 import com.finance.auth.domain.RefreshTokenRepository
 import com.finance.auth.domain.UserRepository
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import java.time.Duration
 
 @Configuration
 class AuthConfig {
@@ -37,14 +35,14 @@ class AuthConfig {
         tokenIssuer: TokenIssuer,
         refreshTokenRepository: RefreshTokenRepository,
         refreshTokenFactory: RefreshTokenFactory,
-        @Value("\${auth.refresh.expiration-ms}") refreshExpirationMs: Long
+        refreshSessionPolicy: RefreshSessionPolicy
     ): AuthenticateUser = AuthenticateUser(
         userRepository,
         passwordEncoder,
         tokenIssuer,
         refreshTokenRepository,
         refreshTokenFactory,
-        Duration.ofMillis(refreshExpirationMs)
+        refreshSessionPolicy.effectiveRefreshTtl()
     )
 
     @Bean
@@ -53,13 +51,13 @@ class AuthConfig {
         refreshTokenRepository: RefreshTokenRepository,
         tokenIssuer: TokenIssuer,
         refreshTokenFactory: RefreshTokenFactory,
-        @Value("\${auth.refresh.expiration-ms}") refreshExpirationMs: Long
+        refreshSessionPolicy: RefreshSessionPolicy
     ): RefreshAccessToken = RefreshAccessToken(
         userRepository,
         refreshTokenRepository,
         tokenIssuer,
         refreshTokenFactory,
-        Duration.ofMillis(refreshExpirationMs)
+        refreshSessionPolicy.effectiveRefreshTtl()
     )
 
     @Bean

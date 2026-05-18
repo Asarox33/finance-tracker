@@ -279,7 +279,7 @@ All in `src/shared/components/ui.tsx`:
 - **Refresh token** in httpOnly cookie `ft_refresh` (path `/api`); all `http` calls use `credentials: "include"`
 - `http.ts` injects the access token when valid, attempts **cookie refresh** on 401 or before guarded navigation (`ensureSession`), then auto-redirects to `/login` if refresh fails
 - `useAuthGuard` (in `AppShell`) redirects unauthenticated users to `/login`
-- `useSessionTimeout` warns after **5 minutes** of inactivity or shortly before access JWT expiry; **15-second** grace with **Stay signed in** (refresh) or **Sign out**
+- `useSessionTimeout` enforces a **10-minute** wall-clock inactivity timeout with a final **15-second** warning and wake/focus deadline checks; shortly before access JWT expiry it may also show the modal with **Stay signed in** (refresh) or **Sign out**
 - Lock detection: backend returns HTTP 429; frontend checks `message.includes("locked")`
 
 ---

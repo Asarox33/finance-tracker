@@ -60,7 +60,7 @@ Features are integrated as vertical slices. Status is **functional** where marke
 
 **Shared / lib**
 
-- ✅ `AppShell` — nav includes Dashboard, Accounts, **Institutions**, Transactions, Analytics; auth guard; **loading shell** while auth is resolving; profile-driven `ENG` / `FRA` / `ESP` / `ITA` i18n provider; **session timeout modal** (idle + access expiry, 15s grace, refresh on “Stay signed in”); responsive sidebar
+- ✅ `AppShell` — nav includes Dashboard, Accounts, **Institutions**, Transactions, Analytics; auth guard; **loading shell** while auth is resolving; profile-driven `ENG` / `FRA` / `ESP` / `ITA` i18n provider; **strict 10-minute inactivity timeout** with final 15-second warning, wake/focus deadline checks, and refresh-token revocation on logout; access-expiry modal fallback; responsive sidebar
 - ✅ `ThemeToggle`, shared UI primitives (`ui.tsx`)
 - ✅ `http.ts` — access JWT in `localStorage`, `credentials: "include"`, **refresh on 401** via cookie, `ensureSession()` for auth guard; **unit tests:** `src/lib/__tests__/http.test.ts`
 - ✅ `format.ts`, `currencies.ts`, `countries.ts` (used by accounts / profile / institutions); money/date formatters accept locale overrides
@@ -166,7 +166,7 @@ Features are integrated as vertical slices. Status is **functional** where marke
 
 - No React **error boundary**.
 - `useSessionTimeout` runs whenever `AppShell` mounts (including rare cases with token on public routes).
-- **Per-user access session length (2–10 min)** in `user-profile` not implemented; global default/max **10 min** via `auth.jwt.access-expiration-ms` / `TokenService.MAX_ACCESS_EXPIRATION_MS`.
+- **Per-user access session length (2–10 min)** in `user-profile` not implemented; global default/max **10 min** via `auth.jwt.access-expiration-ms` / `TokenService.MAX_ACCESS_EXPIRATION_MS`. Refresh token row + cookie max-age also default/max to **10 min** via `auth.refresh.expiration-ms` / `RefreshSessionPolicy.MAX_REFRESH_EXPIRATION_MS`.
 - No optimistic mutations for creates/closes/updates.
 - Root metadata remains static English (`Finance Tracker` title/description); page UI copy is dictionary-driven.
 
@@ -210,7 +210,7 @@ Quality / engineering:
 
 Not built (unchanged product backlog):
 
-- Backend: refresh tokens, email verification, admin, import (CSV/OFX), audit, notifications, holdings, budget, etc.
+- Backend: email verification, admin, import (CSV/OFX), audit, notifications, holdings, budget, etc.
 - Frontend: fee / price / fx / inflation admin UIs (APIs exist), i18n beyond `fr-FR`, mobile-specific polish.
 
 ---
@@ -265,7 +265,7 @@ Configured via Spring profiles (`dev`, `prod`, `test`) — see `application*.yml
 |---|---|
 | `AUTH_JWT_SECRET` | HMAC secret for access JWT |
 | `AUTH_JWT_ACCESS_EXPIRATION_MS` | Access JWT lifetime (ms); default **600000** (10 min); values above **600000** are clamped in `TokenService` |
-| `AUTH_REFRESH_EXPIRATION_MS` | Refresh token row + cookie max-age (ms) |
+| `AUTH_REFRESH_EXPIRATION_MS` | Refresh token row + cookie max-age (ms); default **600000** (10 min); values above **600000** are clamped in `RefreshSessionPolicy` |
 | `AUTH_REFRESH_COOKIE_SECURE` | `true` / `false` — `Secure` flag on refresh cookie (`false` typical for local HTTP) |
 
 ### Frontend
