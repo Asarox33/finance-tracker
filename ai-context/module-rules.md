@@ -91,7 +91,7 @@
 **Key use cases:** `CreateInstitution`, `GetInstitution`, `ListInstitutions`
 
 **Frontend integration:**
-- **`/institutions`** — list with debounced name/country/type filters, localized country-name sorted dropdowns, clear-filters action, pagination, shared-repository notice, create form with client validation, and cards showing colored institution type, readable country, flag, and optional BIC. Feature code lives in `src/features/institutions/` (API + hooks + tests); E2E in `e2e/institutions.spec.ts`.
+- **`/institutions`** — list ordered by institution name with debounced name/country/type filters, localized country-name sorted dropdowns, clear-filters action, pagination, shared-repository notice, create form with client validation, and cards showing colored institution type, readable country, flag, and optional BIC. Feature code lives in `src/features/institutions/` (API + hooks + tests); E2E in `e2e/institutions.spec.ts`.
 - Institutions are shared reference data across users. `createdByUserId` is audit metadata, not an ownership boundary for visibility.
 - **Account creation (`/accounts`)** uses a first-page institution picker backed by `useInstitutions(0, undefined, undefined, 200)`. Upgrade to a searchable/paginated picker if institution volume outgrows that cap.
 
@@ -131,7 +131,7 @@
 **Key use cases:** `CreateAccount`, `GetAccount`, `ListUserAccounts`, `CloseAccount`, `ReactivateAccount`
 
 **Frontend integration:**
-- `GET /api/accounts?page=0&pageSize=20&includeClosed=false&type=SAVINGS` → `PageResult<Account>`; displayed as a paginated card grid on `/accounts`
+- `GET /api/accounts?page=0&pageSize=20&includeClosed=false&type=SAVINGS` → `PageResult<Account>` ordered by account name; displayed as a paginated card grid on `/accounts`
 - `POST /api/accounts` → creates account; requires `institutionId`, `name`, `type`, `currency`; the form selects the institution from the institutions API instead of asking for a raw UUID
 - `DELETE /api/accounts/:id` → closes account (204); uses the shared confirmation dialog
 - `POST /api/accounts/:id/reactivate` → reactivates a closed account; exposed when the user enables the show-closed checkbox

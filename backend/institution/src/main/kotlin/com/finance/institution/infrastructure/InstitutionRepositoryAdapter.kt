@@ -5,6 +5,7 @@ import com.finance.institution.domain.InstitutionRepository
 import com.finance.institution.domain.InstitutionType
 import com.finance.shared.Country
 import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Component
 import java.util.UUID
 
@@ -42,7 +43,7 @@ class InstitutionRepositoryAdapter(
         country: Country?,
         type: InstitutionType?
     ): List<Institution> {
-        val pageable = PageRequest.of(page, pageSize)
+        val pageable = PageRequest.of(page, pageSize, INSTITUTION_LIST_SORT)
         val page = when {
             name != null && country != null && type != null ->
                 jpaRepo.findByNameContainingIgnoreCaseAndCountryAndType(name, country, type, pageable)
@@ -83,4 +84,9 @@ private fun JpaInstitutionEntity.toDomain() = Institution(
     country = country,
     bic = bic,
     createdByUserId = createdByUserId
+)
+
+private val INSTITUTION_LIST_SORT = Sort.by(
+    Sort.Order.asc("name").ignoreCase(),
+    Sort.Order.asc("id")
 )

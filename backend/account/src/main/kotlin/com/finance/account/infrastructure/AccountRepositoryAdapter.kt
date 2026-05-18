@@ -5,6 +5,7 @@ import com.finance.account.domain.AccountRepository
 import com.finance.account.domain.AccountStatus
 import com.finance.account.domain.AccountType
 import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Component
 import java.util.UUID
 
@@ -35,7 +36,7 @@ class AccountRepositoryAdapter(
         jpaRepo.findById(id).orElse(null)?.toDomain()
 
     override fun findByUserId(userId: UUID, page: Int, pageSize: Int, type: AccountType?): List<Account> =
-        jpaRepo.search(userId, status = null, type = type, pageable = PageRequest.of(page, pageSize)).content.map {
+        jpaRepo.search(userId, status = null, type = type, pageable = PageRequest.of(page, pageSize, ACCOUNT_LIST_SORT)).content.map {
             it.toDomain()
         }
 
@@ -49,7 +50,7 @@ class AccountRepositoryAdapter(
         pageSize: Int,
         type: AccountType?
     ): List<Account> =
-        jpaRepo.search(userId, status, type, PageRequest.of(page, pageSize)).content.map { it.toDomain() }
+        jpaRepo.search(userId, status, type, PageRequest.of(page, pageSize, ACCOUNT_LIST_SORT)).content.map { it.toDomain() }
 
     override fun countByUserIdAndStatus(userId: UUID, status: AccountStatus, type: AccountType?): Long =
         jpaRepo.countSearch(userId, status, type)
@@ -63,4 +64,9 @@ private fun JpaAccountEntity.toDomain() = Account(
     type = type,
     currency = currency,
     status = status
+)
+
+private val ACCOUNT_LIST_SORT = Sort.by(
+    Sort.Order.asc("name").ignoreCase(),
+    Sort.Order.asc("id")
 )

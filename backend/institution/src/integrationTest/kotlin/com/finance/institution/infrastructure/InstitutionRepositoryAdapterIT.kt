@@ -79,6 +79,19 @@ class InstitutionRepositoryAdapterIT {
     }
 
     @Test
+    fun listsInstitutionsOrderedByName() {
+        val suffix = UUID.randomUUID().toString().take(8)
+        val first = "SortOrder A $suffix"
+        val second = "SortOrder B $suffix"
+        adapter.save(Institution(UUID.randomUUID(), second, InstitutionType.BANK, Country.FR, null, userId))
+        adapter.save(Institution(UUID.randomUUID(), first, InstitutionType.BANK, Country.FR, null, userId))
+
+        val result = adapter.findAll(0, 20, name = "SortOrder", country = null, type = null)
+
+        assertEquals(listOf(first, second), result.filter { it.name.endsWith(suffix) }.map { it.name })
+    }
+
+    @Test
     fun detectsDuplicateNameAndCountry() {
         adapter.save(Institution(UUID.randomUUID(), "Credit Agricole", InstitutionType.BANK, Country.FR, null, userId))
         assertTrue(adapter.existsByNameAndCountry("Credit Agricole", Country.FR))

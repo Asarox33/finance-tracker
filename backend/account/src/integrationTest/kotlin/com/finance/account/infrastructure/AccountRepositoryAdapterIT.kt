@@ -80,6 +80,20 @@ class AccountRepositoryAdapterIT {
     }
 
     @Test
+    fun findsAccountsByUserIdOrderedByName() {
+        val uid = UUID.randomUUID()
+        val suffix = UUID.randomUUID().toString().take(8)
+        val first = "SortAccount A $suffix"
+        val second = "SortAccount B $suffix"
+        adapter.save(Account(UUID.randomUUID(), uid, institutionId, second, AccountType.SAVINGS, Currency.EUR, AccountStatus.ACTIVE))
+        adapter.save(Account(UUID.randomUUID(), uid, institutionId, first, AccountType.CHECKING, Currency.EUR, AccountStatus.ACTIVE))
+
+        val result = adapter.findByUserId(uid, 0, 20, type = null)
+
+        assertEquals(listOf(first, second), result.map { it.name })
+    }
+
+    @Test
     fun countsAccountsByUserId() {
         val uid = UUID.randomUUID()
         adapter.save(Account(UUID.randomUUID(), uid, institutionId, "Account", AccountType.CHECKING, Currency.EUR, AccountStatus.ACTIVE))
