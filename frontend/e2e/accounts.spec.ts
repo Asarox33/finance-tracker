@@ -69,8 +69,12 @@ test("accounts can show and reactivate closed accounts", async ({ page }) => {
 
     await page.goto("/accounts");
     await expect(page.getByText("Old savings")).not.toBeVisible();
-    await page.getByLabel("Show closed accounts").check();
+    await page.getByText("Show closed accounts").click();
     await expect(page.getByText("Old savings")).toBeVisible();
+    await expect(page.getByRole("link", { name: "View transaction history for closed account Old savings" })).toHaveAttribute(
+        "href",
+        "/transactions?accountId=acc-1"
+    );
     await page.getByRole("button", { name: "Reactivate account" }).click();
     await expect(page.getByText("Active")).toBeVisible();
 });

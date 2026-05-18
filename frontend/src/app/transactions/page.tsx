@@ -1,13 +1,14 @@
 "use client";
 
-import { useState } from "react";
-import { useAccounts } from "@/features/accounts/hooks/useAccounts";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useAccount, useAccounts } from "@/features/accounts/hooks/useAccounts";
 import { useTransactions } from "@/features/transactions/hooks/useTransactions";
 import { transactionsApi } from "@/features/transactions/api/transactionsApi";
 import ConfirmDialog from "@/shared/components/ConfirmDialog";
 import { Badge, Button, Card, EmptyState, ErrorState, PageHeader, Skeleton } from "@/shared/components/ui";
 import { useFormatters, useI18n, type TranslationKey } from "@/shared/i18n";
-import type { Transaction, TransactionType } from "@/shared/types";
+import type { Account, Transaction, TransactionType } from "@/shared/types";
 import styles from "./page.module.css";
 
 const TRANSACTION_TYPES: TransactionType[] = [
@@ -37,6 +38,7 @@ const TYPE_VARIANTS: Record<string, "success" | "danger" | "warning" | "default"
 const INFLOW_TYPES: TransactionType[] = ["DEPOSIT", "SELL", "DIVIDEND"];
 const OUTFLOW_TYPES: TransactionType[] = ["WITHDRAWAL", "BUY", "FEE", "TAX"];
 const EXPLICIT_SIGN_TYPES: TransactionType[] = ["TRANSFER", "OTHER"];
+const ACCOUNT_PICKER_PAGE_SIZE = 200;
 
 function signedTransactionAmount(tx: Pick<Transaction, "type" | "amount">): number {
     if (INFLOW_TYPES.includes(tx.type)) return Math.abs(tx.amount);
@@ -70,8 +72,15 @@ function sanitizeAmountInput(value: string, type: TransactionType): string {
 
 export default function TransactionsPage() {
     const { t } = useI18n();
-    const { data: accounts } = useAccounts();
-    const [selectedAccount, setSelectedAccount] = useState<string>("");
+    const router = useRouter();
+    const pathname = usePathname();
+    const searchParams = useSearchParams();
+    const accountIdFromUrl = searchParams.get("accountId") ?? "";
+    const lastSyncedAccountIdRef = useRef(accountIdFromUrl);
+    const [selectedAccount, setSelectedAccount] = useState(accountIdFromUrl);
+    const [includeClosedAccounts, setIncludeClosedAccounts] = useState(false);
+    const { account: selectedAccountDetails } = useAccount(selectedAccount);
+    const { data: accounts } = useAccounts(0, includeClosedAccounts, undefined, ACCOUNT_PICKER_PAGE_SIZE);
     const [page, setPage] = useState(0);
     const [from, setFrom] = useState("");
     const [to, setTo] = useState("");
@@ -83,6 +92,55 @@ export default function TransactionsPage() {
     const [deleteSubmitting, setDeleteSubmitting] = useState(false);
     const [deleteError, setDeleteError] = useState<string | null>(null);
     const { data, isLoading, error, mutate } = useTransactions(selectedAccount, page, from || undefined, to || undefined);
+    const selectedAccountRecord = useMemo(() => {
+        return accounts?.items.find((account) => account.id === selectedAccount) ?? selectedAccountDetails;
+    }, [accounts, selectedAccount, selectedAccountDetails]);
+    const selectedAccountIsClosed = selectedAccountRecord?.status === "CLOSED";
+    const activeAccounts = useMemo(() => accounts?.items.filter((account) => account.status === "ACTIVE") ?? [], [accounts]);
+    const closedAccounts = useMemo(() => accounts?.items.filter((account) => account.status === "CLOSED") ?? [], [accounts]);
+
+    useEffect(() => {
+        if (lastSyncedAccountIdRef.current === accountIdFromUrl) {
+            return;
+        }
+        lastSyncedAccountIdRef.current = accountIdFromUrl;
+        setSelectedAccount(accountIdFromUrl);
+        setPage(0);
+        setShowForm(false);
+        setDetailTransaction(null);
+        setPendingDeleteTransaction(null);
+    }, [accountIdFromUrl]);
+
+    useEffect(() => {
+        if (selectedAccountDetails?.status === "CLOSED") {
+            setIncludeClosedAccounts(true);
+        }
+    }, [selectedAccountDetails]);
+
+    function updateSelectedAccount(accountId: string) {
+        lastSyncedAccountIdRef.current = accountId;
+        setSelectedAccount(accountId);
+        setPage(0);
+        setShowForm(false);
+        setDetailTransaction(null);
+        setPendingDeleteTransaction(null);
+
+        const nextParams = new URLSearchParams(searchParams.toString());
+        if (accountId) {
+            nextParams.set("accountId", accountId);
+        } else {
+            nextParams.delete("accountId");
+        }
+        const query = nextParams.toString();
+        router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+    }
+
+    function updateIncludeClosedAccounts(includeClosed: boolean) {
+        setIncludeClosedAccounts(includeClosed);
+        if (!includeClosed && selectedAccountIsClosed) {
+            updateSelectedAccount("");
+        }
+    }
 
     async function openTransactionDetail(tx: Transaction) {
         setDetailLoadingId(tx.id);
@@ -137,7 +195,7 @@ export default function TransactionsPage() {
                 title={t("transactions.title")}
                 description={t("transactions.description")}
                 action={
-                    selectedAccount ? (
+                    selectedAccount && !selectedAccountIsClosed ? (
                         <Button onClick={() => setShowForm(true)} variant="primary">
                             {t("transactions.new")}
                         </Button>
@@ -152,23 +210,38 @@ export default function TransactionsPage() {
                             id="account-select"
                             value={selectedAccount}
                             onChange={(e) => {
-                                setSelectedAccount(e.target.value);
-                                setPage(0);
-                                setShowForm(false);
-                                setDetailTransaction(null);
+                                updateSelectedAccount(e.target.value);
                             }}
                             aria-label={t("transactions.selectAccountAria")}
                         >
                             <option value="">{t("transactions.selectAccountOption")}</option>
-                            {accounts?.items
-                                .filter((a) => a.status === "ACTIVE")
-                                .map((a) => (
-                                    <option key={a.id} value={a.id}>
-                                        {t("transactions.accountOption", { accountName: a.name, currency: a.currency })}
-                                    </option>
-                                ))}
+                            {activeAccounts.length > 0 && (
+                                <optgroup label={t("transactions.activeAccounts")}>
+                                    {activeAccounts.map((account) => (
+                                        <AccountOption key={account.id} account={account} />
+                                    ))}
+                                </optgroup>
+                            )}
+                            {includeClosedAccounts && closedAccounts.length > 0 && (
+                                <optgroup label={t("transactions.closedAccounts")}>
+                                    {closedAccounts.map((account) => (
+                                        <AccountOption key={account.id} account={account} closed />
+                                    ))}
+                                </optgroup>
+                            )}
                         </select>
                     </div>
+                    <label className={styles.switchControl}>
+                        <input
+                            type="checkbox"
+                            checked={includeClosedAccounts}
+                            onChange={(e) => updateIncludeClosedAccounts(e.target.checked)}
+                        />
+                        <span className={styles.switchTrack} aria-hidden="true">
+                            <span className={styles.switchThumb} />
+                        </span>
+                        <span>{t("transactions.includeClosedAccounts")}</span>
+                    </label>
                     <div className={styles.filterField}>
                         <label htmlFor="tx-from">{t("transactions.fromDate")}</label>
                         <input
@@ -208,10 +281,17 @@ export default function TransactionsPage() {
                     )}
                 </div>
 
-                {showForm && selectedAccount && (
+                {selectedAccountIsClosed && (
+                    <Card className={styles.historyNotice}>
+                        <p className={styles.historyNoticeTitle}>{t("transactions.closedAccountHistoryTitle")}</p>
+                        <p>{t("transactions.closedAccountHistoryDescription")}</p>
+                    </Card>
+                )}
+
+                {showForm && selectedAccount && !selectedAccountIsClosed && (
                     <AddTransactionForm
                         accountId={selectedAccount}
-                        currency={accounts?.items.find((a) => a.id === selectedAccount)?.currency ?? "EUR"}
+                        currency={selectedAccountRecord?.currency ?? "EUR"}
                         onSuccess={() => {
                             setShowForm(false);
                             mutate();
@@ -241,6 +321,7 @@ export default function TransactionsPage() {
                 {detailTransaction && (
                     <TransactionDetail
                         tx={detailTransaction}
+                        readOnly={selectedAccountIsClosed}
                         onClose={() => setDetailTransaction(null)}
                         onDelete={() => {
                             setDeleteError(null);
@@ -276,6 +357,7 @@ export default function TransactionsPage() {
                                                 key={tx.id}
                                                 tx={tx}
                                                 detailLoading={detailLoadingId === tx.id}
+                                                readOnly={selectedAccountIsClosed}
                                                 onViewDetails={() => openTransactionDetail(tx)}
                                                 onDelete={() => {
                                                     setDeleteError(null);
@@ -315,6 +397,18 @@ export default function TransactionsPage() {
                 )}
             </div>
         </div>
+    );
+}
+
+function AccountOption({ account, closed = false }: { account: Account; closed?: boolean }) {
+    const { t } = useI18n();
+
+    return (
+        <option value={account.id}>
+            {closed
+                ? t("transactions.accountClosedOption", { accountName: account.name, currency: account.currency })
+                : t("transactions.accountOption", { accountName: account.name, currency: account.currency })}
+        </option>
     );
 }
 
@@ -488,7 +582,17 @@ function AddTransactionForm({
     );
 }
 
-function TransactionDetail({ tx, onClose, onDelete }: { tx: Transaction; onClose: () => void; onDelete: () => void }) {
+function TransactionDetail({
+    tx,
+    readOnly,
+    onClose,
+    onDelete,
+}: {
+    tx: Transaction;
+    readOnly: boolean;
+    onClose: () => void;
+    onDelete: () => void;
+}) {
     const { formatDate, formatMoney } = useFormatters();
     const { t } = useI18n();
 
@@ -539,11 +643,13 @@ function TransactionDetail({ tx, onClose, onDelete }: { tx: Transaction; onClose
                     </dd>
                 </div>
             </dl>
-            <div className={styles.formActions}>
-                <Button type="button" variant="danger" onClick={onDelete}>
-                    {t("transactions.deleteTransaction")}
-                </Button>
-            </div>
+            {!readOnly && (
+                <div className={styles.formActions}>
+                    <Button type="button" variant="danger" onClick={onDelete}>
+                        {t("transactions.deleteTransaction")}
+                    </Button>
+                </div>
+            )}
         </Card>
     );
 }
@@ -551,11 +657,13 @@ function TransactionDetail({ tx, onClose, onDelete }: { tx: Transaction; onClose
 function TransactionRow({
     tx,
     detailLoading,
+    readOnly,
     onViewDetails,
     onDelete,
 }: {
     tx: Transaction;
     detailLoading: boolean;
+    readOnly: boolean;
     onViewDetails: () => void;
     onDelete: () => void;
 }) {
@@ -625,9 +733,11 @@ function TransactionRow({
                     <Button type="button" variant="secondary" size="sm" loading={detailLoading} onClick={onViewDetails}>
                         {t("transactions.details")}
                     </Button>
-                    <Button type="button" variant="danger" size="sm" onClick={onDelete}>
-                        {t("transactions.deleteTransaction")}
-                    </Button>
+                    {!readOnly && (
+                        <Button type="button" variant="danger" size="sm" onClick={onDelete}>
+                            {t("transactions.deleteTransaction")}
+                        </Button>
+                    )}
                 </div>
             </td>
         </tr>

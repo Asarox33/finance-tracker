@@ -353,11 +353,13 @@ function InstitutionCard({ institution }: { institution: Institution }) {
     return (
         <Card className={styles.institutionCard}>
             <div className={styles.cardHeader}>
-                <div>
-                    <p className={styles.cardName}>{institution.name}</p>
-                    <p className={styles.countryLine}>
+                <div className={styles.cardTitleBlock}>
+                    <p className={styles.cardName} title={institution.name}>
+                        {institution.name}
+                    </p>
+                    <p className={styles.countryLine} title={countryName}>
                         <span className={`fi fi-${institution.country.toLowerCase()}`} title={countryName} />{" "}
-                        {countryName}
+                        <span className={styles.countryName}>{countryName}</span>
                     </p>
                 </div>
                 <span
@@ -370,7 +372,13 @@ function InstitutionCard({ institution }: { institution: Institution }) {
             </div>
 
             <div className={styles.cardMeta}>
-                {institution.bic && <span className={styles.bic}>{institution.bic}</span>}
+                {institution.bic ? (
+                    <span className={styles.bic} title={institution.bic}>
+                        {institution.bic}
+                    </span>
+                ) : (
+                    <span className={styles.bicPlaceholder} aria-hidden="true" />
+                )}
             </div>
         </Card>
     );

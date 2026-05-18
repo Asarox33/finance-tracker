@@ -475,13 +475,19 @@ function AccountCard({
         <Card className={styles.accountCard}>
             <div className={styles.accountHeader}>
                 <div className={styles.accountTitleBlock}>
-                    <p className={styles.accountName}>{account.name}</p>
+                    <div className={styles.accountNameRow}>
+                        <p className={styles.accountName} title={account.name}>
+                            {account.name}
+                        </p>
+                        <span className={styles.currency}>{account.currency}</span>
+                    </div>
                     <span className={`${styles.typePill} ${ACCOUNT_TYPE_CLASSES[account.type]}`}>
                         {t(`accountType.${account.type}` as TranslationKey)}
                     </span>
                     <p
                         className={institutionLinePending ? styles.institutionPending : styles.institution}
                         aria-label={t("accounts.institution")}
+                        title={institutionLine}
                     >
                         {institutionLine}
                     </p>
@@ -491,11 +497,20 @@ function AccountCard({
                 </Badge>
             </div>
             <div className={styles.accountFooter}>
-                <div className={styles.accountMeta}>
-                    <span className={styles.currency}>{account.currency}</span>
-                </div>
-                {account.status === "ACTIVE" && (
-                    <div className={styles.accountActions}>
+                <div className={styles.accountActions}>
+                    <Link
+                        href={`/transactions?accountId=${encodeURIComponent(account.id)}`}
+                        className={styles.accountActionLink}
+                        aria-label={t(
+                            account.status === "ACTIVE"
+                                ? "accounts.viewTransactionsAria"
+                                : "accounts.viewHistoryAria",
+                            { accountName: account.name }
+                        )}
+                    >
+                        {t(account.status === "ACTIVE" ? "accounts.viewTransactions" : "accounts.viewHistory")}
+                    </Link>
+                    {account.status === "ACTIVE" && (
                         <Button
                             variant="secondary"
                             size="sm"
@@ -505,10 +520,8 @@ function AccountCard({
                         >
                             {t("accounts.closeAccount")}
                         </Button>
-                    </div>
-                )}
-                {account.status === "CLOSED" && (
-                    <div className={styles.accountActions}>
+                    )}
+                    {account.status === "CLOSED" && (
                         <Button
                             variant="secondary"
                             size="sm"
@@ -518,8 +531,8 @@ function AccountCard({
                         >
                             {t("accounts.reactivateAccount")}
                         </Button>
-                    </div>
-                )}
+                    )}
+                </div>
             </div>
         </Card>
     );

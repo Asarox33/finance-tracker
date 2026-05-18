@@ -41,3 +41,109 @@ test("dashboard renders translated labels", async ({ page }) => {
     await expect(page.getByRole("link", { name: "Ajouter un compte" })).toBeVisible();
     await expect(page.getByRole("link", { name: "Enregistrer une transaction" })).toBeVisible();
 });
+
+test("dashboard account breakdown links to filtered transactions", async ({ page }) => {
+    await authenticateUser(page);
+    await mockUserProfile(page);
+    await page.route("**/api/accounts**", (route) =>
+        route.fulfill({
+            status: 200,
+            contentType: "application/json",
+            body: JSON.stringify({
+                items: [
+                    {
+                        id: "acc-1",
+                        userId: "user-123",
+                        institutionId: "inst-1",
+                        name: "Very long brokerage account name for dashboard",
+                        type: "BROKERAGE",
+                        currency: "EUR",
+                        status: "ACTIVE",
+                    },
+                ],
+                totalItems: 1,
+                totalPages: 1,
+                page: 0,
+                pageSize: 20,
+                isEmpty: false,
+                isFirst: true,
+                isLast: true,
+            }),
+        })
+    );
+    await page.route("**/api/institutions**", (route) =>
+        route.fulfill({
+            status: 200,
+            contentType: "application/json",
+            body: JSON.stringify({
+                items: [
+                    {
+                        id: "inst-1",
+                        name: "Very long institution name for dashboard",
+                        country: "FR",
+                        type: "BROKER",
+                        bic: null,
+                    },
+                ],
+                totalItems: 1,
+                totalPages: 1,
+                page: 0,
+                pageSize: 20,
+                isEmpty: false,
+                isFirst: true,
+                isLast: true,
+            }),
+        })
+    );
+    await page.route("**/api/analytics/portfolio-value**", (route) =>
+        route.fulfill({
+            status: 200,
+            contentType: "application/json",
+            body: JSON.stringify({
+                totalValue: 12345,
+                currency: "EUR",
+                asOf: "2024-01-15",
+                snapshots: [
+                    {
+                        accountId: "acc-1",
+                        currency: "EUR",
+                        valueInAccountCurrency: 12345,
+                        valueInReferenceCurrency: 12345,
+                        referenceCurrency: "EUR",
+                        asOf: "2024-01-15",
+                    },
+                ],
+            }),
+        })
+    );
+    await page.route("**/api/analytics/performance**", (route) =>
+        route.fulfill({
+            status: 200,
+            contentType: "application/json",
+            body: JSON.stringify({
+                startValue: 10000,
+                endValue: 12345,
+                currency: "EUR",
+                gainLoss: 2345,
+                gainLossBasisPoints: 2345,
+                from: "2023-01-15",
+                to: "2024-01-15",
+            }),
+        })
+    );
+
+    await page.goto("/dashboard");
+    await expect(page.getByRole("heading", { name: "Account Breakdown" })).toBeVisible();
+    await expect(page.getByText("Very long brokerage account name for dashboard")).toHaveAttribute(
+        "title",
+        "Very long brokerage account name for dashboard"
+    );
+    await expect(page.getByText("Very long institution name for dashboard")).toHaveAttribute(
+        "title",
+        "Very long institution name for dashboard"
+    );
+    await expect(page.getByRole("link", { name: "View transactions for Very long brokerage account name for dashboard" })).toHaveAttribute(
+        "href",
+        "/transactions?accountId=acc-1"
+    );
+});

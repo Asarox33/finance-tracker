@@ -1,4 +1,17 @@
 spring:
+  flyway:
+    locations:
+      - classpath:db/migration/auth
+      - classpath:db/migration/user_profile
+      - classpath:db/migration/institution
+      - classpath:db/migration/asset
+      - classpath:db/migration/account
+      - classpath:db/migration/transaction
+      - classpath:db/migration/fees
+      - classpath:db/migration/price
+      - classpath:db/migration/fx
+      - classpath:db/migration/inflation
+      - classpath:db/seed
   jpa:
     show-sql: true
 

@@ -12,6 +12,7 @@
 
 .filters {
     display: flex;
+    align-items: flex-end;
     gap: 1rem;
     flex-wrap: wrap;
 }
@@ -22,6 +23,78 @@
 
 .filters button {
     align-self: flex-end;
+}
+
+.switchControl {
+    display: inline-flex;
+    align-items: center;
+    align-self: flex-end;
+    gap: 0.625rem;
+    min-height: 2.5rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    user-select: none;
+}
+
+.switchControl input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.switchTrack {
+    position: relative;
+    width: 2.25rem;
+    height: 1.25rem;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--surface-2);
+    transition: border-color var(--transition), background var(--transition);
+}
+
+.switchThumb {
+    position: absolute;
+    top: 0.1875rem;
+    left: 0.1875rem;
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: 999px;
+    background: var(--text-dim);
+    transition: background var(--transition), transform var(--transition);
+}
+
+.switchControl input:checked + .switchTrack {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.switchControl input:checked + .switchTrack .switchThumb {
+    background: var(--accent);
+    transform: translateX(1rem);
+}
+
+.switchControl:focus-within .switchTrack {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+}
+
+.historyNotice {
+    border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+}
+
+.historyNoticeTitle {
+    font-weight: 600;
+    margin-bottom: 0.35rem;
+}
+
+.historyNotice p:last-child {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    line-height: 1.5;
 }
 
 .formCard {

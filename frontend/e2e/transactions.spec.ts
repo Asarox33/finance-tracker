@@ -110,3 +110,85 @@ test("transactions supports date filters, details, and delete", async ({ page })
     await page.locator("[role='alertdialog'] button").last().click();
     await expect(page.getByText("No transactions")).toBeVisible();
 });
+
+test("transactions opens closed account history from deep link as read-only", async ({ page }) => {
+    await authenticateUser(page);
+    await mockUserProfile(page);
+    const closedAccount = {
+        id: "acc-closed",
+        userId: "user-123",
+        institutionId: "inst-1",
+        name: "Old savings",
+        type: "SAVINGS",
+        currency: "EUR",
+        status: "CLOSED",
+    };
+    const transaction = {
+        id: "tx-closed-1",
+        accountId: "acc-closed",
+        assetId: null,
+        type: "WITHDRAWAL",
+        amount: -2500,
+        currency: "EUR",
+        date: "2024-02-10",
+        label: "Archived card payment",
+        notes: "Before account closure",
+        appliedFxRate: null,
+        appliedFxRateScale: null,
+        appliedFxRateDate: null,
+        appliedFxSourceCurrency: null,
+        appliedFxTargetCurrency: null,
+    };
+
+    await page.route("**/api/accounts**", (route) => {
+        const requestUrl = new URL(route.request().url());
+        if (requestUrl.pathname.endsWith("/api/accounts/acc-closed")) {
+            return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(closedAccount) });
+        }
+        const includeClosed = requestUrl.searchParams.get("includeClosed") === "true";
+        return route.fulfill({
+            status: 200,
+            contentType: "application/json",
+            body: JSON.stringify({
+                items: includeClosed ? [closedAccount] : [],
+                totalItems: includeClosed ? 1 : 0,
+                totalPages: 1,
+                page: 0,
+                pageSize: 20,
+                isEmpty: !includeClosed,
+                isFirst: true,
+                isLast: true,
+            }),
+        });
+    });
+    await page.route("**/api/transactions**", (route) => {
+        if (route.request().url().includes("/api/transactions/tx-closed-1")) {
+            return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(transaction) });
+        }
+        return route.fulfill({
+            status: 200,
+            contentType: "application/json",
+            body: JSON.stringify({
+                items: [transaction],
+                totalItems: 1,
+                totalPages: 1,
+                page: 0,
+                pageSize: 20,
+                isEmpty: false,
+                isFirst: true,
+                isLast: true,
+            }),
+        });
+    });
+
+    await page.goto("/transactions?accountId=acc-closed");
+    await expect(page.getByLabel("Include closed accounts")).toBeChecked();
+    await expect(page.getByLabel("Select account to view transactions")).toHaveValue("acc-closed");
+    await expect(page.getByText("Closed account history")).toBeVisible();
+    await expect(page.getByRole("button", { name: "+ New transaction" })).not.toBeVisible();
+    await expect(page.getByText("Archived card payment")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Delete" })).not.toBeVisible();
+    await page.getByRole("button", { name: "Details" }).click();
+    await expect(page.getByRole("heading", { name: "Transaction details" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Delete" })).not.toBeVisible();
+});

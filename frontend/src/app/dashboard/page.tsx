@@ -157,6 +157,7 @@ export default function DashboardPage() {
                                         <th scope="col" style={{ textAlign: "right" }}>
                                             {t("dashboard.inCurrency", { currency: referenceCurrency })}
                                         </th>
+                                        <th scope="col">{t("dashboard.actions")}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -169,7 +170,9 @@ export default function DashboardPage() {
                                             <tr key={snap.accountId}>
                                                 <td>
                                                     <div className={styles.entityCell}>
-                                                        <span className={styles.entityName}>{account?.name ?? "—"}</span>
+                                                        <span className={styles.entityName} title={account?.name ?? "—"}>
+                                                            {account?.name ?? "—"}
+                                                        </span>
                                                         {account && (
                                                             <span
                                                                 className={`${styles.typePill} ${
@@ -183,7 +186,10 @@ export default function DashboardPage() {
                                                 </td>
                                                 <td>
                                                     <div className={styles.entityCell}>
-                                                        <span className={styles.entityName}>
+                                                        <span
+                                                            className={styles.entityName}
+                                                            title={institution?.name ?? "—"}
+                                                        >
                                                             {institution?.name ?? "—"}
                                                         </span>
                                                         {institution && (
@@ -213,6 +219,24 @@ export default function DashboardPage() {
                                                     }}
                                                 >
                                                     {formatMoney(snap.valueInReferenceCurrency, snap.referenceCurrency)}
+                                                </td>
+                                                <td>
+                                                    {account && (
+                                                        <Link
+                                                            href={`/transactions?accountId=${encodeURIComponent(
+                                                                account.id
+                                                            )}`}
+                                                            className={styles.transactionLink}
+                                                            aria-label={t("dashboard.viewTransactionsAria", {
+                                                                accountName: account.name,
+                                                            })}
+                                                            title={t("dashboard.viewTransactionsAria", {
+                                                                accountName: account.name,
+                                                            })}
+                                                        >
+                                                            <span aria-hidden="true">⇄</span>
+                                                        </Link>
+                                                    )}
                                                 </td>
                                             </tr>
                                         );

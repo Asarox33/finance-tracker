@@ -134,9 +134,10 @@
 - `POST /api/accounts` → creates account; requires `institutionId`, `name`, `type`, `currency`; the form selects the institution from the institutions API instead of asking for a raw UUID
 - `DELETE /api/accounts/:id` → closes account (204); uses the shared confirmation dialog
 - `POST /api/accounts/:id/reactivate` → reactivates a closed account; exposed when the user enables the show-closed checkbox
+- Account cards expose a dedicated transaction-history link to `/transactions?accountId=<id>`; closed accounts link to read-only history.
 - Account types shown as colored labels and filter options: `CHECKING`, `SAVINGS`, `BROKERAGE`, `CRYPTO`, `REAL_ESTATE`, `RETIREMENT`, `OTHER`
 - Currency picker uses full ISO 4217 list from `src/lib/currencies.ts`
-- `ACTIVE` accounts are filterable in the transaction page's account selector
+- `ACTIVE` accounts are shown by default in the transaction page's account selector; closed accounts are available through an include-closed toggle for read-only history.
 - Dashboard shows a count of active accounts and a breakdown table (via `portfolioValue.snapshots`) with account and institution type badges under the names.
 
 ---
@@ -162,9 +163,9 @@
 **Frontend integration:**
 - `GET /api/transactions?accountId=...&page=0&pageSize=20&from=YYYY-MM-DD&to=YYYY-MM-DD` → `PageResult<Transaction>`; displayed as a table on `/transactions`
 - `GET /api/transactions/:id` → loads the user-facing transaction details panel
-- Account must be selected from a dropdown; only `ACTIVE` accounts are listed
+- Account must be selected from a dropdown; `ACTIVE` accounts are listed by default, while closed accounts are listed when the include-closed toggle is enabled. `/transactions?accountId=<id>` deep-links to a selected account and automatically enables closed-account history for closed accounts.
 - `POST /api/transactions` → body includes `accountId`, `type`, `amount` (minor units), `currency`, `date`, `label`, `notes?`
-- `DELETE /api/transactions/:id` → soft-deletes a transaction after confirmation
+- `DELETE /api/transactions/:id` → soft-deletes a transaction after confirmation for active-account views only; closed-account history hides create/delete actions.
 - Amount input accepts digits plus one decimal separator (e.g. `100.50`); converted to minor units before sending: `Math.round(float * 10^2)`.
 - `-` is accepted only for `TRANSFER` and `OTHER`; API/use case validation rejects negative amounts for all directional types.
 - Transaction type badge colors: `DEPOSIT`/`DIVIDEND` → success (green), `WITHDRAWAL`/`FEE`/`TAX` → danger (red), `BUY`/`SELL` → warning (yellow), `TRANSFER`/`OTHER` → default (grey)
@@ -287,7 +288,9 @@
 - Same shape for `performance-after-fees` and `performance-after-inflation`
 - Dashboard uses `useReferenceCurrency()` to feed profile `preferredCurrency` into `usePortfolioValue()` and `usePerformance(..., 12)` for KPI cards
 - Dashboard shows a contextual getting-started checklist while setup is incomplete (institution, account, transaction/portfolio snapshot), instead of duplicating permanent sidebar navigation
-- Analytics page adds period selector (3M/6M/1Y/3Y) that changes the `months` parameter; `monthsAgo(n)` and `today()` compute the date range
+- Dashboard Account Breakdown rows expose a dedicated link to `/transactions?accountId=<id>`; account-scoped analytics links remain deferred until analytics supports account filters.
+- Dashboard currently shows current global state; backlog item: decide whether to add an `asOf` date picker here or keep historical date exploration in Analytics.
+- Analytics page adds period selector (3M/6M/1Y/3Y) that changes the `months` parameter; `monthsAgo(n)` and `today()` compute the date range. Backlog: add YTD.
 - All three performance variants are shown side-by-side in a comparison grid and detail table
 - Dashboard and analytics read reference currency from user profile preferences; hooks still default to `"EUR"` only when called without a currency argument
 

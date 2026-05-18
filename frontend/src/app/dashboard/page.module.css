@@ -84,7 +84,48 @@
 
 .entityName {
     font-weight: 500;
-    overflow-wrap: anywhere;
+    max-width: min(18rem, 28vw);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.transactionLink {
+    align-items: center;
+    background: color-mix(in srgb, var(--accent) 16%, var(--surface-2));
+    border: 1px solid color-mix(in srgb, var(--accent) 42%, var(--border));
+    border-radius: 999px;
+    color: var(--accent);
+    display: inline-flex;
+    font-size: 1rem;
+    font-weight: 600;
+    justify-content: center;
+    line-height: 1;
+    height: 2rem;
+    width: 2rem;
+    text-decoration: none;
+    transition: border-color var(--transition), color var(--transition), background var(--transition);
+    white-space: nowrap;
+}
+
+.transactionLink:hover,
+.transactionLink:focus-visible {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 24%, var(--surface-2));
+}
+
+[data-theme="light"] .transactionLink {
+    background: var(--surface-2);
+    border-color: var(--border);
+    color: var(--text);
+}
+
+[data-theme="light"] .transactionLink:hover,
+[data-theme="light"] .transactionLink:focus-visible {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--surface-2);
 }
 
 .typePill {

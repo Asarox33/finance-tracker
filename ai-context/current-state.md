@@ -38,7 +38,7 @@ All 13 modules are implemented end-to-end (domain → application → infrastruc
 - ✅ OpenAPI / Swagger UI (dev only)
 - ✅ Spring Actuator (`/actuator/health`, `/actuator/info`)
 - ✅ Multi-profile config (`dev`, `prod`, `test`)
-- ✅ Dev seed data (`V0_1__seed_dev_user.sql` with known credentials)
+- ✅ Dev seed data (`V11_1__seed_dev_demo_data.sql` with known credentials and demo portfolio)
 
 **Build tooling:** Gradle wrapper **9.5.0** (`backend/gradle/wrapper/gradle-wrapper.properties`). Version catalog: Kotlin **2.3.20**, Spring Boot **4.0.6** (verify `gradle/libs.versions.toml` — root docs such as `CLAUDE.md` may lag by a patch).
 
@@ -74,10 +74,10 @@ Features are integrated as vertical slices. Status is **functional** where marke
 | `/login` | Sign-in, locked-account handling |
 | `/login/register` | Registration |
 | `/login/reset` | Password reset (request → OTP + new password → success) |
-| `/dashboard` | Portfolio KPIs, 12-month performance, account breakdown with account/institution type badges and formatted currency values, and contextual getting-started checklist while setup is incomplete (reference currency from profile `preferredCurrency`) |
-| `/accounts` | Account cards with colored type labels, type filter, create form with institution picker, close/reactivate account, show-closed toggle, pagination |
+| `/dashboard` | Portfolio KPIs, 12-month performance, account breakdown with account/institution type badges, formatted currency values, and dedicated transaction links per account; contextual getting-started checklist while setup is incomplete (reference currency from profile `preferredCurrency`) |
+| `/accounts` | Account cards with colored type labels, type filter, create form with institution picker, close/reactivate account, show-closed toggle, pagination, and dedicated links to filtered transaction history |
 | `/institutions` | Debounced list filters, type filter, localized country-name sorted dropdowns, clear filters, pagination, shared-repository notice, create institution with client validation, colored type/country cards (`flag-icons` for country flags) |
-| `/transactions` | Account selector, date-range filters, paginated table, create form, detail view, soft-delete action; transaction signs follow operation type for deposits/withdrawals/buys/sells/fees/taxes; **no asset selector** |
+| `/transactions` | Deep-linkable account selector (`accountId` query), optional closed-account history toggle, date-range filters, paginated table, create form and soft-delete for active accounts, read-only history for closed accounts; transaction signs follow operation type for deposits/withdrawals/buys/sells/fees/taxes; **no asset selector** |
 | `/analytics` | Period presets, performance variants; reference currency from profile `preferredCurrency` |
 | `/profile` | Profile and preferences, including preferred currency and display language |
 
@@ -196,13 +196,17 @@ High value for the current **STEP 9** programme (`CLAUDE.md`):
 1. **Accounts picker scale** — Replace the first-page institution dropdown with search/pagination if institution volume grows beyond the current picker cap.
 2. **Institutions quality guardrails** — Add rate limits, normalization/duplicate detection, and moderation/review before a user-created institution becomes globally visible.
 3. **Transactions** — Add optional asset selector when backend expects `assetId` for BUY/SELL.
+4. **Analytics periods** — Add a YTD period choice alongside 3M/6M/1Y/3Y.
+5. **Account-scoped analytics** — Once analytics supports account filters, add account-level analytics links from Dashboard Account Breakdown rows.
+6. **FX imports** — Add a backend FX import path/job for latest external rates (candidate source: `taux.live`) and store them in `fx.fx_rates`; keep dashboard/analytics conversions routed through the `fx` module and historical lookup.
+7. **Dashboard as-of date UX** — Decide whether Dashboard should expose an `asOf` date picker for historical global state or keep date exploration in Analytics.
 
 Quality / engineering:
 
-4. **E2E depth** — Broaden mocked smoke specs into interaction/error coverage for accounts, transactions, analytics, and dashboard.
-5. **Backend** — Fix double-query in `AssetPriceRepositoryAdapter`; consider pushing fee date filters to SQL; revisit analytics caps or document limits in product copy.
-6. **CI/CD** — Add `.github/workflows` using `npm ci` + `npm run lint` + `npm run build` for frontend; `cd backend && .\gradlew.bat clean build` (with Docker service for IT, or `-PskipIT=true` split jobs per team policy).
-7. **Versions** — After bumping dependencies, update **`current-state.md` § *Dependency Versions*** only (do not reintroduce pin matrices into `CLAUDE.md` or `architecture.md`).
+8. **E2E depth** — Broaden mocked smoke specs into interaction/error coverage for accounts, transactions, analytics, and dashboard.
+9. **Backend** — Fix double-query in `AssetPriceRepositoryAdapter`; consider pushing fee date filters to SQL; revisit analytics caps or document limits in product copy.
+10. **CI/CD** — Add `.github/workflows` using `npm ci` + `npm run lint` + `npm run build` for frontend; `cd backend && .\gradlew.bat clean build` (with Docker service for IT, or `-PskipIT=true` split jobs per team policy).
+11. **Versions** — After bumping dependencies, update **`current-state.md` § *Dependency Versions*** only (do not reintroduce pin matrices into `CLAUDE.md` or `architecture.md`).
 
 Not built (unchanged product backlog):
 
@@ -233,11 +237,19 @@ Pin versions remain policy; confirm compatibility before upgrading transitives.
 
 ## Dev Seed Credentials
 
-File: `backend/auth/src/main/resources/db/seed/V0_1__seed_dev_user.sql`
+Files: `backend/auth/src/main/resources/db/seed/V11_1__seed_dev_demo_data.sql`, `backend/auth/src/main/resources/db/seed/V11_2__fix_dev_demo_account_institutions.sql`
 
-- **Email:** `github@meraville.fr`
-- **Password:** `MyStrongPassword123!`
-- **User ID:** `a1b2c3d4-e5f6-7890-abcd-ef1234567890`
+- **Primary email:** `github@meraville.fr`
+- **Demo email:** `demo@meraville.fr`
+- **Password:** `MyStrongPassword123!` for both seeded users
+- **Primary user ID:** `a1b2c3d4-e5f6-7890-abcd-ef1234567890`
+- **Demo user ID:** `b2c3d4e5-f6a7-4901-8cde-f23456789012`
+
+The dev seed keeps the primary user account, resets seeded business data for the primary/demo users, and recreates a broad demo portfolio:
+
+- Shared institutions across all institution types (`BANK`, `BROKER`, `INSURANCE`, `CRYPTO_EXCHANGE`, `OTHER`) so the second user demonstrates shared institution visibility.
+- Primary user accounts across all account types (`CHECKING`, `SAVINGS`, `BROKERAGE`, `CRYPTO`, `REAL_ESTATE`, `RETIREMENT`, `OTHER`) with multi-currency balances.
+- Assets, prices, transactions, fees, FX rates, and inflation indices covering implemented backend modules and future frontend slices.
 
 > Seed runs via Flyway dev configuration. Production Flyway must not include ad-hoc seed locations — verify `application.yml` migration paths for prod.
 
