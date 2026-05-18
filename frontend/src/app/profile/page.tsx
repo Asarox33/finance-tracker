@@ -3,17 +3,17 @@
 import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { useUpdatePreferences, useUserProfile } from "@/features/user-profile/hooks/useUserProfile";
 import { Button, Card, ErrorState, PageHeader, Skeleton } from "@/shared/components/ui";
-import { useI18n, type TranslationKey } from "@/shared/i18n";
+import { useI18n } from "@/shared/i18n";
 import type { DisplayLanguage } from "@/shared/types";
 import { CURRENCIES } from "@/lib/currencies";
 import styles from "./page.module.css";
 
-const DISPLAY_LANGUAGES: DisplayLanguage[] = ["ENG", "FRA", "ESP", "ITA"];
-const LANGUAGE_LABEL_KEYS: Record<DisplayLanguage, TranslationKey> = {
-    ENG: "language.ENG",
-    FRA: "language.FRA",
-    ESP: "language.ESP",
-    ITA: "language.ITA",
+const DISPLAY_LANGUAGES: DisplayLanguage[] = ["ENG", "ESP", "FRA", "ITA"];
+const LANGUAGE_NATIVE_LABELS: Record<DisplayLanguage, string> = {
+    ENG: "ENG - English",
+    ESP: "ESP - Español",
+    FRA: "FRA - Français",
+    ITA: "ITA - Italiano",
 };
 
 export default function ProfilePage() {
@@ -224,7 +224,7 @@ export default function ProfilePage() {
                                     >
                                         {DISPLAY_LANGUAGES.map((displayLanguage) => (
                                             <option key={displayLanguage} value={displayLanguage}>
-                                                {t(LANGUAGE_LABEL_KEYS[displayLanguage])}
+                                                {LANGUAGE_NATIVE_LABELS[displayLanguage]}
                                             </option>
                                         ))}
                                     </select>
