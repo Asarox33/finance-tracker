@@ -133,6 +133,21 @@ describe("useSessionTimeout", () => {
         expect(result.current.warningOpen).toBe(false);
     });
 
+    it("logs out after custom idle timeout (5 minutes)", async () => {
+        (httpModule.getAccessTokenExpiryMs as jest.Mock).mockReturnValue(makeExpMs(900_000));
+        (httpModule.getToken as jest.Mock).mockReturnValue("valid-token");
+
+        const { result } = renderHook(() => useSessionTimeout(5 * 60 * 1000));
+
+        await act(async () => {
+            jest.advanceTimersByTime(5 * 60 * 1000);
+            await Promise.resolve();
+        });
+
+        expect(mockLogout).toHaveBeenCalled();
+        expect(result.current.warningOpen).toBe(false);
+    });
+
     it("logs out immediately when a sleeping tab wakes after the idle deadline", async () => {
         (httpModule.getAccessTokenExpiryMs as jest.Mock).mockReturnValue(makeExpMs(900_000));
 

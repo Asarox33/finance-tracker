@@ -11,6 +11,7 @@ import com.finance.auth.application.RegisterUser
 import com.finance.auth.application.RequestPasswordReset
 import com.finance.auth.application.ResetPassword
 import com.finance.auth.application.RevokeRefreshToken
+import com.finance.auth.application.SessionTimeoutPort
 import com.finance.auth.application.TokenIssuer
 import com.finance.auth.domain.PasswordResetTokenRepository
 import com.finance.auth.domain.RefreshTokenRepository
@@ -35,14 +36,14 @@ class AuthConfig {
         tokenIssuer: TokenIssuer,
         refreshTokenRepository: RefreshTokenRepository,
         refreshTokenFactory: RefreshTokenFactory,
-        refreshSessionPolicy: RefreshSessionPolicy
+        sessionTimeoutPort: SessionTimeoutPort
     ): AuthenticateUser = AuthenticateUser(
         userRepository,
         passwordEncoder,
         tokenIssuer,
         refreshTokenRepository,
         refreshTokenFactory,
-        refreshSessionPolicy.effectiveRefreshTtl()
+        sessionTimeoutPort
     )
 
     @Bean
@@ -51,13 +52,13 @@ class AuthConfig {
         refreshTokenRepository: RefreshTokenRepository,
         tokenIssuer: TokenIssuer,
         refreshTokenFactory: RefreshTokenFactory,
-        refreshSessionPolicy: RefreshSessionPolicy
+        sessionTimeoutPort: SessionTimeoutPort
     ): RefreshAccessToken = RefreshAccessToken(
         userRepository,
         refreshTokenRepository,
         tokenIssuer,
         refreshTokenFactory,
-        refreshSessionPolicy.effectiveRefreshTtl()
+        sessionTimeoutPort
     )
 
     @Bean

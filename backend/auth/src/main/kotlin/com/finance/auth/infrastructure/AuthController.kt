@@ -132,7 +132,10 @@ class AuthController(
             AuthenticateUser.Command(email = request.email, rawPassword = request.password)
         )
         val headers = HttpHeaders()
-        headers.add(HttpHeaders.SET_COOKIE, refreshCookieFactory.buildSetCookie(session.refreshTokenPlain))
+        headers.add(
+            HttpHeaders.SET_COOKIE,
+            refreshCookieFactory.buildSetCookie(session.refreshTokenPlain, session.refreshMaxAge)
+        )
         return ResponseEntity.ok()
             .headers(headers)
             .body(LoginResponse(accessToken = session.accessToken))
@@ -143,7 +146,10 @@ class AuthController(
         val raw = request.cookies?.firstOrNull { it.name == RefreshCookieFactory.COOKIE_NAME }?.value
         val session = refreshAccessToken.execute(raw)
         val headers = HttpHeaders()
-        headers.add(HttpHeaders.SET_COOKIE, refreshCookieFactory.buildSetCookie(session.refreshTokenPlain))
+        headers.add(
+            HttpHeaders.SET_COOKIE,
+            refreshCookieFactory.buildSetCookie(session.refreshTokenPlain, session.refreshMaxAge)
+        )
         return ResponseEntity.ok()
             .headers(headers)
             .body(RefreshResponse(accessToken = session.accessToken))

@@ -35,5 +35,11 @@ class JpaUserProfileEntity(
     var preferredLanguage: DisplayLanguage,
 
     @Column(name = "birth_date")
-    var birthDate: LocalDate?
+    var birthDate: LocalDate?,
+
+    @Column(name = "table_page_size", nullable = false)
+    var tablePageSize: Int,
+
+    @Column(name = "session_timeout_minutes", nullable = false)
+    var sessionTimeoutMinutes: Int
 )

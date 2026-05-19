@@ -32,7 +32,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
     const { isAuthenticated, isLoading } = useAuthGuard();
 
-    const sessionTimeout = useSessionTimeout();
+    const sessionTimeoutMinutes = profile?.sessionTimeoutMinutes ?? 10;
+    const sessionTimeout = useSessionTimeout(sessionTimeoutMinutes * 60 * 1000);
 
     useEffect(() => {
         if (!isLoading && !isAuthenticated) {

@@ -54,6 +54,37 @@ describe("analyticsApi", () => {
         expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining("referenceCurrency=EUR"), expect.anything());
     });
 
+    it("returns enriched account snapshots from portfolio value", async () => {
+        const enriched = {
+            totalValue: 12345,
+            currency: "EUR",
+            asOf: "2024-06-30",
+            snapshots: [
+                {
+                    accountId: "acc-1",
+                    accountName: "Brokerage",
+                    accountType: "BROKERAGE",
+                    institutionId: "inst-1",
+                    institutionName: "Test Bank",
+                    institutionType: "BANK",
+                    currency: "EUR",
+                    valueInAccountCurrency: 12345,
+                    valueInReferenceCurrency: 12345,
+                    referenceCurrency: "EUR",
+                    asOf: "2024-06-30",
+                },
+            ],
+        };
+        mockResponse(enriched);
+        const result = await analyticsApi.portfolioValue("2024-06-30", "EUR");
+        expect(result.snapshots[0]).toMatchObject({
+            accountName: "Brokerage",
+            institutionName: "Test Bank",
+            accountType: "BROKERAGE",
+            institutionType: "BANK",
+        });
+    });
+
     it("fetches performance with date range", async () => {
         mockResponse(mockPerf);
         await analyticsApi.performance("2023-06-30", "2024-06-30", "EUR");

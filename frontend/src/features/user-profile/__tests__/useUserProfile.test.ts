@@ -13,6 +13,8 @@ jest.mock("swr", () => ({
             preferredCurrency: "EUR",
             preferredLanguage: "ENG",
             birthDate: null,
+            tablePageSize: 20,
+            sessionTimeoutMinutes: 10,
         },
         error: null,
         isLoading: false,
@@ -34,6 +36,8 @@ const mockPreferences = {
     preferredCurrency: "EUR",
     preferredLanguage: "ENG",
     birthDate: null,
+    tablePageSize: 20,
+    sessionTimeoutMinutes: 10,
 };
 
 describe("useUpdatePreferences", () => {
@@ -119,6 +123,8 @@ describe("useUserProfile", () => {
             preferredCurrency: "EUR",
             preferredLanguage: "ENG",
             birthDate: null,
+            tablePageSize: 20,
+            sessionTimeoutMinutes: 10,
         });
         expect(result.current.isLoading).toBe(false);
         expect(result.current.error).toBeNull();

@@ -114,6 +114,7 @@ All code lives under `com.finance.<module>`. Sub-packages are always exactly `do
 - Each authenticated section (`accounts/`, `transactions/`, `analytics/`, `dashboard/`, `profile/`) has its own `layout.tsx` that wraps `<AppShell>`.
 - Auth pages (`login/`, `login/register/`, `login/reset/`) do **not** use `<AppShell>`.
 - **Shared UI primitives** live in `src/shared/components/ui.tsx` and are exported from that single file: `Card`, `Skeleton`, `Badge`, `Button`, `PageHeader`, `EmptyState`, `ErrorState`.
+- **Paginated lists** use `ListPagination` (`src/shared/components/ListPagination.tsx`) and `itemRange()` (`src/lib/pagination.ts`). Show **`{from}–{to} of {total}`** whenever `totalItems > 0`. Page size comes from `profile.tablePageSize` via `useTablePageSize()`.
 - CSS Modules are co-located with their component (`page.module.css` beside `page.tsx`).
 - No Tailwind, no external component libraries. All styling via CSS custom properties.
 

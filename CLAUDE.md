@@ -270,6 +270,9 @@ All in `src/shared/components/ui.tsx`:
 | `PageHeader` | `title`, `description?`, `action?` (right-side slot) |
 | `EmptyState` | `title`, `description?` |
 | `ErrorState` | `message?` |
+| `ListPagination` | `page`, `pageSize`, `totalItems`, `onPageChange`, optional `onPageSizeChange` — shows **`{from}–{to} of {total}`** |
+
+**Paginated lists:** use `profile.tablePageSize` (allowed: 10, 20, 50, 100; default 20) for API `pageSize` and for client-side slices. Footer must use `ListPagination` with the items-range label, not page-index-only copy.
 
 ---
 
@@ -279,7 +282,7 @@ All in `src/shared/components/ui.tsx`:
 - **Refresh token** in httpOnly cookie `ft_refresh` (path `/api`); all `http` calls use `credentials: "include"`
 - `http.ts` injects the access token when valid, attempts **cookie refresh** on 401 or before guarded navigation (`ensureSession`), then auto-redirects to `/login` if refresh fails
 - `useAuthGuard` (in `AppShell`) redirects unauthenticated users to `/login`
-- `useSessionTimeout` enforces a **10-minute** wall-clock inactivity timeout with a final **15-second** warning and wake/focus deadline checks; shortly before access JWT expiry it may also show the modal with **Stay signed in** (refresh) or **Sign out**
+- `useSessionTimeout` uses `profile.sessionTimeoutMinutes` (**5–15**, default **10**) for idle deadline; JWT and refresh TTL align on login/refresh. Final **15-second** warning and wake/focus checks unchanged; modal offers **Stay signed in** or **Sign out**
 - Lock detection: backend returns HTTP 429; frontend checks `message.includes("locked")`
 
 ---

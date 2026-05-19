@@ -1,7 +1,16 @@
 import { expect, test } from "@playwright/test";
 import { authenticateUser, mockUserProfile } from "./helpers/auth";
 
-const emptyPage = { items: [], totalItems: 0, totalPages: 1, page: 0, pageSize: 20, isEmpty: true, isFirst: true, isLast: true };
+const emptyPage = {
+    items: [],
+    totalItems: 0,
+    totalPages: 1,
+    page: 0,
+    pageSize: 20,
+    isEmpty: true,
+    isFirst: true,
+    isLast: true,
+};
 
 test("accounts renders translated labels", async ({ page }) => {
     await authenticateUser(page);
@@ -19,7 +28,7 @@ test("accounts renders translated labels", async ({ page }) => {
     await page.getByRole("button", { name: "+ Nouveau compte" }).click();
     await expect(page.getByRole("heading", { name: "Nouveau compte" })).toBeVisible();
     await expect(page.getByLabel("Nom du compte")).toBeVisible();
-    await expect(page.getByText("Créez d'abord une institution, puis revenez ici.")).toBeVisible();
+    await expect(page.getByText("Saisissez au moins 3 caractères pour rechercher une institution")).toBeVisible();
 });
 
 test("accounts can show and reactivate closed accounts", async ({ page }) => {
@@ -50,7 +59,11 @@ test("accounts can show and reactivate closed accounts", async ({ page }) => {
         const request = route.request();
         if (request.method() === "POST") {
             reactivated = true;
-            return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(accountPage().items[0]) });
+            return route.fulfill({
+                status: 200,
+                contentType: "application/json",
+                body: JSON.stringify(accountPage().items[0]),
+            });
         }
         const includeClosed = new URL(request.url()).searchParams.get("includeClosed") === "true";
         return route.fulfill({
@@ -63,7 +76,10 @@ test("accounts can show and reactivate closed accounts", async ({ page }) => {
         route.fulfill({
             status: 200,
             contentType: "application/json",
-            body: JSON.stringify({ ...emptyPage, items: [{ id: "inst-1", name: "Bank", country: "FR", type: "BANK", bic: null }] }),
+            body: JSON.stringify({
+                ...emptyPage,
+                items: [{ id: "inst-1", name: "Bank", country: "FR", type: "BANK", bic: null }],
+            }),
         })
     );
 
@@ -71,10 +87,9 @@ test("accounts can show and reactivate closed accounts", async ({ page }) => {
     await expect(page.getByText("Old savings")).not.toBeVisible();
     await page.getByText("Show closed accounts").click();
     await expect(page.getByText("Old savings")).toBeVisible();
-    await expect(page.getByRole("link", { name: "View transaction history for closed account Old savings" })).toHaveAttribute(
-        "href",
-        "/transactions?accountId=acc-1"
-    );
+    await expect(
+        page.getByRole("link", { name: "View transaction history for closed account Old savings" })
+    ).toHaveAttribute("href", "/transactions?accountId=acc-1");
     await page.getByRole("button", { name: "Reactivate account" }).click();
     await expect(page.getByText("Active")).toBeVisible();
 });

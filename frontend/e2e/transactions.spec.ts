@@ -9,7 +9,17 @@ test("transactions renders translated labels", async ({ page }) => {
             status: 200,
             contentType: "application/json",
             body: JSON.stringify({
-                items: [{ id: "acc-1", userId: "user-123", institutionId: "inst-1", name: "Compte courant", type: "CHECKING", currency: "EUR", status: "ACTIVE" }],
+                items: [
+                    {
+                        id: "acc-1",
+                        userId: "user-123",
+                        institutionId: "inst-1",
+                        name: "Compte courant",
+                        type: "CHECKING",
+                        currency: "EUR",
+                        status: "ACTIVE",
+                    },
+                ],
                 totalItems: 1,
                 totalPages: 1,
                 page: 0,
@@ -24,7 +34,16 @@ test("transactions renders translated labels", async ({ page }) => {
         route.fulfill({
             status: 200,
             contentType: "application/json",
-            body: JSON.stringify({ items: [], totalItems: 0, totalPages: 1, page: 0, pageSize: 20, isEmpty: true, isFirst: true, isLast: true }),
+            body: JSON.stringify({
+                items: [],
+                totalItems: 0,
+                totalPages: 1,
+                page: 0,
+                pageSize: 20,
+                isEmpty: true,
+                isFirst: true,
+                isLast: true,
+            }),
         })
     );
 
@@ -63,7 +82,17 @@ test("transactions supports date filters, details, and delete", async ({ page })
             status: 200,
             contentType: "application/json",
             body: JSON.stringify({
-                items: [{ id: "acc-1", userId: "user-123", institutionId: "inst-1", name: "Main", type: "CHECKING", currency: "EUR", status: "ACTIVE" }],
+                items: [
+                    {
+                        id: "acc-1",
+                        userId: "user-123",
+                        institutionId: "inst-1",
+                        name: "Main",
+                        type: "CHECKING",
+                        currency: "EUR",
+                        status: "ACTIVE",
+                    },
+                ],
                 totalItems: 1,
                 totalPages: 1,
                 page: 0,

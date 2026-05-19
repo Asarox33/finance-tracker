@@ -53,7 +53,9 @@
     border: 1px solid var(--border);
     border-radius: 999px;
     background: var(--surface-2);
-    transition: border-color var(--transition), background var(--transition);
+    transition:
+        border-color var(--transition),
+        background var(--transition);
 }
 
 .switchThumb {
@@ -64,7 +66,9 @@
     height: 0.75rem;
     border-radius: 999px;
     background: var(--text-dim);
-    transition: background var(--transition), transform var(--transition);
+    transition:
+        background var(--transition),
+        transform var(--transition);
 }
 
 .switchControl input:checked + .switchTrack {

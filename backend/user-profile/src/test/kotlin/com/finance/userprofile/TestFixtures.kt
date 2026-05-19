@@ -19,4 +19,12 @@ fun testProfile(
     displayName: String = "johndoe",
     preferredCurrency: Currency = Currency.EUR,
     preferredLanguage: DisplayLanguage = DisplayLanguage.ENG
-) = UserProfile(id, firstName, lastName, displayName, preferredCurrency, preferredLanguage, null)
+) = UserProfile(
+    id,
+    firstName,
+    lastName,
+    displayName,
+    preferredCurrency,
+    preferredLanguage,
+    null
+)

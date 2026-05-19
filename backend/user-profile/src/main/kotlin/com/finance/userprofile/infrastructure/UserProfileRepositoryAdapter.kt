@@ -19,6 +19,8 @@ class UserProfileRepositoryAdapter(
                 it.preferredCurrency = profile.preferredCurrency
                 it.preferredLanguage = profile.preferredLanguage
                 it.birthDate = profile.birthDate
+                it.tablePageSize = profile.tablePageSize
+                it.sessionTimeoutMinutes = profile.sessionTimeoutMinutes
             }
             ?: JpaUserProfileEntity(
                 id = profile.id,
@@ -27,7 +29,9 @@ class UserProfileRepositoryAdapter(
                 displayName = profile.displayName,
                 preferredCurrency = profile.preferredCurrency,
                 preferredLanguage = profile.preferredLanguage,
-                birthDate = profile.birthDate
+                birthDate = profile.birthDate,
+                tablePageSize = profile.tablePageSize,
+                sessionTimeoutMinutes = profile.sessionTimeoutMinutes
             )
         return jpaRepo.save(entity).toDomain()
     }
@@ -43,5 +47,7 @@ private fun JpaUserProfileEntity.toDomain() = UserProfile(
     displayName = displayName,
     preferredCurrency = preferredCurrency,
     preferredLanguage = preferredLanguage,
-    birthDate = birthDate
+    birthDate = birthDate,
+    tablePageSize = tablePageSize,
+    sessionTimeoutMinutes = sessionTimeoutMinutes
 )

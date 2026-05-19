@@ -23,5 +23,6 @@
     "editor.defaultFormatter": "fwcd.kotlin"
   },
   "eslint.workingDirectories": ["frontend"],
-  "java.compile.nullAnalysis.mode": "automatic"
+  "java.compile.nullAnalysis.mode": "automatic",
+  "java.configuration.updateBuildConfiguration": "interactive"
 }

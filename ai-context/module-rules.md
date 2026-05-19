@@ -43,7 +43,9 @@
 - `SecureOtpGenerator` uses `SecureRandom`
 - `SpringPasswordEncoder` wraps BCrypt
 - `JwtAuthenticationFilter` validates Bearer token; sets `SecurityContextHolder` principal = user UUID string
-- `TokenService` issues **short-lived access JWT** (`auth.jwt.access-expiration-ms`, default/max 10 min); `RefreshSessionPolicy` caps opaque **refresh tokens** stored hashed in `auth.refresh_tokens` to default/max 10 min via `auth.refresh.expiration-ms`
+- `TokenService` issues access JWT with env default **10 min** and hard cap **15 min** (`TokenService.MAX_ACCESS_EXPIRATION_MS`); per-user TTL from `SessionTimeoutPort` / `GetUserProfile` on login and refresh
+- `RefreshSessionPolicy` caps opaque **refresh tokens** (env default **10 min**, max **15 min**); effective TTL = `min(profile.sessionTimeoutMinutes, cap)`
+- `SessionTimeoutAdapter` reads `sessionTimeoutMinutes` from user-profile (**5–15**, default **10**)
 - `POST /api/auth/refresh` and `POST /api/auth/logout` skip Bearer validation in `JwtAuthenticationFilter` so an expired access token does not block rotation or sign-out
 
 **Dependencies:** `user-profile` (via `CreateUserProfilePort` — creates a profile on registration)
@@ -52,7 +54,7 @@
 - `POST /api/auth/login` → JSON `{ accessToken }` (JWT) + **httpOnly** refresh cookie `ft_refresh` (path `/api`); frontend stores access token in `localStorage` and sends `credentials: "include"` on API calls
 - `POST /api/auth/refresh` → JSON `{ accessToken }` + new refresh cookie (rotation)
 - `POST /api/auth/logout` → 204 + clears refresh cookie; frontend clears access token from `localStorage`
-- Authenticated pages must force logout after 10 minutes of inactivity; the final warning is 15 seconds, and wake/focus checks must enforce the wall-clock deadline.
+- Idle timeout follows `profile.sessionTimeoutMinutes` (**5–15**, default **10**) via `useSessionTimeout` in `AppShell`; applies on **next login or refresh**, not immediately when saved on Profile. Final warning is **15 seconds**; wake/focus checks enforce the wall-clock deadline.
 - `POST /api/auth/register` → returns `{ userId }`; frontend redirects to `/login?registered=1`
 - `POST /api/auth/password-reset/request` → 204; frontend advances to OTP entry step
 - `POST /api/auth/password-reset/confirm` → 204; frontend shows success screen
@@ -62,18 +64,20 @@
 
 ### user-profile
 
-**Purpose:** Stores display name, first/last name, preferred currency, preferred display language, birth date.
+**Purpose:** Stores display name, first/last name, preferred currency, preferred display language, birth date, list pagination, and session timeout preferences.
 
 **Domain rules:**
 - `firstName`, `lastName`, `displayName` must not be blank
 - Profile ID equals the auth user ID (same UUID, no auto-increment)
 - Profile is created during registration with placeholder values (`"Unknown"` names, `USD` currency, `ENG` language)
+- `tablePageSize` must be one of **10, 20, 50, 100** (default **20**)
+- `sessionTimeoutMinutes` must be **5–15** inclusive (default **10**)
 
 **Key use cases:** `CreateUserProfile`, `GetUserProfile`, `UpdateUserPreferences`
 
 **Frontend integration:**
-- `GET /api/users/me` → returns `UserProfile`; used in `AppShell` to show `displayName`, select the i18n dictionary, and in `/profile` page to pre-fill the form
-- `PUT /api/users/me/preferences` → updates name, display name, preferred currency, preferred language, birth date
+- `GET /api/users/me` → returns `UserProfile`; used in `AppShell` to show `displayName`, select the i18n dictionary, drive `useTablePageSize` / idle timeout, and in `/profile` page to pre-fill the form
+- `PUT /api/users/me/preferences` → updates name, display name, preferred currency, preferred language, birth date, `tablePageSize`, `sessionTimeoutMinutes`
 - The profile form is pre-populated via `useEffect` watching the SWR data; updates trigger `mutate()` to refresh
 - Preferred language values are `ENG`, `FRA`, `ESP`, and `ITA`; frontend maps them to locale tags for dictionaries and formatting
 
@@ -93,7 +97,7 @@
 **Frontend integration:**
 - **`/institutions`** — list ordered by institution name with debounced name/country/type filters, localized country-name sorted dropdowns, clear-filters action, pagination, shared-repository notice, create form with client validation, and cards showing colored institution type, readable country, flag, and optional BIC. Feature code lives in `src/features/institutions/` (API + hooks + tests); E2E in `e2e/institutions.spec.ts`.
 - Institutions are shared reference data across users. `createdByUserId` is audit metadata, not an ownership boundary for visibility.
-- **Account creation (`/accounts`)** uses a first-page institution picker backed by `useInstitutions(0, undefined, undefined, 200)`. Upgrade to a searchable/paginated picker if institution volume outgrows that cap.
+- **Account creation (`/accounts`)** uses **`InstitutionPicker`** + `useInstitutionSearch`: debounced name filter (**250 ms**), API search only when query length ≥ **3**, `pageSize` **20** — no bulk load on mount.
 
 ---
 
@@ -139,7 +143,7 @@
 - Account types shown as colored labels and filter options: `CHECKING`, `SAVINGS`, `BROKERAGE`, `CRYPTO`, `REAL_ESTATE`, `RETIREMENT`, `OTHER`
 - Currency picker uses full ISO 4217 list from `src/lib/currencies.ts`
 - `ACTIVE` accounts are shown by default in the transaction page's account selector; closed accounts are available through an include-closed toggle for read-only history.
-- Dashboard shows a count of active accounts and a breakdown table (via `portfolioValue.snapshots`) with account and institution type badges under the names.
+- Dashboard breakdown uses **enriched** `portfolioValue.snapshots` only (account/institution names and types from analytics); no join with paginated `/accounts` or `/institutions` lists. Active account count = `snapshots.length`. Client pagination via `profile.tablePageSize` and `ListPagination`.
 
 ---
 
@@ -261,7 +265,8 @@
 
 | Port | Backed by |
 |---|---|
-| `AccountPort` | `ListUserAccounts` use case |
+| `AccountPort` | `ListUserAccounts` use case (`includeClosed = false`, up to 1000) |
+| `InstitutionPort` | `ListInstitutions` use case (up to 1000) |
 | `TransactionPort` | `ListAccountTransactions` use case |
 | `FeePort` | `ListFees` use case |
 | `FxRatePort` | `GetFxRate` use case |
@@ -289,7 +294,7 @@
 - Same shape for `performance-after-fees` and `performance-after-inflation`
 - Dashboard uses `useReferenceCurrency()` to feed profile `preferredCurrency` into `usePortfolioValue()` and `usePerformance(..., 12)` for KPI cards
 - Dashboard shows a contextual getting-started checklist while setup is incomplete (institution, account, transaction/portfolio snapshot), instead of duplicating permanent sidebar navigation
-- Dashboard Account Breakdown rows default to sorting by reference-currency value descending, expose sortable account/institution/value column headers, and include a dedicated link to `/transactions?accountId=<id>`; account-scoped analytics links remain deferred until analytics supports account filters.
+- Each `AccountSnapshot` includes `accountName`, `accountType`, `institutionId`, `institutionName`, `institutionType` (fallbacks `"Unknown"` / `OTHER` if institution missing). Dashboard Account Breakdown rows default to sorting by reference-currency value descending, expose sortable account/institution/value column headers, and include a dedicated link to `/transactions?accountId=<id>`; account-scoped analytics links remain deferred until analytics supports account filters.
 - Dashboard currently shows current global state; backlog item: decide whether to add an `asOf` date picker here or keep historical date exploration in Analytics.
 - Analytics page adds period selector (3M/6M/1Y/3Y) that changes the `months` parameter; `monthsAgo(n)` and `today()` compute the date range. Backlog: add YTD.
 - All three performance variants are shown side-by-side in a comparison grid and detail table
@@ -365,13 +370,13 @@
 |---|---|
 | `ApiError` | `{ message, errors?, correlationId? }` — shape of backend error responses |
 | `PageResult<T>` | `{ items, totalItems, totalPages, page, pageSize, isEmpty, isFirst, isLast }` |
-| `UserProfile` | `{ id, firstName, lastName, displayName, preferredCurrency, birthDate }` |
+| `UserProfile` | `{ id, firstName, lastName, displayName, preferredCurrency, preferredLanguage, birthDate, tablePageSize, sessionTimeoutMinutes }` |
 | `Account` | `{ id, userId, institutionId, name, type, currency, status }` |
 | `AccountType` | Union: `"CHECKING" \| "SAVINGS" \| "BROKERAGE" \| "CRYPTO" \| "REAL_ESTATE" \| "RETIREMENT" \| "OTHER"` |
 | `Transaction` | Full transaction with FX rate fields |
 | `TransactionType` | Union: `"DEPOSIT" \| "WITHDRAWAL" \| "TRANSFER" \| "BUY" \| "SELL" \| "DIVIDEND" \| "FEE" \| "TAX" \| "OTHER"` |
 | `PortfolioValue` | `{ totalValue, currency, asOf, snapshots: AccountSnapshot[] }` |
-| `AccountSnapshot` | Per-account value in account currency and reference currency |
+| `AccountSnapshot` | Per-account value plus `accountName`, `accountType`, `institutionId`, `institutionName`, `institutionType` |
 | `PortfolioPerformance` | `{ startValue, endValue, currency, gainLoss, gainLossBasisPoints, from, to }` |
 
 **Rules:**

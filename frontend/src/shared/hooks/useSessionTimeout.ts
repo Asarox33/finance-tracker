@@ -5,11 +5,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useLogout } from "@/features/auth/hooks/useAuth";
 import { getAccessTokenExpiryMs, getToken, refreshAccessToken, subscribeAccessTokenChange } from "@/lib/http";
 
-const IDLE_TIMEOUT_MS = 10 * 60 * 1000;
+const DEFAULT_IDLE_TIMEOUT_MS = 10 * 60 * 1000;
 const GRACE_COUNTDOWN_SEC = 15;
 const IDLE_WARNING_BEFORE_MS = GRACE_COUNTDOWN_SEC * 1000;
 const JWT_WARNING_BEFORE_MS = 15 * 1000;
-const REFRESH_AHEAD_MS = 2 * 60 * 1000;
+const MAX_REFRESH_AHEAD_MS = 2 * 60 * 1000;
 const ACTIVITY_THROTTLE_MS = 1000;
 const PROACTIVE_REFRESH_THROTTLE_MS = 60 * 1000;
 const EVENTS = ["mousedown", "mousemove", "keydown", "scroll", "touchstart"];
@@ -32,10 +32,15 @@ function secondsUntil(deadlineAt: number): number {
     return Math.max(0, Math.ceil((deadlineAt - Date.now()) / 1000));
 }
 
-export function useSessionTimeout() {
+export function useSessionTimeout(idleTimeoutMs: number = DEFAULT_IDLE_TIMEOUT_MS) {
     const { logout } = useLogout();
     const logoutRef = useRef(logout);
     logoutRef.current = logout;
+
+    const idleTimeoutMsRef = useRef(idleTimeoutMs);
+    idleTimeoutMsRef.current = idleTimeoutMs;
+
+    const refreshAheadMs = Math.min(MAX_REFRESH_AHEAD_MS, Math.floor(idleTimeoutMs / 2));
 
     const warningOpenRef = useRef(false);
     const reasonRef = useRef<SessionTimeoutReason>("idle");
@@ -127,7 +132,7 @@ export function useSessionTimeout() {
     const tryProactiveRefreshIfNeeded = useCallback(async () => {
         if (warningOpenRef.current) return;
         const remaining = remainingMs();
-        if (remaining == null || remaining > REFRESH_AHEAD_MS) return;
+        if (remaining == null || remaining > refreshAheadMs) return;
 
         const now = Date.now();
         if (now - lastProactiveRefreshRef.current < PROACTIVE_REFRESH_THROTTLE_MS) return;
@@ -139,7 +144,7 @@ export function useSessionTimeout() {
         } else if (remaining <= JWT_WARNING_BEFORE_MS) {
             openWarning("jwt");
         }
-    }, [openWarning, scheduleJwtWarning]);
+    }, [openWarning, refreshAheadMs, scheduleJwtWarning]);
 
     const checkIdleDeadline = useCallback(() => {
         clearIdleTimer();
@@ -164,8 +169,9 @@ export function useSessionTimeout() {
     const armIdleTimer = useCallback(
         (activityAt = Date.now()) => {
             clearIdleTimer();
-            idleDeadlineAtRef.current = activityAt + IDLE_TIMEOUT_MS;
-            idleTimerRef.current = setTimeout(checkIdleDeadline, IDLE_TIMEOUT_MS - IDLE_WARNING_BEFORE_MS);
+            const idleMs = idleTimeoutMsRef.current;
+            idleDeadlineAtRef.current = activityAt + idleMs;
+            idleTimerRef.current = setTimeout(checkIdleDeadline, idleMs - IDLE_WARNING_BEFORE_MS);
         },
         [checkIdleDeadline, clearIdleTimer]
     );
@@ -269,6 +275,7 @@ export function useSessionTimeout() {
         clearJwtTimer,
         clearCountdown,
         closeWarningAndContinue,
+        idleTimeoutMs,
     ]);
 
     const stayConnected = useCallback(async () => {

@@ -82,9 +82,7 @@ export default function ResetPage() {
                             ◈
                         </span>
                         <h1 className={styles.title}>{t("auth.resetConfirmTitle")}</h1>
-                        <p className={styles.subtitle}>
-                            {t("auth.resetCodeSent", { email })}
-                        </p>
+                        <p className={styles.subtitle}>{t("auth.resetCodeSent", { email })}</p>
                     </header>
 
                     <form onSubmit={handleConfirm} noValidate aria-label={t("auth.resetConfirmFormAria")}>

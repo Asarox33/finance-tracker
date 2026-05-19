@@ -13,11 +13,15 @@ data class UserProfile(
     val displayName: String,
     val preferredCurrency: Currency,
     val preferredLanguage: DisplayLanguage,
-    val birthDate: LocalDate?
+    val birthDate: LocalDate?,
+    val tablePageSize: Int = UserProfilePreferences.DEFAULT_TABLE_PAGE_SIZE,
+    val sessionTimeoutMinutes: Int = UserProfilePreferences.DEFAULT_SESSION_TIMEOUT_MINUTES
 ) {
     init {
         if (firstName.isBlank()) throw BusinessRuleViolationException("First name must not be blank")
         if (lastName.isBlank()) throw BusinessRuleViolationException("Last name must not be blank")
         if (displayName.isBlank()) throw BusinessRuleViolationException("Display name must not be blank")
+        UserProfilePreferences.validateTablePageSize(tablePageSize)
+        UserProfilePreferences.validateSessionTimeoutMinutes(sessionTimeoutMinutes)
     }
 }

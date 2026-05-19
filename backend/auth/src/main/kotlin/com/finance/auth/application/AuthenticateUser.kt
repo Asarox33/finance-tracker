@@ -11,7 +11,7 @@ class AuthenticateUser(
     private val tokenIssuer: TokenIssuer,
     private val refreshTokenRepository: RefreshTokenRepository,
     private val refreshTokenFactory: RefreshTokenFactory,
-    private val refreshTtl: java.time.Duration,
+    private val sessionTimeoutPort: SessionTimeoutPort,
     private val clock: java.time.Clock = java.time.Clock.systemUTC()
 ) {
     data class Command(val email: String, val rawPassword: String)
@@ -30,9 +30,10 @@ class AuthenticateUser(
 
         userRepository.save(user.recordSuccessfulLogin())
 
-        val access = tokenIssuer.issue(user.id)
+        val sessionTtl = SessionTtl.fromMinutes(sessionTimeoutPort.getSessionTimeoutMinutes(user.id))
+        val access = tokenIssuer.issue(user.id, sessionTtl)
         val opaque = refreshTokenFactory.create()
-        val expiresAt = now.plus(refreshTtl)
+        val expiresAt = now.plus(sessionTtl)
         refreshTokenRepository.save(
             RefreshToken(
                 id = java.util.UUID.randomUUID(),
@@ -43,6 +44,10 @@ class AuthenticateUser(
                 createdAt = now
             )
         )
-        return IssuedAuthSession(accessToken = access.value, refreshTokenPlain = opaque.plainText)
+        return IssuedAuthSession(
+            accessToken = access.value,
+            refreshTokenPlain = opaque.plainText,
+            refreshMaxAge = sessionTtl
+        )
     }
 }

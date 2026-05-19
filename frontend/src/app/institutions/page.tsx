@@ -2,6 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useInstitutions } from "@/features/institutions/hooks/useInstitutions";
+import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
+import { useTablePageSize } from "@/shared/hooks/useTablePageSize";
+import ListPagination from "@/shared/components/ListPagination";
 import { INSTITUTION_TYPES, institutionsApi, type InstitutionType } from "@/features/institutions/api/institutionsApi";
 import { Button, Card, EmptyState, ErrorState, PageHeader, Skeleton } from "@/shared/components/ui";
 import { useI18n, type TranslationKey } from "@/shared/i18n";
@@ -31,17 +34,18 @@ export default function InstitutionsPage() {
     const hasActiveFilters = debouncedNameFilter.length > 0 || countryFilter.length > 0 || typeFilter.length > 0;
     const countries = useLocalizedCountries(locale);
 
+    const { pageSize, setPageSize } = useTablePageSize();
     const { data, isLoading, error, mutate } = useInstitutions(
         page,
         debouncedNameFilter || undefined,
         countryFilter || undefined,
-        20,
+        pageSize,
         typeFilter || undefined
     );
 
     useEffect(() => {
         setPage(0);
-    }, [debouncedNameFilter, countryFilter, typeFilter]);
+    }, [debouncedNameFilter, countryFilter, typeFilter, pageSize]);
 
     function clearFilters() {
         setNameSearch("");
@@ -160,28 +164,18 @@ export default function InstitutionsPage() {
                     </div>
                 )}
 
-                {data && data.totalPages > 1 && (
-                    <nav className={styles.pagination} aria-label={t("institutions.pagesAria")}>
-                        <button
-                            className={styles.pageBtn}
-                            onClick={() => setPage((p) => p - 1)}
-                            disabled={data.isFirst}
-                            aria-label={t("common.previousPage")}
-                        >
-                            ←
-                        </button>
-                        <span className={styles.pageInfo} aria-live="polite">
-                            {t("common.pageOfTotal", { page: page + 1, total: data.totalPages })}
-                        </span>
-                        <button
-                            className={styles.pageBtn}
-                            onClick={() => setPage((p) => p + 1)}
-                            disabled={data.isLast}
-                            aria-label={t("common.nextPage")}
-                        >
-                            →
-                        </button>
-                    </nav>
+                {data && data.totalItems > 0 && (
+                    <ListPagination
+                        page={page}
+                        pageSize={pageSize}
+                        totalItems={data.totalItems}
+                        onPageChange={setPage}
+                        onPageSizeChange={(size) => {
+                            void setPageSize(size);
+                            setPage(0);
+                        }}
+                        ariaLabel={t("institutions.pagesAria")}
+                    />
                 )}
             </div>
         </div>
@@ -395,15 +389,4 @@ function useLocalizedCountries(locale: string): { code: string; name: string }[]
             name: formatCountryName(country.code, locale, country.name),
         })).sort((a, b) => a.name.localeCompare(b.name, locale, { sensitivity: "base" }));
     }, [locale]);
-}
-
-function useDebouncedValue<T>(value: T, delayMs: number): T {
-    const [debounced, setDebounced] = useState(value);
-
-    useEffect(() => {
-        const timer = window.setTimeout(() => setDebounced(value), delayMs);
-        return () => window.clearTimeout(timer);
-    }, [value, delayMs]);
-
-    return debounced;
 }

@@ -42,9 +42,7 @@ export function useLogin() {
             const apiErr = err as ApiError;
             const locked = apiErr?.message?.toLowerCase().includes("locked") ?? false;
             setError({
-                message: locked
-                    ? t("auth.lockedError")
-                    : (apiErr.message ?? t("auth.loginFallback")),
+                message: locked ? t("auth.lockedError") : (apiErr.message ?? t("auth.loginFallback")),
                 locked,
             });
         } finally {

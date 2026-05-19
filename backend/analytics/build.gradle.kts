@@ -10,6 +10,7 @@ kotlin {
 dependencies {
     implementation(project(":shared"))
     implementation(project(":account"))
+    implementation(project(":institution"))
     implementation(project(":transaction"))
     implementation(project(":fees"))
     implementation(project(":price"))

@@ -6,12 +6,13 @@ import { SUPPORTED_LANGUAGES, useI18n } from "@/shared/i18n";
 import type { DisplayLanguage } from "@/shared/types";
 import styles from "./LanguageToggle.module.css";
 
-const LANGUAGE_LABEL_KEYS: Record<DisplayLanguage, "language.ENG" | "language.FRA" | "language.ESP" | "language.ITA"> = {
-    ENG: "language.ENG",
-    FRA: "language.FRA",
-    ESP: "language.ESP",
-    ITA: "language.ITA",
-};
+const LANGUAGE_LABEL_KEYS: Record<DisplayLanguage, "language.ENG" | "language.FRA" | "language.ESP" | "language.ITA"> =
+    {
+        ENG: "language.ENG",
+        FRA: "language.FRA",
+        ESP: "language.ESP",
+        ITA: "language.ITA",
+    };
 
 const LANGUAGE_FLAG_CODES: Record<DisplayLanguage, string> = {
     ENG: "gb",

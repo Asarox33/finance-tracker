@@ -58,10 +58,10 @@ info:
 auth:
   jwt:
     secret: ${AUTH_JWT_SECRET}
-    # Default 10 minutes (ms); max enforced in TokenService. Per-user 2–10 min preference planned in user-profile.
+    # Default 10 minutes (ms); max enforced in TokenService (15 min). Per-user 5–15 min via user-profile.
     access-expiration-ms: ${AUTH_JWT_ACCESS_EXPIRATION_MS:600000}
   refresh:
-    # Default 10 minutes (ms); max enforced in RefreshSessionPolicy.
+    # Default 10 minutes (ms); max enforced in RefreshSessionPolicy (15 min).
     expiration-ms: ${AUTH_REFRESH_EXPIRATION_MS:600000}
   refresh-cookie:
     secure: ${AUTH_REFRESH_COOKIE_SECURE:true}

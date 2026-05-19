@@ -1,15 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { usePerformance, usePortfolioValue } from "@/features/analytics/hooks/useAnalytics";
-import { useAccounts } from "@/features/accounts/hooks/useAccounts";
 import { useInstitutions } from "@/features/institutions/hooks/useInstitutions";
 import { useReferenceCurrency } from "@/shared/hooks/useReferenceCurrency";
+import { useTablePageSize } from "@/shared/hooks/useTablePageSize";
+import ListPagination from "@/shared/components/ListPagination";
 import { Card, ErrorState, PageHeader, Skeleton } from "@/shared/components/ui";
 import { useFormatters, useI18n, type TranslationKey } from "@/shared/i18n";
-import type { Account, AccountSnapshot, AccountType, Institution } from "@/shared/types";
+import type { AccountSnapshot, AccountType } from "@/shared/types";
 import { formatBasisPoints, today } from "@/lib/format";
 import styles from "./page.module.css";
 
@@ -46,45 +47,47 @@ export default function DashboardPage() {
         key: "referenceValue",
         direction: "desc",
     });
+    const [breakdownPage, setBreakdownPage] = useState(0);
+    const { pageSize, setPageSize } = useTablePageSize();
 
     const { data: portfolio, isLoading: pvLoading, error: pvError } = usePortfolioValue(analyticsCurrency);
     const { data: perf, isLoading: perfLoading, error: perfError } = usePerformance(analyticsCurrency, 12);
-    const { data: accounts, isLoading: accLoading, error: accError } = useAccounts();
-    const { data: institutions, isLoading: instLoading, error: instError } = useInstitutions();
+    const { data: institutionsCheck } = useInstitutions(0, undefined, undefined, 1);
     const { formatDate, formatMoney } = useFormatters();
     const { t } = useI18n();
 
-    const accountById = useMemo(() => {
-        return new Map(accounts?.items.map((a) => [a.id, a]) ?? []);
-    }, [accounts]);
-
-    const institutionById = useMemo(() => {
-        return new Map(institutions?.items.map((i) => [i.id, i]) ?? []);
-    }, [institutions]);
-
-    const breakdownLoading = currencyLoading || pvLoading || accLoading || instLoading;
+    const breakdownLoading = currencyLoading || pvLoading;
     const kpiLoading = currencyLoading || pvLoading;
     const perfKpiLoading = currencyLoading || perfLoading;
 
     const gainPositive = (perf?.gainLossBasisPoints ?? 0) >= 0;
-    const breakdownError = pvError || accError || instError;
+    const breakdownError = pvError;
     const hasSnapshots = (portfolio?.snapshots.length ?? 0) > 0;
     const nonZeroSnapshotCount =
         portfolio?.snapshots.filter(
             (snapshot) => snapshot.valueInAccountCurrency !== 0 || snapshot.valueInReferenceCurrency !== 0
         ).length ?? 0;
     const hasPortfolioActivity = nonZeroSnapshotCount > 0;
-    const hasInstitutions = (institutions?.items.length ?? 0) > 0;
-    const activeAccountsCount = accounts?.items.filter((a) => a.status === "ACTIVE").length ?? 0;
+    const hasInstitutions = (institutionsCheck?.totalItems ?? 0) > 0;
+    const activeAccountsCount = portfolio?.snapshots.length ?? 0;
     const showingGettingStarted =
-        !breakdownLoading && !breakdownError && (!hasInstitutions || activeAccountsCount === 0 || !hasPortfolioActivity);
+        !breakdownLoading &&
+        !breakdownError &&
+        (!hasInstitutions || activeAccountsCount === 0 || !hasPortfolioActivity);
     const showAccountBreakdown = !breakdownLoading && !breakdownError && hasSnapshots;
     const showAccountBreakdownTitle = breakdownLoading || Boolean(breakdownError) || showAccountBreakdown;
     const sortedSnapshots = useMemo(() => {
-        return [...(portfolio?.snapshots ?? [])].sort((a, b) =>
-            compareSnapshots(a, b, breakdownSort, accountById, institutionById)
-        );
-    }, [accountById, breakdownSort, institutionById, portfolio?.snapshots]);
+        return [...(portfolio?.snapshots ?? [])].sort((a, b) => compareSnapshots(a, b, breakdownSort));
+    }, [breakdownSort, portfolio?.snapshots]);
+
+    const pagedSnapshots = useMemo(() => {
+        const start = breakdownPage * pageSize;
+        return sortedSnapshots.slice(start, start + pageSize);
+    }, [breakdownPage, pageSize, sortedSnapshots]);
+
+    useEffect(() => {
+        setBreakdownPage(0);
+    }, [breakdownSort, pageSize, portfolio?.snapshots.length]);
 
     const handleBreakdownSort = (key: BreakdownSortKey) => {
         setBreakdownSort((current) => {
@@ -98,7 +101,10 @@ export default function DashboardPage() {
 
     return (
         <div className={styles.page}>
-            <PageHeader title={t("dashboard.title")} description={t("dashboard.asOfDate", { date: formatDate(today()) })} />
+            <PageHeader
+                title={t("dashboard.title")}
+                description={t("dashboard.asOfDate", { date: formatDate(today()) })}
+            />
 
             <div className={styles.body}>
                 <section aria-label={t("dashboard.portfolioOverviewAria")} className={styles.kpis}>
@@ -139,14 +145,12 @@ export default function DashboardPage() {
 
                     <Card className={styles.kpi}>
                         <p className={styles.kpiLabel}>{t("dashboard.activeAccounts")}</p>
-                        {accLoading ? (
+                        {breakdownLoading ? (
                             <Skeleton className={styles.kpiSkel} />
-                        ) : accError ? (
+                        ) : pvError ? (
                             <ErrorState message={t("dashboard.loadBreakdownError")} />
                         ) : (
-                            <p className={styles.kpiValue}>
-                                {accounts?.items.filter((a) => a.status === "ACTIVE").length ?? 0}
-                            </p>
+                            <p className={styles.kpiValue}>{activeAccountsCount}</p>
                         )}
                         <p className={styles.kpiSub}>{t("dashboard.acrossInstitutions")}</p>
                     </Card>
@@ -217,47 +221,42 @@ export default function DashboardPage() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {sortedSnapshots.map((snap) => {
-                                        const account = accountById.get(snap.accountId);
-                                        const institution = account
-                                            ? institutionById.get(account.institutionId)
-                                            : undefined;
+                                    {pagedSnapshots.map((snap) => {
+                                        const accountType = snap.accountType as AccountType;
                                         return (
                                             <tr key={snap.accountId}>
                                                 <td>
                                                     <div className={styles.entityCell}>
-                                                        <span className={styles.entityName} title={account?.name ?? "—"}>
-                                                            {account?.name ?? "—"}
+                                                        <span className={styles.entityName} title={snap.accountName}>
+                                                            {snap.accountName}
                                                         </span>
-                                                        {account && (
-                                                            <span
-                                                                className={`${styles.typePill} ${
-                                                                    ACCOUNT_TYPE_CLASSES[account.type]
-                                                                }`}
-                                                            >
-                                                                {t(`accountType.${account.type}` as TranslationKey)}
-                                                            </span>
-                                                        )}
+                                                        <span
+                                                            className={`${styles.typePill} ${
+                                                                ACCOUNT_TYPE_CLASSES[accountType] ?? styles.typeOther
+                                                            }`}
+                                                        >
+                                                            {t(`accountType.${accountType}` as TranslationKey)}
+                                                        </span>
                                                     </div>
                                                 </td>
                                                 <td>
                                                     <div className={styles.entityCell}>
                                                         <span
                                                             className={styles.entityName}
-                                                            title={institution?.name ?? "—"}
+                                                            title={snap.institutionName}
                                                         >
-                                                            {institution?.name ?? "—"}
+                                                            {snap.institutionName}
                                                         </span>
-                                                        {institution && (
-                                                            <span
-                                                                className={`${styles.typePill} ${
-                                                                    INSTITUTION_TYPE_CLASSES[institution.type] ??
-                                                                    styles.typeOther
-                                                                }`}
-                                                            >
-                                                                {t(`institutionType.${institution.type}` as TranslationKey)}
-                                                            </span>
-                                                        )}
+                                                        <span
+                                                            className={`${styles.typePill} ${
+                                                                INSTITUTION_TYPE_CLASSES[snap.institutionType] ??
+                                                                styles.typeOther
+                                                            }`}
+                                                        >
+                                                            {t(
+                                                                `institutionType.${snap.institutionType}` as TranslationKey
+                                                            )}
+                                                        </span>
                                                     </div>
                                                 </td>
                                                 <td
@@ -277,28 +276,34 @@ export default function DashboardPage() {
                                                     {formatMoney(snap.valueInReferenceCurrency, snap.referenceCurrency)}
                                                 </td>
                                                 <td>
-                                                    {account && (
-                                                        <Link
-                                                            href={`/transactions?accountId=${encodeURIComponent(
-                                                                account.id
-                                                            )}`}
-                                                            className={styles.transactionLink}
-                                                            aria-label={t("dashboard.viewTransactionsAria", {
-                                                                accountName: account.name,
-                                                            })}
-                                                            title={t("dashboard.viewTransactionsAria", {
-                                                                accountName: account.name,
-                                                            })}
-                                                        >
-                                                            <span aria-hidden="true">⇄</span>
-                                                        </Link>
-                                                    )}
+                                                    <Link
+                                                        href={`/transactions?accountId=${encodeURIComponent(snap.accountId)}`}
+                                                        className={styles.transactionLink}
+                                                        aria-label={t("dashboard.viewTransactionsAria", {
+                                                            accountName: snap.accountName,
+                                                        })}
+                                                        title={t("dashboard.viewTransactionsAria", {
+                                                            accountName: snap.accountName,
+                                                        })}
+                                                    >
+                                                        <span aria-hidden="true">⇄</span>
+                                                    </Link>
                                                 </td>
                                             </tr>
                                         );
                                     })}
                                 </tbody>
                             </table>
+                            <ListPagination
+                                page={breakdownPage}
+                                pageSize={pageSize}
+                                totalItems={sortedSnapshots.length}
+                                onPageChange={setBreakdownPage}
+                                onPageSizeChange={(size) => {
+                                    void setPageSize(size);
+                                }}
+                                ariaLabel={t("dashboard.accountBreakdownAria")}
+                            />
                         </Card>
                     ) : null}
                 </section>
@@ -355,29 +360,17 @@ function defaultSortDirection(key: BreakdownSortKey): SortDirection {
     return key === "accountValue" || key === "referenceValue" ? "desc" : "asc";
 }
 
-function compareSnapshots(
-    a: AccountSnapshot,
-    b: AccountSnapshot,
-    sort: BreakdownSort,
-    accountById: Map<string, Account>,
-    institutionById: Map<string, Institution>
-): number {
+function compareSnapshots(a: AccountSnapshot, b: AccountSnapshot, sort: BreakdownSort): number {
     const direction = sort.direction === "asc" ? 1 : -1;
     let result = 0;
 
     switch (sort.key) {
         case "account":
-            result = compareText(accountById.get(a.accountId)?.name, accountById.get(b.accountId)?.name);
+            result = compareText(a.accountName, b.accountName);
             break;
-        case "institution": {
-            const aAccount = accountById.get(a.accountId);
-            const bAccount = accountById.get(b.accountId);
-            result = compareText(
-                aAccount ? institutionById.get(aAccount.institutionId)?.name : undefined,
-                bAccount ? institutionById.get(bAccount.institutionId)?.name : undefined
-            );
+        case "institution":
+            result = compareText(a.institutionName, b.institutionName);
             break;
-        }
         case "accountValue":
             result = a.valueInAccountCurrency - b.valueInAccountCurrency;
             break;
@@ -390,7 +383,7 @@ function compareSnapshots(
         return result * direction;
     }
 
-    return compareText(accountById.get(a.accountId)?.name, accountById.get(b.accountId)?.name) || a.accountId.localeCompare(b.accountId);
+    return compareText(a.accountName, b.accountName) || a.accountId.localeCompare(b.accountId);
 }
 
 function compareText(a?: string, b?: string): number {

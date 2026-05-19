@@ -7,6 +7,7 @@ import com.finance.analytics.application.ComputePortfolioValue
 import com.finance.analytics.domain.ports.AccountPort
 import com.finance.analytics.domain.ports.FeePort
 import com.finance.analytics.domain.ports.FxRatePort
+import com.finance.analytics.domain.ports.InstitutionPort
 import com.finance.analytics.domain.ports.InflationPort
 import com.finance.analytics.domain.ports.TransactionPort
 import org.springframework.context.annotation.Bean
@@ -18,9 +19,10 @@ class AnalyticsConfig {
     @Bean
     fun computePortfolioValue(
         accountPort: AccountPort,
+        institutionPort: InstitutionPort,
         transactionPort: TransactionPort,
         fxRatePort: FxRatePort
-    ): ComputePortfolioValue = ComputePortfolioValue(accountPort, transactionPort, fxRatePort)
+    ): ComputePortfolioValue = ComputePortfolioValue(accountPort, institutionPort, transactionPort, fxRatePort)
 
     @Bean
     fun computePerformance(

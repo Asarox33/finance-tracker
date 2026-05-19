@@ -6,6 +6,7 @@ import { Button, Card, ErrorState, PageHeader, Skeleton } from "@/shared/compone
 import { useI18n } from "@/shared/i18n";
 import type { DisplayLanguage } from "@/shared/types";
 import { CURRENCIES } from "@/lib/currencies";
+import { SESSION_TIMEOUT_OPTIONS, TABLE_PAGE_SIZE_OPTIONS } from "@/lib/pagination";
 import styles from "./page.module.css";
 
 const DISPLAY_LANGUAGES: DisplayLanguage[] = ["ENG", "ESP", "FRA", "ITA"];
@@ -27,6 +28,8 @@ export default function ProfilePage() {
     const [currency, setCurrency] = useState("EUR");
     const [language, setLanguage] = useState<DisplayLanguage>("ENG");
     const [birthDate, setBirthDate] = useState("");
+    const [tablePageSize, setTablePageSize] = useState(20);
+    const [sessionTimeoutMinutes, setSessionTimeoutMinutes] = useState(10);
     const [clientError, setClientError] = useState<string | null>(null);
 
     useEffect(() => {
@@ -37,6 +40,8 @@ export default function ProfilePage() {
             setCurrency(profile.preferredCurrency);
             setLanguage(profile.preferredLanguage);
             setBirthDate(profile.birthDate ?? "");
+            setTablePageSize(profile.tablePageSize);
+            setSessionTimeoutMinutes(profile.sessionTimeoutMinutes);
         }
     }, [profile]);
 
@@ -48,9 +53,21 @@ export default function ProfilePage() {
             displayName !== profile.displayName ||
             currency !== profile.preferredCurrency ||
             language !== profile.preferredLanguage ||
-            birthDate !== (profile.birthDate ?? "")
+            birthDate !== (profile.birthDate ?? "") ||
+            tablePageSize !== profile.tablePageSize ||
+            sessionTimeoutMinutes !== profile.sessionTimeoutMinutes
         );
-    }, [birthDate, currency, displayName, firstName, language, lastName, profile]);
+    }, [
+        birthDate,
+        currency,
+        displayName,
+        firstName,
+        language,
+        lastName,
+        profile,
+        sessionTimeoutMinutes,
+        tablePageSize,
+    ]);
 
     async function handleSubmit(e: FormEvent) {
         e.preventDefault();
@@ -82,6 +99,8 @@ export default function ProfilePage() {
                 preferredCurrency: currency,
                 preferredLanguage: language,
                 birthDate: birthDate || null,
+                tablePageSize,
+                sessionTimeoutMinutes,
             },
             () => mutate()
         );
@@ -232,10 +251,51 @@ export default function ProfilePage() {
                                         {t("profile.languageHint")}
                                     </p>
                                 </div>
+
+                                <div className={styles.field}>
+                                    <label htmlFor="tablePageSize">{t("profile.tablePageSize")}</label>
+                                    <select
+                                        id="tablePageSize"
+                                        value={tablePageSize}
+                                        onChange={(e) => setTablePageSize(Number(e.target.value))}
+                                        disabled={saving}
+                                    >
+                                        {TABLE_PAGE_SIZE_OPTIONS.map((size) => (
+                                            <option key={size} value={size}>
+                                                {size}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div className={styles.field}>
+                                    <label htmlFor="sessionTimeout">{t("profile.sessionTimeoutMinutes")}</label>
+                                    <select
+                                        id="sessionTimeout"
+                                        value={sessionTimeoutMinutes}
+                                        onChange={(e) => setSessionTimeoutMinutes(Number(e.target.value))}
+                                        disabled={saving}
+                                        aria-describedby="session-timeout-hint"
+                                    >
+                                        {SESSION_TIMEOUT_OPTIONS.map((minutes) => (
+                                            <option key={minutes} value={minutes}>
+                                                {minutes}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <p id="session-timeout-hint" className={styles.hint}>
+                                        {t("profile.sessionTimeoutHint")}
+                                    </p>
+                                </div>
                             </fieldset>
 
                             <div className={styles.actions}>
-                                <Button type="submit" variant="primary" loading={saving} disabled={!hasChanges || saving}>
+                                <Button
+                                    type="submit"
+                                    variant="primary"
+                                    loading={saving}
+                                    disabled={!hasChanges || saving}
+                                >
                                     {t("profile.saveChanges")}
                                 </Button>
                             </div>

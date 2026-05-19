@@ -5,6 +5,9 @@ import java.util.UUID
 
 data class AccountSummary(
     val id: UUID,
+    val name: String,
+    val type: String,
+    val institutionId: UUID,
     val currency: Currency,
     val status: String
 )

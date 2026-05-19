@@ -46,7 +46,11 @@ class PlainPasswordEncoder : PasswordEncoder {
 }
 
 class FixedTokenIssuer : TokenIssuer {
-    override fun issue(userId: UUID): AuthToken = AuthToken("fixed-token", userId)
+    override fun issue(userId: UUID, accessTtl: java.time.Duration): AuthToken = AuthToken("fixed-token", userId)
+}
+
+class FixedSessionTimeoutPort(private val minutes: Int = 10) : com.finance.auth.application.SessionTimeoutPort {
+    override fun getSessionTimeoutMinutes(userId: UUID): Int = minutes
 }
 
 class FixedOtpGenerator(private val otp: String = "123456") : OtpGenerator {

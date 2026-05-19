@@ -1,5 +1,6 @@
 package com.finance.auth.infrastructure
 
+import com.finance.userprofile.domain.UserProfilePreferences
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
@@ -32,7 +33,16 @@ class RefreshSessionPolicy(
 
     fun effectiveRefreshTtl(): Duration = Duration.ofMillis(effectiveRefreshExpirationMs)
 
+    fun effectiveRefreshTtl(sessionTimeoutMinutes: Int): Duration {
+        val clampedMinutes = sessionTimeoutMinutes.coerceIn(
+            UserProfilePreferences.MIN_SESSION_TIMEOUT_MINUTES,
+            UserProfilePreferences.MAX_SESSION_TIMEOUT_MINUTES
+        )
+        val ms = clampedMinutes * 60_000L
+        return Duration.ofMillis(ms.coerceAtMost(MAX_REFRESH_EXPIRATION_MS))
+    }
+
     companion object {
-        const val MAX_REFRESH_EXPIRATION_MS: Long = 600_000L
+        const val MAX_REFRESH_EXPIRATION_MS: Long = 900_000L
     }
 }

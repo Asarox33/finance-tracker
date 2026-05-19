@@ -8,6 +8,8 @@ export interface UpdatePreferencesRequest {
     preferredCurrency: string;
     preferredLanguage: DisplayLanguage;
     birthDate: string | null;
+    tablePageSize: number;
+    sessionTimeoutMinutes: number;
 }
 
 export const userProfileApi = {

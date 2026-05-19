@@ -1,5 +1,6 @@
 package com.finance.auth.application
 
+import com.finance.auth.FixedSessionTimeoutPort
 import com.finance.auth.FixedTokenIssuer
 import com.finance.auth.InMemoryRefreshTokenRepository
 import com.finance.auth.InMemoryUserRepository
@@ -28,7 +29,7 @@ class AuthenticateUserTest {
         tokenIssuer,
         refreshRepo,
         refreshFactory,
-        java.time.Duration.ofDays(7)
+        FixedSessionTimeoutPort(10)
     )
 
     @Test

@@ -6,6 +6,8 @@ import { useAccount, useAccounts } from "@/features/accounts/hooks/useAccounts";
 import { useTransactions } from "@/features/transactions/hooks/useTransactions";
 import { transactionsApi } from "@/features/transactions/api/transactionsApi";
 import ConfirmDialog from "@/shared/components/ConfirmDialog";
+import ListPagination from "@/shared/components/ListPagination";
+import { useTablePageSize } from "@/shared/hooks/useTablePageSize";
 import { Badge, Button, Card, EmptyState, ErrorState, PageHeader, Skeleton } from "@/shared/components/ui";
 import { useFormatters, useI18n, type TranslationKey } from "@/shared/i18n";
 import type { Account, Transaction, TransactionType } from "@/shared/types";
@@ -82,6 +84,7 @@ export default function TransactionsPage() {
     const { account: selectedAccountDetails } = useAccount(selectedAccount);
     const { data: accounts } = useAccounts(0, includeClosedAccounts, undefined, ACCOUNT_PICKER_PAGE_SIZE);
     const [page, setPage] = useState(0);
+    const { pageSize, setPageSize } = useTablePageSize();
     const [from, setFrom] = useState("");
     const [to, setTo] = useState("");
     const [showForm, setShowForm] = useState(false);
@@ -91,13 +94,25 @@ export default function TransactionsPage() {
     const [pendingDeleteTransaction, setPendingDeleteTransaction] = useState<Transaction | null>(null);
     const [deleteSubmitting, setDeleteSubmitting] = useState(false);
     const [deleteError, setDeleteError] = useState<string | null>(null);
-    const { data, isLoading, error, mutate } = useTransactions(selectedAccount, page, from || undefined, to || undefined);
+    const { data, isLoading, error, mutate } = useTransactions(
+        selectedAccount,
+        page,
+        from || undefined,
+        to || undefined,
+        pageSize
+    );
     const selectedAccountRecord = useMemo(() => {
         return accounts?.items.find((account) => account.id === selectedAccount) ?? selectedAccountDetails;
     }, [accounts, selectedAccount, selectedAccountDetails]);
     const selectedAccountIsClosed = selectedAccountRecord?.status === "CLOSED";
-    const activeAccounts = useMemo(() => accounts?.items.filter((account) => account.status === "ACTIVE") ?? [], [accounts]);
-    const closedAccounts = useMemo(() => accounts?.items.filter((account) => account.status === "CLOSED") ?? [], [accounts]);
+    const activeAccounts = useMemo(
+        () => accounts?.items.filter((account) => account.status === "ACTIVE") ?? [],
+        [accounts]
+    );
+    const closedAccounts = useMemo(
+        () => accounts?.items.filter((account) => account.status === "CLOSED") ?? [],
+        [accounts]
+    );
 
     useEffect(() => {
         if (lastSyncedAccountIdRef.current === accountIdFromUrl) {
@@ -370,28 +385,18 @@ export default function TransactionsPage() {
                             </Card>
                         )}
 
-                        {data.totalPages > 1 && (
-                            <nav className={styles.pagination} aria-label={t("transactions.pagesAria")}>
-                                <button
-                                    className={styles.pageBtn}
-                                    onClick={() => setPage((p) => p - 1)}
-                                    disabled={data.isFirst}
-                                    aria-label={t("common.previousPage")}
-                                >
-                                    ←
-                                </button>
-                                <span className={styles.pageInfo} aria-live="polite">
-                                    {t("common.pageOfTotal", { page: page + 1, total: data.totalPages })}
-                                </span>
-                                <button
-                                    className={styles.pageBtn}
-                                    onClick={() => setPage((p) => p + 1)}
-                                    disabled={data.isLast}
-                                    aria-label={t("common.nextPage")}
-                                >
-                                    →
-                                </button>
-                            </nav>
+                        {data.totalItems > 0 && (
+                            <ListPagination
+                                page={page}
+                                pageSize={pageSize}
+                                totalItems={data.totalItems}
+                                onPageChange={setPage}
+                                onPageSizeChange={(size) => {
+                                    void setPageSize(size);
+                                    setPage(0);
+                                }}
+                                ariaLabel={t("transactions.pagesAria")}
+                            />
                         )}
                     </>
                 )}

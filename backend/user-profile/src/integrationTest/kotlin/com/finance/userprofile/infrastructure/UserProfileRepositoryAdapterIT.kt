@@ -59,7 +59,17 @@ class UserProfileRepositoryAdapterIT {
         displayName: String = "johndoe",
         preferredCurrency: Currency = Currency.EUR,
         preferredLanguage: DisplayLanguage = DisplayLanguage.ENG
-    ) = UserProfile(id, firstName, lastName, displayName, preferredCurrency, preferredLanguage, null)
+    ) = UserProfile(
+        id,
+        firstName,
+        lastName,
+        displayName,
+        preferredCurrency,
+        preferredLanguage,
+        null,
+        tablePageSize = 20,
+        sessionTimeoutMinutes = 10
+    )
 
     @Test
     fun savesAndFindsProfileById() {

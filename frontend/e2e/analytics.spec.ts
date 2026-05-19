@@ -15,7 +15,15 @@ test("analytics renders translated labels", async ({ page }) => {
         route.fulfill({
             status: 200,
             contentType: "application/json",
-            body: JSON.stringify({ startValue: 0, endValue: 0, currency: "EUR", gainLoss: 0, gainLossBasisPoints: 0, from: "2023-01-15", to: "2024-01-15" }),
+            body: JSON.stringify({
+                startValue: 0,
+                endValue: 0,
+                currency: "EUR",
+                gainLoss: 0,
+                gainLossBasisPoints: 0,
+                from: "2023-01-15",
+                to: "2024-01-15",
+            }),
         })
     );
 

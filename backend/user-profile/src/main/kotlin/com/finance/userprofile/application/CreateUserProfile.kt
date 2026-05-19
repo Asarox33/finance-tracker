@@ -4,6 +4,7 @@ import com.finance.shared.Currency
 import com.finance.shared.DisplayLanguage
 import com.finance.shared.error.InvalidRequestException
 import com.finance.userprofile.domain.UserProfile
+import com.finance.userprofile.domain.UserProfilePreferences
 import com.finance.userprofile.domain.UserProfileRepository
 import java.time.LocalDate
 import java.util.UUID
@@ -34,7 +35,9 @@ class CreateUserProfile(
             displayName = command.displayName,
             preferredCurrency = command.preferredCurrency,
             preferredLanguage = command.preferredLanguage,
-            birthDate = command.birthDate
+            birthDate = command.birthDate,
+            tablePageSize = UserProfilePreferences.DEFAULT_TABLE_PAGE_SIZE,
+            sessionTimeoutMinutes = UserProfilePreferences.DEFAULT_SESSION_TIMEOUT_MINUTES
         )
         return Result(userId = userProfileRepository.save(profile).id)
     }

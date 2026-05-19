@@ -71,6 +71,42 @@ class UpdateUserPreferencesTest {
         }
     }
 
+    @Test
+    fun rejectsInvalidTablePageSize() {
+        val id = UUID.randomUUID()
+        repository.save(testProfile(id = id))
+        assertThrows(InvalidRequestException::class.java) {
+            useCase.execute(command(userId = id, tablePageSize = 25))
+        }
+    }
+
+    @Test
+    fun rejectsSessionTimeoutBelowMinimum() {
+        val id = UUID.randomUUID()
+        repository.save(testProfile(id = id))
+        assertThrows(InvalidRequestException::class.java) {
+            useCase.execute(command(userId = id, sessionTimeoutMinutes = 4))
+        }
+    }
+
+    @Test
+    fun rejectsSessionTimeoutAboveMaximum() {
+        val id = UUID.randomUUID()
+        repository.save(testProfile(id = id))
+        assertThrows(InvalidRequestException::class.java) {
+            useCase.execute(command(userId = id, sessionTimeoutMinutes = 16))
+        }
+    }
+
+    @Test
+    fun updatesTablePageSizeAndSessionTimeout() {
+        val id = UUID.randomUUID()
+        repository.save(testProfile(id = id))
+        val result = useCase.execute(command(userId = id, tablePageSize = 50, sessionTimeoutMinutes = 12))
+        assertEquals(50, result.tablePageSize)
+        assertEquals(12, result.sessionTimeoutMinutes)
+    }
+
     private fun command(
         userId: UUID = UUID.randomUUID(),
         firstName: String = "John",
@@ -78,6 +114,8 @@ class UpdateUserPreferencesTest {
         displayName: String = "johndoe",
         preferredCurrency: Currency = Currency.EUR,
         preferredLanguage: DisplayLanguage = DisplayLanguage.ENG,
+        tablePageSize: Int = 20,
+        sessionTimeoutMinutes: Int = 10,
     ) = UpdateUserPreferences.Command(
         userId = userId,
         firstName = firstName,
@@ -85,6 +123,8 @@ class UpdateUserPreferencesTest {
         displayName = displayName,
         preferredCurrency = preferredCurrency,
         preferredLanguage = preferredLanguage,
-        birthDate = null
+        birthDate = null,
+        tablePageSize = tablePageSize,
+        sessionTimeoutMinutes = sessionTimeoutMinutes
     )
 }

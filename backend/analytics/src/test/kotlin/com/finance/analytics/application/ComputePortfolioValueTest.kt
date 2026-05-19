@@ -2,14 +2,17 @@ package com.finance.analytics.application
 
 import com.finance.analytics.StubAccountPort
 import com.finance.analytics.StubFxRatePort
+import com.finance.analytics.StubInstitutionPort
 import com.finance.analytics.StubTransactionPort
 import com.finance.analytics.account
+import com.finance.analytics.institution
 import com.finance.analytics.transaction
 import com.finance.analytics.domain.ports.FxRateSummary
 import com.finance.shared.Currency
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
+import java.util.UUID
 
 class ComputePortfolioValueTest {
 
@@ -17,79 +20,88 @@ class ComputePortfolioValueTest {
 
     @Test
     fun returnsZeroForUserWithNoAccounts() {
-        val useCase = ComputePortfolioValue(
-            StubAccountPort(),
-            StubTransactionPort(),
-            StubFxRatePort()
-        )
-        val result = useCase.execute(ComputePortfolioValue.Query(
-            java.util.UUID.randomUUID(), asOf, Currency.EUR
-        ))
+        val useCase = portfolioUseCase()
+        val result = useCase.execute(ComputePortfolioValue.Query(UUID.randomUUID(), asOf, Currency.EUR))
         assertEquals(0L, result.totalValue)
         assertEquals(0, result.snapshots.size)
     }
 
     @Test
     fun computesTotalValueInReferenceCurrency() {
-        val account = account(currency = Currency.EUR)
-        val useCase = ComputePortfolioValue(
-            StubAccountPort(listOf(account)),
-            StubTransactionPort(listOf(
-                transaction(account.id, 100000L),
-                transaction(account.id, 50000L)
-            )),
-            StubFxRatePort()
+        val instId = UUID.randomUUID()
+        val acc = account(currency = Currency.EUR, institutionId = instId, name = "Livret A")
+        val useCase = portfolioUseCase(
+            accounts = listOf(acc),
+            institutions = listOf(institution(id = instId, name = "BNP Paribas")),
+            transactions = listOf(
+                transaction(acc.id, 100000L),
+                transaction(acc.id, 50000L)
+            )
         )
-        val result = useCase.execute(ComputePortfolioValue.Query(
-            java.util.UUID.randomUUID(), asOf, Currency.EUR
-        ))
+        val result = useCase.execute(ComputePortfolioValue.Query(UUID.randomUUID(), asOf, Currency.EUR))
         assertEquals(150000L, result.totalValue)
+        assertEquals("Livret A", result.snapshots.single().accountName)
+        assertEquals("BNP Paribas", result.snapshots.single().institutionName)
     }
 
     @Test
     fun appliesTransactionTypeDirectionToPortfolioValue() {
-        val account = account(currency = Currency.EUR)
-        val useCase = ComputePortfolioValue(
-            StubAccountPort(listOf(account)),
-            StubTransactionPort(listOf(
-                transaction(account.id, 100000L, type = "DEPOSIT"),
-                transaction(account.id, 20000L, type = "WITHDRAWAL"),
-                transaction(account.id, -5000L, type = "FEE")
-            )),
-            StubFxRatePort()
+        val acc = account(currency = Currency.EUR)
+        val useCase = portfolioUseCase(
+            accounts = listOf(acc),
+            transactions = listOf(
+                transaction(acc.id, 100000L, type = "DEPOSIT"),
+                transaction(acc.id, 20000L, type = "WITHDRAWAL"),
+                transaction(acc.id, -5000L, type = "FEE")
+            )
         )
-        val result = useCase.execute(ComputePortfolioValue.Query(
-            java.util.UUID.randomUUID(), asOf, Currency.EUR
-        ))
+        val result = useCase.execute(ComputePortfolioValue.Query(UUID.randomUUID(), asOf, Currency.EUR))
         assertEquals(75000L, result.totalValue)
     }
 
     @Test
     fun convertsForeignCurrencyAccountUsingFxRate() {
-        val account = account(currency = Currency.USD)
-        val useCase = ComputePortfolioValue(
-            StubAccountPort(listOf(account)),
-            StubTransactionPort(listOf(transaction(account.id, 100000L, Currency.USD))),
-            StubFxRatePort(FxRateSummary(91500L, 5, asOf))
+        val acc = account(currency = Currency.USD)
+        val useCase = portfolioUseCase(
+            accounts = listOf(acc),
+            transactions = listOf(transaction(acc.id, 100000L, Currency.USD)),
+            fxRate = FxRateSummary(91500L, 5, asOf)
         )
-        val result = useCase.execute(ComputePortfolioValue.Query(
-            java.util.UUID.randomUUID(), asOf, Currency.EUR
-        ))
+        val result = useCase.execute(ComputePortfolioValue.Query(UUID.randomUUID(), asOf, Currency.EUR))
         val expected = 100000L * 91500L / 100000L
         assertEquals(expected, result.totalValue)
     }
 
     @Test
     fun returnsZeroForForeignAccountWithNoFxRate() {
-        val account = account(currency = Currency.USD)
-        val useCase = ComputePortfolioValue(
-            StubAccountPort(listOf(account)),
-            StubTransactionPort(listOf(transaction(account.id, 100000L, Currency.USD))),
-            StubFxRatePort(null)
+        val acc = account(currency = Currency.USD)
+        val useCase = portfolioUseCase(
+            accounts = listOf(acc),
+            transactions = listOf(transaction(acc.id, 100000L, Currency.USD)),
+            fxRate = null
         )
-        val result = useCase.execute(ComputePortfolioValue.Query(
-            java.util.UUID.randomUUID(), asOf, Currency.EUR
-        ))
+        val result = useCase.execute(ComputePortfolioValue.Query(UUID.randomUUID(), asOf, Currency.EUR))
         assertEquals(0L, result.totalValue)
     }
+
+    @Test
+    fun usesUnknownInstitutionWhenInstitutionMissing() {
+        val acc = account(name = "Orphan Account")
+        val useCase = portfolioUseCase(accounts = listOf(acc), institutions = emptyList())
+        val result = useCase.execute(ComputePortfolioValue.Query(UUID.randomUUID(), asOf, Currency.EUR))
+        assertEquals("Unknown", result.snapshots.single().institutionName)
+        assertEquals("OTHER", result.snapshots.single().institutionType)
+    }
+
+    private fun portfolioUseCase(
+        accounts: List<com.finance.analytics.domain.ports.AccountSummary> = emptyList(),
+        institutions: List<com.finance.analytics.domain.ports.InstitutionSummary> = emptyList(),
+        transactions: List<com.finance.analytics.domain.ports.TransactionSummary> = emptyList(),
+        fxRate: FxRateSummary? = null
+    ) = ComputePortfolioValue(
+        StubAccountPort(accounts),
+        StubInstitutionPort(institutions),
+        StubTransactionPort(transactions),
+        StubFxRatePort(fxRate)
+    )
 }

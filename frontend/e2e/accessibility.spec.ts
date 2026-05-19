@@ -11,7 +11,7 @@ test.describe("Navigation accessibility", () => {
         await page.goto("/login");
         const emailInput = page.getByLabel("Email address");
         await expect(emailInput).toHaveAttribute("aria-required", "true");
-        const passwordInput = page.getByLabel("Password");
+        const passwordInput = page.getByRole("textbox", { name: "Password" });
         await expect(passwordInput).toHaveAttribute("aria-required", "true");
         const submitBtn = page.getByRole("button", { name: "Sign in" });
         await expect(submitBtn).toHaveAttribute("type", "submit");

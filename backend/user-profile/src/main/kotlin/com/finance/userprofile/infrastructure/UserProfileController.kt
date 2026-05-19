@@ -59,7 +59,15 @@ class UserProfileController(
         @field:Past(message = "Birth date must be in the past")
         @field:DateTimeFormat(pattern = "yyyy-MM-dd")
         @field:Schema(example = "1990-01-15")
-        val birthDate: LocalDate?
+        val birthDate: LocalDate?,
+
+        @param:JsonProperty("tablePageSize")
+        @field:Schema(example = "20")
+        val tablePageSize: Int,
+
+        @param:JsonProperty("sessionTimeoutMinutes")
+        @field:Schema(example = "10")
+        val sessionTimeoutMinutes: Int
     )
 
     data class UserProfileResponse(
@@ -69,7 +77,9 @@ class UserProfileController(
         val displayName: String,
         val preferredCurrency: Currency,
         val preferredLanguage: DisplayLanguage,
-        val birthDate: LocalDate?
+        val birthDate: LocalDate?,
+        val tablePageSize: Int,
+        val sessionTimeoutMinutes: Int
     )
 
     @GetMapping("/me")
@@ -89,7 +99,9 @@ class UserProfileController(
                 displayName = request.displayName,
                 preferredCurrency = request.preferredCurrency,
                 preferredLanguage = request.preferredLanguage,
-                birthDate = request.birthDate
+                birthDate = request.birthDate,
+                tablePageSize = request.tablePageSize,
+                sessionTimeoutMinutes = request.sessionTimeoutMinutes
             )
         ).toResponse()
 
@@ -100,6 +112,8 @@ class UserProfileController(
         displayName = displayName,
         preferredCurrency = preferredCurrency,
         preferredLanguage = preferredLanguage,
-        birthDate = birthDate
+        birthDate = birthDate,
+        tablePageSize = tablePageSize,
+        sessionTimeoutMinutes = sessionTimeoutMinutes
     )
 }

@@ -13,11 +13,11 @@ class RefreshCookieFactory(
     private val secure: Boolean
 ) {
 
-    fun buildSetCookie(refreshTokenPlain: String): String =
+    fun buildSetCookie(refreshTokenPlain: String, maxAge: Duration = refreshSessionPolicy.effectiveRefreshTtl()): String =
         ResponseCookie.from(COOKIE_NAME, refreshTokenPlain)
             .httpOnly(true)
             .path(COOKIE_PATH)
-            .maxAge(refreshSessionPolicy.effectiveRefreshTtl())
+            .maxAge(maxAge)
             .secure(secure)
             .sameSite("Lax")
             .build()

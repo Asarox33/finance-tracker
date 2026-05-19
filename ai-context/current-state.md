@@ -166,7 +166,8 @@ Features are integrated as vertical slices. Status is **functional** where marke
 
 - No React **error boundary**.
 - `useSessionTimeout` runs whenever `AppShell` mounts (including rare cases with token on public routes).
-- **Per-user access session length (2–10 min)** in `user-profile` not implemented; global default/max **10 min** via `auth.jwt.access-expiration-ms` / `TokenService.MAX_ACCESS_EXPIRATION_MS`. Refresh token row + cookie max-age also default/max to **10 min** via `auth.refresh.expiration-ms` / `RefreshSessionPolicy.MAX_REFRESH_EXPIRATION_MS`.
+- **Per-user session length** in `user-profile`: `sessionTimeoutMinutes` (**5–15**, default **10**) drives idle timeout, access JWT, and refresh TTL on login/refresh. Env default remains **10 min**; hard cap **15 min** (`TokenService` / `RefreshSessionPolicy`).
+- **`tablePageSize`** on profile (**10 / 20 / 50 / 100**, default **20**) drives list pagination and dashboard breakdown client slice.
 - No optimistic mutations for creates/closes/updates.
 - Root metadata remains static English (`Finance Tracker` title/description); page UI copy is dictionary-driven.
 
@@ -193,7 +194,7 @@ Features are integrated as vertical slices. Status is **functional** where marke
 
 High value for the current **STEP 9** programme (`CLAUDE.md`):
 
-1. **Accounts picker scale** — Replace the first-page institution dropdown with search/pagination if institution volume grows beyond the current picker cap.
+1. ~~**Accounts picker scale**~~ — Searchable institution picker (min 3 characters, server-side name filter) on account create form.
 2. **Institutions quality guardrails** — Add rate limits, normalization/duplicate detection, and moderation/review before a user-created institution becomes globally visible.
 3. **Transactions** — Add optional asset selector when backend expects `assetId` for BUY/SELL.
 4. **Analytics periods** — Add a YTD period choice alongside 3M/6M/1Y/3Y.

@@ -28,6 +28,8 @@ export interface UserProfile {
     preferredCurrency: string;
     preferredLanguage: DisplayLanguage;
     birthDate: string | null;
+    tablePageSize: number;
+    sessionTimeoutMinutes: number;
 }
 
 export type DisplayLanguage = "ENG" | "FRA" | "ESP" | "ITA";
@@ -81,6 +83,11 @@ export interface PortfolioValue {
 
 export interface AccountSnapshot {
     accountId: string;
+    accountName: string;
+    accountType: AccountType;
+    institutionId: string;
+    institutionName: string;
+    institutionType: string;
     currency: string;
     valueInAccountCurrency: number;
     valueInReferenceCurrency: number;

@@ -7,7 +7,9 @@ import io.jsonwebtoken.security.Keys
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
-import java.util.*
+import java.time.Duration
+import java.util.Date
+import java.util.UUID
 
 @Component
 class TokenService(
@@ -20,7 +22,7 @@ class TokenService(
 
     private val logger = LoggerFactory.getLogger(TokenService::class.java)
 
-    private val effectiveAccessExpirationMs: Long =
+    private val configuredAccessExpirationMs: Long =
         accessExpirationMs.coerceAtMost(MAX_ACCESS_EXPIRATION_MS).also { effective ->
             if (accessExpirationMs > MAX_ACCESS_EXPIRATION_MS) {
                 logger.warn(
@@ -34,17 +36,18 @@ class TokenService(
 
     private val key by lazy { Keys.hmacShaKeyFor(secret.toByteArray()) }
 
-    override fun issue(userId: UUID): AuthToken {
+    override fun issue(userId: UUID, accessTtl: Duration): AuthToken {
+        val ttlMs = accessTtl.toMillis().coerceIn(1L, MAX_ACCESS_EXPIRATION_MS)
         val token = Jwts.builder()
             .subject(userId.toString())
             .issuedAt(Date())
-            .expiration(Date(System.currentTimeMillis() + effectiveAccessExpirationMs))
+            .expiration(Date(System.currentTimeMillis() + ttlMs))
             .signWith(key)
             .compact()
         return AuthToken(value = token, userId = userId)
     }
 
     companion object {
-        const val MAX_ACCESS_EXPIRATION_MS: Long = 600_000L
+        const val MAX_ACCESS_EXPIRATION_MS: Long = 900_000L
     }
 }

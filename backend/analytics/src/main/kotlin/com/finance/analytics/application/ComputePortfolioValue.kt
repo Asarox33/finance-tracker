@@ -4,6 +4,7 @@ import com.finance.analytics.domain.AccountSnapshot
 import com.finance.analytics.domain.PortfolioValue
 import com.finance.analytics.domain.ports.AccountPort
 import com.finance.analytics.domain.ports.FxRatePort
+import com.finance.analytics.domain.ports.InstitutionPort
 import com.finance.analytics.domain.ports.TransactionPort
 import com.finance.shared.Currency
 import java.time.LocalDate
@@ -11,6 +12,7 @@ import java.util.UUID
 
 class ComputePortfolioValue(
     private val accountPort: AccountPort,
+    private val institutionPort: InstitutionPort,
     private val transactionPort: TransactionPort,
     private val fxRatePort: FxRatePort
 ) {
@@ -22,6 +24,7 @@ class ComputePortfolioValue(
 
     fun execute(query: Query): PortfolioValue {
         val accounts = accountPort.findActiveByUserId(query.userId)
+        val institutionsById = institutionPort.findAll().associateBy { it.id }
 
         val snapshots = accounts.map { account ->
             val transactions = transactionPort.findByAccountId(query.userId, account.id, LocalDate.MIN, query.asOf)
@@ -39,8 +42,15 @@ class ComputePortfolioValue(
                 }
             }
 
+            val institution = institutionsById[account.institutionId]
+
             AccountSnapshot(
                 accountId = account.id,
+                accountName = account.name,
+                accountType = account.type,
+                institutionId = account.institutionId,
+                institutionName = institution?.name ?: UNKNOWN_INSTITUTION_NAME,
+                institutionType = institution?.type ?: UNKNOWN_INSTITUTION_TYPE,
                 currency = account.currency,
                 valueInAccountCurrency = valueInAccountCurrency,
                 valueInReferenceCurrency = valueInRef,
@@ -61,5 +71,10 @@ class ComputePortfolioValue(
         var result = 1L
         repeat(exp) { result *= 10L }
         return result
+    }
+
+    companion object {
+        private const val UNKNOWN_INSTITUTION_NAME = "Unknown"
+        private const val UNKNOWN_INSTITUTION_TYPE = "OTHER"
     }
 }

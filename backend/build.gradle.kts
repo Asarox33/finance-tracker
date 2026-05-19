@@ -55,7 +55,8 @@ kover {
                     "*.infrastructure.*",
                     "*.app.*",
                     "*Application*",
-                    "*Config*"
+                    "*Config*",
+                    "*.domain.*Repository"
                 )
             }
         }

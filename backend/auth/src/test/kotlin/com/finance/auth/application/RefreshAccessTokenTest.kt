@@ -1,5 +1,6 @@
 package com.finance.auth.application
 
+import com.finance.auth.FixedSessionTimeoutPort
 import com.finance.auth.FixedTokenIssuer
 import com.finance.auth.InMemoryRefreshTokenRepository
 import com.finance.auth.InMemoryUserRepository
@@ -28,7 +29,7 @@ class RefreshAccessTokenTest {
         refreshRepo,
         issuer,
         factory,
-        Duration.ofDays(7)
+        FixedSessionTimeoutPort(10)
     )
 
     @Test
@@ -83,7 +84,7 @@ class RefreshAccessTokenTest {
             refreshRepo,
             issuer,
             factory,
-            Duration.ofMinutes(10),
+            FixedSessionTimeoutPort(10),
             Clock.fixed(now, ZoneOffset.UTC)
         )
 

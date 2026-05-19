@@ -1,7 +1,11 @@
 import type { Page } from "@playwright/test";
 import type { DisplayLanguage } from "@/shared/types";
 
-export function mockUserProfile(page: Page, preferredLanguage: DisplayLanguage = "ENG") {
+export function mockUserProfile(
+    page: Page,
+    preferredLanguage: DisplayLanguage = "ENG",
+    overrides?: Partial<{ tablePageSize: number; sessionTimeoutMinutes: number }>
+) {
     return page.route("**/api/users/me", (route) =>
         route.fulfill({
             status: 200,
@@ -14,6 +18,8 @@ export function mockUserProfile(page: Page, preferredLanguage: DisplayLanguage =
                 preferredCurrency: "EUR",
                 preferredLanguage,
                 birthDate: null,
+                tablePageSize: overrides?.tablePageSize ?? 20,
+                sessionTimeoutMinutes: overrides?.sessionTimeoutMinutes ?? 10,
             }),
         })
     );

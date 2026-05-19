@@ -2,9 +2,12 @@
 
 import Link from "next/link";
 import { useCallback, useMemo, useState } from "react";
+import InstitutionPicker from "@/features/accounts/components/InstitutionPicker";
 import { useAccounts } from "@/features/accounts/hooks/useAccounts";
 import { accountsApi } from "@/features/accounts/api/accountsApi";
 import { useInstitutions } from "@/features/institutions/hooks/useInstitutions";
+import { useTablePageSize } from "@/shared/hooks/useTablePageSize";
+import ListPagination from "@/shared/components/ListPagination";
 import ConfirmDialog from "@/shared/components/ConfirmDialog";
 import { Badge, Button, Card, EmptyState, ErrorState, PageHeader, Skeleton } from "@/shared/components/ui";
 import { useI18n, type TranslationKey } from "@/shared/i18n";
@@ -59,7 +62,8 @@ export default function AccountsPage() {
     const [page, setPage] = useState(0);
     const [showClosed, setShowClosed] = useState(false);
     const [typeFilter, setTypeFilter] = useState<AccountType | "">("");
-    const { data, isLoading, error, mutate } = useAccounts(page, showClosed, typeFilter || undefined);
+    const { pageSize, setPageSize } = useTablePageSize();
+    const { data, isLoading, error, mutate } = useAccounts(page, showClosed, typeFilter || undefined, pageSize);
     const {
         data: institutionsPage,
         isLoading: institutionsLoading,
@@ -256,28 +260,18 @@ export default function AccountsPage() {
                         );
                     })}
                 </div>
-                {data && data.totalPages > 1 && (
-                    <nav className={styles.pagination} aria-label={t("accounts.pagesAria")}>
-                        <button
-                            className={styles.pageBtn}
-                            onClick={() => setPage((current) => current - 1)}
-                            disabled={data.isFirst}
-                            aria-label={t("common.previousPage")}
-                        >
-                            {"<"}
-                        </button>
-                        <span className={styles.pageInfo} aria-live="polite">
-                            {t("common.pageOfTotal", { page: page + 1, total: data.totalPages })}
-                        </span>
-                        <button
-                            className={styles.pageBtn}
-                            onClick={() => setPage((current) => current + 1)}
-                            disabled={data.isLast}
-                            aria-label={t("common.nextPage")}
-                        >
-                            {">"}
-                        </button>
-                    </nav>
+                {data && data.totalItems > 0 && (
+                    <ListPagination
+                        page={page}
+                        pageSize={pageSize}
+                        totalItems={data.totalItems}
+                        onPageChange={setPage}
+                        onPageSizeChange={(size) => {
+                            void setPageSize(size);
+                            setPage(0);
+                        }}
+                        ariaLabel={t("accounts.pagesAria")}
+                    />
                 )}
             </div>
         </div>
@@ -285,22 +279,13 @@ export default function AccountsPage() {
 }
 
 function AddAccountForm({ onSuccess, onCancel }: { onSuccess: () => void; onCancel: () => void }) {
-    const { t, locale } = useI18n();
-    const {
-        data: institutionsPage,
-        isLoading: institutionsLoading,
-        error: institutionsError,
-    } = useInstitutions(0, undefined, undefined, INSTITUTION_PICKER_PAGE_SIZE);
-
-    const institutionsSorted = useMemo(() => {
-        const items = institutionsPage?.items ?? [];
-        return [...items].sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" }));
-    }, [institutionsPage]);
+    const { t } = useI18n();
 
     const [name, setName] = useState("");
     const [type, setType] = useState<AccountType>("CHECKING");
     const [currency, setCurrency] = useState("EUR");
     const [institutionId, setInstitutionId] = useState("");
+    const [institutionLabel, setInstitutionLabel] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -386,44 +371,19 @@ function AddAccountForm({ onSuccess, onCancel }: { onSuccess: () => void; onCanc
 
                     <div className={styles.field}>
                         <label htmlFor="acc-institution">{t("accounts.institution")}</label>
-                        <select
-                            id="acc-institution"
-                            required
-                            aria-required="true"
+                        <InstitutionPicker
                             value={institutionId}
-                            onChange={(e) => setInstitutionId(e.target.value)}
-                            disabled={
-                                loading || institutionsLoading || institutionsSorted.length === 0 || !!institutionsError
-                            }
-                        >
-                            {institutionsLoading ? (
-                                <option value="">{t("accounts.loadingInstitutions")}</option>
-                            ) : institutionsError ? (
-                                <option value="">{t("accounts.loadInstitutionsError")}</option>
-                            ) : institutionsSorted.length === 0 ? (
-                                <option value="">{t("accounts.noInstitutions")}</option>
-                            ) : (
-                                <>
-                                    <option value="">{t("accounts.selectInstitution")}</option>
-                                    {institutionsSorted.map((inst) => (
-                                        <option key={inst.id} value={inst.id}>
-                                            {inst.name} ({formatCountryName(inst.country, locale, inst.country)})
-                                        </option>
-                                    ))}
-                                </>
-                            )}
-                        </select>
-                        {institutionsError && (
-                            <p className={styles.fieldError} role="alert">
-                                {t("accounts.loadInstitutionsHint")}
-                            </p>
-                        )}
-                        {!institutionsLoading && !institutionsError && institutionsSorted.length === 0 && (
-                            <p className={styles.fieldHint}>
-                                {t("accounts.createInstitutionFirst")}{" "}
-                                <Link href="/institutions">{t("accounts.goToInstitutions")}</Link>
-                            </p>
-                        )}
+                            selectedLabel={institutionLabel}
+                            disabled={loading}
+                            onChange={(id, inst) => {
+                                setInstitutionId(id);
+                                setInstitutionLabel(inst.name);
+                            }}
+                            onClear={() => {
+                                setInstitutionId("");
+                                setInstitutionLabel(null);
+                            }}
+                        />
                     </div>
                 </div>
 
@@ -431,27 +391,13 @@ function AddAccountForm({ onSuccess, onCancel }: { onSuccess: () => void; onCanc
                     <Button type="button" variant="ghost" onClick={onCancel} disabled={loading}>
                         {t("common.cancel")}
                     </Button>
-                    <Button
-                        type="submit"
-                        variant="primary"
-                        loading={loading}
-                        disabled={
-                            institutionsLoading ||
-                            !institutionId.trim() ||
-                            institutionsSorted.length === 0 ||
-                            !!institutionsError
-                        }
-                    >
+                    <Button type="submit" variant="primary" loading={loading} disabled={!institutionId.trim()}>
                         {t("accounts.create")}
                     </Button>
                 </div>
             </form>
         </Card>
     );
-}
-
-function formatCountryName(code: string, locale: string, fallback: string): string {
-    return new Intl.DisplayNames([locale], { type: "region" }).of(code) ?? fallback;
 }
 
 function AccountCard({
@@ -502,9 +448,7 @@ function AccountCard({
                         href={`/transactions?accountId=${encodeURIComponent(account.id)}`}
                         className={styles.accountActionLink}
                         aria-label={t(
-                            account.status === "ACTIVE"
-                                ? "accounts.viewTransactionsAria"
-                                : "accounts.viewHistoryAria",
+                            account.status === "ACTIVE" ? "accounts.viewTransactionsAria" : "accounts.viewHistoryAria",
                             { accountName: account.name }
                         )}
                     >
