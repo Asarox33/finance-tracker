@@ -6,16 +6,16 @@
     width: 100%;
     padding: 0.5rem 0.75rem;
     border-radius: var(--radius-sm);
-    border: 1px solid var(--color-border);
-    background: var(--color-surface);
-    color: var(--color-text);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
 }
 
 .hint,
 .empty {
     margin-top: 0.35rem;
     font-size: 0.8125rem;
-    color: var(--color-text-muted);
+    color: var(--text-muted);
 }
 
 .listbox {
@@ -26,10 +26,10 @@
     margin-top: 0.25rem;
     max-height: 14rem;
     overflow-y: auto;
-    border: 1px solid var(--color-border);
+    border: 1px solid var(--border);
     border-radius: var(--radius-sm);
-    background: var(--color-surface);
-    box-shadow: var(--shadow-md);
+    background: var(--surface);
+    box-shadow: var(--shadow);
     list-style: none;
     padding: 0;
     margin-bottom: 0;
@@ -41,13 +41,13 @@
     padding: 0.5rem 0.75rem;
     border: none;
     background: transparent;
-    color: var(--color-text);
+    color: var(--text);
     cursor: pointer;
 }
 
 .option:hover,
 .optionActive {
-    background: var(--color-surface-muted);
+    background: var(--surface-2);
 }
 
 .selectedRow {
@@ -61,7 +61,7 @@
 
 .clearBtn {
     font-size: 0.8125rem;
-    color: var(--color-primary);
+    color: var(--accent);
     background: none;
     border: none;
     cursor: pointer;

@@ -22,17 +22,17 @@ class TokenService(
 
     private val logger = LoggerFactory.getLogger(TokenService::class.java)
 
-    private val configuredAccessExpirationMs: Long =
-        accessExpirationMs.coerceAtMost(MAX_ACCESS_EXPIRATION_MS).also { effective ->
-            if (accessExpirationMs > MAX_ACCESS_EXPIRATION_MS) {
-                logger.warn(
-                    "auth.jwt.access-expiration-ms ({}) exceeds maximum ({}); using {}",
-                    accessExpirationMs,
-                    MAX_ACCESS_EXPIRATION_MS,
-                    effective
-                )
-            }
+    init {
+        val effective = accessExpirationMs.coerceAtMost(MAX_ACCESS_EXPIRATION_MS)
+        if (accessExpirationMs > MAX_ACCESS_EXPIRATION_MS) {
+            logger.warn(
+                "auth.jwt.access-expiration-ms ({}) exceeds maximum ({}); cap for issued tokens is {}",
+                accessExpirationMs,
+                MAX_ACCESS_EXPIRATION_MS,
+                effective
+            )
         }
+    }
 
     private val key by lazy { Keys.hmacShaKeyFor(secret.toByteArray()) }
 
