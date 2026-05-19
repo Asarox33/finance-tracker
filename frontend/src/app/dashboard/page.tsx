@@ -179,6 +179,13 @@ export default function DashboardPage() {
                     ) : showAccountBreakdown ? (
                         <Card>
                             <table className={styles.breakdownTable} aria-label={t("dashboard.accountValuesAria")}>
+                                <colgroup>
+                                    <col className={styles.colAccount} />
+                                    <col className={styles.colInstitution} />
+                                    <col className={styles.colValue} />
+                                    <col className={styles.colValue} />
+                                    <col className={styles.colActions} />
+                                </colgroup>
                                 <thead>
                                     <tr>
                                         <SortHeader
@@ -215,7 +222,7 @@ export default function DashboardPage() {
                                         >
                                             {t("dashboard.referenceCurrencyValue", { currency: referenceCurrency })}
                                         </SortHeader>
-                                        <th scope="col" className={styles.fixedHeaderCell}>
+                                        <th scope="col" className={`${styles.fixedHeaderCell} ${styles.actionsCell}`}>
                                             {t("dashboard.actions")}
                                         </th>
                                     </tr>
@@ -259,35 +266,27 @@ export default function DashboardPage() {
                                                         </span>
                                                     </div>
                                                 </td>
-                                                <td
-                                                    style={{
-                                                        textAlign: "right",
-                                                        fontFamily: "var(--font-mono)",
-                                                    }}
-                                                >
+                                                <td className={styles.numericCell}>
                                                     {formatMoney(snap.valueInAccountCurrency, snap.currency)}
                                                 </td>
-                                                <td
-                                                    style={{
-                                                        textAlign: "right",
-                                                        fontFamily: "var(--font-mono)",
-                                                    }}
-                                                >
+                                                <td className={styles.numericCell}>
                                                     {formatMoney(snap.valueInReferenceCurrency, snap.referenceCurrency)}
                                                 </td>
-                                                <td>
-                                                    <Link
-                                                        href={`/transactions?accountId=${encodeURIComponent(snap.accountId)}`}
-                                                        className={styles.transactionLink}
-                                                        aria-label={t("dashboard.viewTransactionsAria", {
-                                                            accountName: snap.accountName,
-                                                        })}
-                                                        title={t("dashboard.viewTransactionsAria", {
-                                                            accountName: snap.accountName,
-                                                        })}
-                                                    >
-                                                        <span aria-hidden="true">⇄</span>
-                                                    </Link>
+                                                <td className={styles.actionsCell}>
+                                                    <div className={styles.actionsCellInner}>
+                                                        <Link
+                                                            href={`/transactions?accountId=${encodeURIComponent(snap.accountId)}`}
+                                                            className={styles.transactionLink}
+                                                            aria-label={t("dashboard.viewTransactionsAria", {
+                                                                accountName: snap.accountName,
+                                                            })}
+                                                            title={t("dashboard.viewTransactionsAria", {
+                                                                accountName: snap.accountName,
+                                                            })}
+                                                        >
+                                                            <span aria-hidden="true">⇄</span>
+                                                        </Link>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         );

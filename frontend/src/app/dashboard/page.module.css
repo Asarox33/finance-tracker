@@ -84,9 +84,57 @@
 
 .entityName {
     font-weight: 500;
-    max-width: min(18rem, 28vw);
+    max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.breakdownTable {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+}
+
+.breakdownTable td {
+    padding: 0.75rem 1rem;
+    vertical-align: middle;
+}
+
+.colAccount,
+.colInstitution {
+    width: 26%;
+}
+
+.colValue {
+    width: 22%;
+}
+
+.colActions {
+    width: 5.5rem;
+}
+
+.actionsCell {
+    padding-left: 0.35rem;
+    padding-right: 0.35rem;
+    text-align: center;
+}
+
+.breakdownTable th.actionsCell {
+    padding: 0.75rem 0.35rem;
+    text-align: center;
+}
+
+.actionsCellInner {
+    align-items: center;
+    display: flex;
+    justify-content: center;
+    gap: 0.35rem;
+}
+
+.numericCell {
+    font-family: var(--font-mono), monospace;
+    text-align: right;
     white-space: nowrap;
 }
 

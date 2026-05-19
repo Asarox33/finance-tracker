@@ -181,10 +181,155 @@
     overflow-wrap: anywhere;
 }
 
-.rowActions {
+.transactionTable {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+}
+
+.transactionTable th {
+    color: color-mix(in srgb, var(--text) 82%, var(--text-muted));
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    padding: 0.75rem 1rem;
+    text-transform: uppercase;
+    vertical-align: middle;
+}
+
+.transactionTable .sortableHeaderCell {
+    color: var(--accent);
+    padding: 0;
+}
+
+.sortHeader {
+    align-items: center;
+    background: transparent;
+    border: 0;
+    border-radius: var(--radius-sm);
+    color: var(--accent);
+    cursor: pointer;
     display: flex;
-    gap: 0.5rem;
+    font: inherit;
+    gap: 0.35rem;
+    justify-content: flex-start;
+    margin: 0.35rem;
+    min-height: 2.05rem;
+    padding: 0.4rem 0.65rem;
+    text-transform: uppercase;
+    transition:
+        background var(--transition),
+        color var(--transition);
+    white-space: nowrap;
+    width: calc(100% - 0.7rem);
+}
+
+.sortHeaderRight {
     justify-content: flex-end;
+}
+
+.sortHeader:hover,
+.sortHeader:focus-visible,
+.sortHeaderActive {
+    background: color-mix(in srgb, var(--accent) 14%, transparent);
+    color: var(--accent);
+}
+
+.sortIndicator {
+    color: currentColor;
+    font-size: 0.875rem;
+    line-height: 1;
+}
+
+.transactionTable td {
+    padding: 0.75rem 1rem;
+    vertical-align: middle;
+}
+
+.colDate {
+    width: 7rem;
+}
+
+.colType {
+    width: 10rem;
+}
+
+.colAmount {
+    width: 9.5rem;
+}
+
+.colActions {
+    width: 12.5rem;
+}
+
+.dateCell {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    white-space: nowrap;
+}
+
+.labelCell {
+    min-width: 0;
+}
+
+.labelPrimary {
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.labelNotes {
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+    margin-top: 0.2rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.typeCell {
+    min-width: 0;
+}
+
+.typeFxHint {
+    color: var(--text-muted);
+    display: inline-block;
+    font-size: 0.75rem;
+    margin-left: 0.5rem;
+}
+
+.numericCell {
+    font-family: var(--font-mono), monospace;
+    text-align: right;
+    white-space: nowrap;
+}
+
+.amountPositive {
+    color: var(--success);
+}
+
+.amountNegative {
+    color: var(--danger);
+}
+
+.actionsCell {
+    padding-left: 0.35rem;
+    padding-right: 0.35rem;
+    text-align: center;
+}
+
+.transactionTable th.actionsCell {
+    padding: 0.75rem 0.35rem;
+    text-align: center;
+}
+
+.actionsCellInner {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    justify-content: center;
 }
 
 .skels {

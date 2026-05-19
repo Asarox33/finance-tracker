@@ -11,6 +11,7 @@ export function useUserProfile() {
 }
 
 export function useUpdatePreferences() {
+    const { mutate: mutateProfile } = useUserProfile();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
@@ -20,7 +21,8 @@ export function useUpdatePreferences() {
         setError(null);
         setSuccess(false);
         try {
-            await userProfileApi.updatePreferences(data);
+            const updated = await userProfileApi.updatePreferences(data);
+            await mutateProfile(updated, { revalidate: false });
             setSuccess(true);
             onSuccess?.();
         } catch (err) {

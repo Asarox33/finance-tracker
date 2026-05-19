@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useAccount, useAccounts } from "@/features/accounts/hooks/useAccounts";
-import { useTransactions } from "@/features/transactions/hooks/useTransactions";
+import { useAccountTransactions } from "@/features/transactions/hooks/useTransactions";
 import { transactionsApi } from "@/features/transactions/api/transactionsApi";
 import ConfirmDialog from "@/shared/components/ConfirmDialog";
 import ListPagination from "@/shared/components/ListPagination";
@@ -41,6 +41,14 @@ const INFLOW_TYPES: TransactionType[] = ["DEPOSIT", "SELL", "DIVIDEND"];
 const OUTFLOW_TYPES: TransactionType[] = ["WITHDRAWAL", "BUY", "FEE", "TAX"];
 const EXPLICIT_SIGN_TYPES: TransactionType[] = ["TRANSFER", "OTHER"];
 const ACCOUNT_PICKER_PAGE_SIZE = 200;
+
+type TransactionSortKey = "date" | "label" | "type" | "amount";
+type SortDirection = "asc" | "desc";
+
+interface TransactionSort {
+    key: TransactionSortKey;
+    direction: SortDirection;
+}
 
 function signedTransactionAmount(tx: Pick<Transaction, "type" | "amount">): number {
     if (INFLOW_TYPES.includes(tx.type)) return Math.abs(tx.amount);
@@ -84,6 +92,10 @@ export default function TransactionsPage() {
     const { account: selectedAccountDetails } = useAccount(selectedAccount);
     const { data: accounts } = useAccounts(0, includeClosedAccounts, undefined, ACCOUNT_PICKER_PAGE_SIZE);
     const [page, setPage] = useState(0);
+    const [transactionSort, setTransactionSort] = useState<TransactionSort>({
+        key: "date",
+        direction: "desc",
+    });
     const { pageSize, setPageSize } = useTablePageSize();
     const [from, setFrom] = useState("");
     const [to, setTo] = useState("");
@@ -94,13 +106,18 @@ export default function TransactionsPage() {
     const [pendingDeleteTransaction, setPendingDeleteTransaction] = useState<Transaction | null>(null);
     const [deleteSubmitting, setDeleteSubmitting] = useState(false);
     const [deleteError, setDeleteError] = useState<string | null>(null);
-    const { data, isLoading, error, mutate } = useTransactions(
+    const { transactions, totalItems, isLoading, error, mutate } = useAccountTransactions(
         selectedAccount,
-        page,
         from || undefined,
-        to || undefined,
-        pageSize
+        to || undefined
     );
+    const sortedTransactions = useMemo(() => {
+        return [...transactions].sort((a, b) => compareTransactions(a, b, transactionSort));
+    }, [transactionSort, transactions]);
+    const pagedTransactions = useMemo(() => {
+        const start = page * pageSize;
+        return sortedTransactions.slice(start, start + pageSize);
+    }, [page, pageSize, sortedTransactions]);
     const selectedAccountRecord = useMemo(() => {
         return accounts?.items.find((account) => account.id === selectedAccount) ?? selectedAccountDetails;
     }, [accounts, selectedAccount, selectedAccountDetails]);
@@ -131,6 +148,20 @@ export default function TransactionsPage() {
             setIncludeClosedAccounts(true);
         }
     }, [selectedAccountDetails]);
+
+    useEffect(() => {
+        setPage(0);
+    }, [from, to, pageSize, transactionSort, transactions.length]);
+
+    const handleTransactionSort = (key: TransactionSortKey) => {
+        setTransactionSort((current) => {
+            if (current.key === key) {
+                return { key, direction: current.direction === "asc" ? "desc" : "asc" };
+            }
+
+            return { key, direction: defaultTransactionSortDirection(key) };
+        });
+    };
 
     function updateSelectedAccount(accountId: string) {
         lastSyncedAccountIdRef.current = accountId;
@@ -345,29 +376,68 @@ export default function TransactionsPage() {
                     />
                 )}
 
-                {selectedAccount && !isLoading && data && (
+                {selectedAccount && !isLoading && !error && (
                     <>
-                        {data.items.length === 0 && !showForm ? (
+                        {totalItems === 0 && !showForm ? (
                             <EmptyState
                                 title={t("transactions.emptyTitle")}
                                 description={t("transactions.emptyDescription")}
                             />
                         ) : (
                             <Card>
-                                <table aria-label={t("transactions.tableAria")}>
+                                <table
+                                    className={styles.transactionTable}
+                                    aria-label={t("transactions.tableAria")}
+                                >
+                                    <colgroup>
+                                        <col className={styles.colDate} />
+                                        <col />
+                                        <col className={styles.colType} />
+                                        <col className={styles.colAmount} />
+                                        <col className={styles.colActions} />
+                                    </colgroup>
                                     <thead>
                                         <tr>
-                                            <th scope="col">{t("transactions.date")}</th>
-                                            <th scope="col">{t("transactions.label")}</th>
-                                            <th scope="col">{t("transactions.type")}</th>
-                                            <th scope="col" style={{ textAlign: "right" }}>
+                                            <SortHeader
+                                                sortKey="date"
+                                                currentSort={transactionSort}
+                                                onSort={handleTransactionSort}
+                                                label={t("transactions.sortByDate")}
+                                            >
+                                                {t("transactions.date")}
+                                            </SortHeader>
+                                            <SortHeader
+                                                sortKey="label"
+                                                currentSort={transactionSort}
+                                                onSort={handleTransactionSort}
+                                                label={t("transactions.sortByLabel")}
+                                            >
+                                                {t("transactions.label")}
+                                            </SortHeader>
+                                            <SortHeader
+                                                sortKey="type"
+                                                currentSort={transactionSort}
+                                                onSort={handleTransactionSort}
+                                                label={t("transactions.sortByType")}
+                                            >
+                                                {t("transactions.type")}
+                                            </SortHeader>
+                                            <SortHeader
+                                                sortKey="amount"
+                                                currentSort={transactionSort}
+                                                onSort={handleTransactionSort}
+                                                label={t("transactions.sortByAmount")}
+                                                align="right"
+                                            >
                                                 {t("transactions.amount")}
+                                            </SortHeader>
+                                            <th scope="col" className={styles.actionsCell}>
+                                                {t("transactions.actions")}
                                             </th>
-                                            <th scope="col">{t("transactions.actions")}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {data.items.map((tx) => (
+                                        {pagedTransactions.map((tx) => (
                                             <TransactionRow
                                                 key={tx.id}
                                                 tx={tx}
@@ -382,27 +452,105 @@ export default function TransactionsPage() {
                                         ))}
                                     </tbody>
                                 </table>
+                                {totalItems > 0 && (
+                                    <ListPagination
+                                        page={page}
+                                        pageSize={pageSize}
+                                        totalItems={sortedTransactions.length}
+                                        onPageChange={setPage}
+                                        onPageSizeChange={(size) => {
+                                            void setPageSize(size);
+                                            setPage(0);
+                                        }}
+                                        ariaLabel={t("transactions.pagesAria")}
+                                        pageSizeLabelKey="transactions.perPage"
+                                    />
+                                )}
                             </Card>
-                        )}
-
-                        {data.totalItems > 0 && (
-                            <ListPagination
-                                page={page}
-                                pageSize={pageSize}
-                                totalItems={data.totalItems}
-                                onPageChange={setPage}
-                                onPageSizeChange={(size) => {
-                                    void setPageSize(size);
-                                    setPage(0);
-                                }}
-                                ariaLabel={t("transactions.pagesAria")}
-                            />
                         )}
                     </>
                 )}
             </div>
         </div>
     );
+}
+
+function SortHeader({
+    sortKey,
+    currentSort,
+    onSort,
+    label,
+    align = "left",
+    children,
+}: {
+    sortKey: TransactionSortKey;
+    currentSort: TransactionSort;
+    onSort: (key: TransactionSortKey) => void;
+    label: string;
+    align?: "left" | "right";
+    children: ReactNode;
+}) {
+    const active = currentSort.key === sortKey;
+    const directionIndicator = currentSort.direction === "asc" ? "↑" : "↓";
+
+    return (
+        <th
+            scope="col"
+            className={styles.sortableHeaderCell}
+            aria-sort={active ? (currentSort.direction === "asc" ? "ascending" : "descending") : "none"}
+            style={{ textAlign: align }}
+        >
+            <button
+                type="button"
+                className={`${styles.sortHeader} ${align === "right" ? styles.sortHeaderRight : ""} ${
+                    active ? styles.sortHeaderActive : ""
+                }`}
+                onClick={() => onSort(sortKey)}
+                aria-label={label}
+            >
+                <span>{children}</span>
+                {active && (
+                    <span aria-hidden="true" className={styles.sortIndicator}>
+                        {directionIndicator}
+                    </span>
+                )}
+            </button>
+        </th>
+    );
+}
+
+function defaultTransactionSortDirection(key: TransactionSortKey): SortDirection {
+    return key === "date" || key === "amount" ? "desc" : "asc";
+}
+
+function compareTransactions(a: Transaction, b: Transaction, sort: TransactionSort): number {
+    const direction = sort.direction === "asc" ? 1 : -1;
+    let result = 0;
+
+    switch (sort.key) {
+        case "date":
+            result = compareText(a.date, b.date);
+            break;
+        case "label":
+            result = compareText(a.label, b.label);
+            break;
+        case "type":
+            result = compareText(a.type, b.type);
+            break;
+        case "amount":
+            result = signedTransactionAmount(a) - signedTransactionAmount(b);
+            break;
+    }
+
+    if (result !== 0) {
+        return result * direction;
+    }
+
+    return compareText(b.date, a.date) || a.id.localeCompare(b.id);
+}
+
+function compareText(a?: string, b?: string): number {
+    return (a ?? "").localeCompare(b ?? "", undefined, { sensitivity: "base" });
 }
 
 function AccountOption({ account, closed = false }: { account: Account; closed?: boolean }) {
@@ -679,62 +827,31 @@ function TransactionRow({
 
     return (
         <tr>
-            <td
-                style={{
-                    color: "var(--text-muted)",
-                    fontSize: "0.875rem",
-                    whiteSpace: "nowrap",
-                }}
-            >
-                {formatDate(tx.date)}
-            </td>
-            <td>
-                <p style={{ fontWeight: 500 }}>{tx.label}</p>
+            <td className={styles.dateCell}>{formatDate(tx.date)}</td>
+            <td className={styles.labelCell}>
+                <p className={styles.labelPrimary} title={tx.label}>
+                    {tx.label}
+                </p>
                 {tx.notes && (
-                    <p
-                        style={{
-                            fontSize: "0.8125rem",
-                            color: "var(--text-muted)",
-                        }}
-                    >
+                    <p className={styles.labelNotes} title={tx.notes}>
                         {tx.notes}
                     </p>
                 )}
             </td>
-            <td>
+            <td className={styles.typeCell}>
                 <Badge variant={TYPE_VARIANTS[tx.type] ?? "default"}>
                     {t(`transactionType.${tx.type}` as TranslationKey)}
                 </Badge>
-                {tx.appliedFxRate && (
-                    <span
-                        style={{
-                            marginLeft: "0.5rem",
-                            fontSize: "0.75rem",
-                            color: "var(--text-muted)",
-                        }}
-                    >
-                        {t("transactions.fx")}
-                    </span>
-                )}
+                {tx.appliedFxRate && <span className={styles.typeFxHint}>{t("transactions.fx")}</span>}
             </td>
-            <td
-                style={{
-                    textAlign: "right",
-                    fontFamily: "var(--font-mono)",
-                    whiteSpace: "nowrap",
-                }}
-            >
-                <span
-                    style={{
-                        color: positive ? "var(--success)" : "var(--danger)",
-                    }}
-                >
+            <td className={styles.numericCell}>
+                <span className={positive ? styles.amountPositive : styles.amountNegative}>
                     {positive ? "+" : ""}
                     {formatMoney(signedAmount, tx.currency)}
                 </span>
             </td>
-            <td>
-                <div className={styles.rowActions}>
+            <td className={styles.actionsCell}>
+                <div className={styles.actionsCellInner}>
                     <Button type="button" variant="secondary" size="sm" loading={detailLoading} onClick={onViewDetails}>
                         {t("transactions.details")}
                     </Button>

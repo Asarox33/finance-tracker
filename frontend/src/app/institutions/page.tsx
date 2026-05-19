@@ -175,6 +175,7 @@ export default function InstitutionsPage() {
                             setPage(0);
                         }}
                         ariaLabel={t("institutions.pagesAria")}
+                        pageSizeLabelKey="institutions.perPage"
                     />
                 )}
             </div>

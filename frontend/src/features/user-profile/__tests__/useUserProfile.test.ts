@@ -2,6 +2,8 @@ import { act, renderHook } from "@testing-library/react";
 import { useUpdatePreferences, useUserProfile } from "@/features/user-profile/hooks/useUserProfile";
 import * as apiModule from "@/features/user-profile/api/userProfileApi";
 
+const mockMutate = jest.fn();
+
 jest.mock("swr", () => ({
     __esModule: true,
     default: jest.fn(() => ({
@@ -18,7 +20,7 @@ jest.mock("swr", () => ({
         },
         error: null,
         isLoading: false,
-        mutate: jest.fn(),
+        mutate: mockMutate,
     })),
 }));
 
@@ -109,6 +111,16 @@ describe("useUpdatePreferences", () => {
             await result.current.update(mockPreferences);
         });
         expect(result.current.success).toBe(true);
+    });
+
+    it("updates user profile cache after successful update", async () => {
+        const updatedProfile = { ...mockPreferences, id: "user-123", tablePageSize: 50 };
+        (apiModule.userProfileApi.updatePreferences as jest.Mock).mockResolvedValue(updatedProfile);
+        const { result } = renderHook(() => useUpdatePreferences());
+        await act(async () => {
+            await result.current.update({ ...mockPreferences, tablePageSize: 50 });
+        });
+        expect(mockMutate).toHaveBeenCalledWith(updatedProfile, { revalidate: false });
     });
 });
 

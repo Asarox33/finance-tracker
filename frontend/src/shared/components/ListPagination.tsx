@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/shared/components/ui";
-import { useI18n } from "@/shared/i18n";
+import { useI18n, type TranslationKey } from "@/shared/i18n";
 import { itemRange, TABLE_PAGE_SIZE_OPTIONS, type TablePageSize } from "@/lib/pagination";
 import styles from "./ListPagination.module.css";
 
@@ -12,6 +12,7 @@ export interface ListPaginationProps {
     onPageChange: (page: number) => void;
     onPageSizeChange?: (pageSize: TablePageSize) => void;
     ariaLabel: string;
+    pageSizeLabelKey?: TranslationKey;
     showPageSizeSelector?: boolean;
 }
 
@@ -22,9 +23,11 @@ export default function ListPagination({
     onPageChange,
     onPageSizeChange,
     ariaLabel,
+    pageSizeLabelKey = "common.rowsPerPage",
     showPageSizeSelector = true,
 }: ListPaginationProps) {
     const { t } = useI18n();
+    const pageSizeLabel = t(pageSizeLabelKey);
     const range = itemRange(page, pageSize, totalItems);
     const lastPage = Math.max(0, Math.ceil(totalItems / pageSize) - 1);
 
@@ -40,11 +43,11 @@ export default function ListPagination({
             <div className={styles.controls}>
                 {showPageSizeSelector && onPageSizeChange && (
                     <label className={styles.pageSizeField}>
-                        <span>{t("common.rowsPerPage")}</span>
+                        <span>{pageSizeLabel}</span>
                         <select
                             value={pageSize}
                             onChange={(e) => onPageSizeChange(Number(e.target.value) as TablePageSize)}
-                            aria-label={t("common.rowsPerPage")}
+                            aria-label={pageSizeLabel}
                         >
                             {TABLE_PAGE_SIZE_OPTIONS.map((size) => (
                                 <option key={size} value={size}>

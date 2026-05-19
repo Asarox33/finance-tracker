@@ -259,6 +259,7 @@ export default function ProfilePage() {
                                         value={tablePageSize}
                                         onChange={(e) => setTablePageSize(Number(e.target.value))}
                                         disabled={saving}
+                                        aria-describedby="table-page-size-hint"
                                     >
                                         {TABLE_PAGE_SIZE_OPTIONS.map((size) => (
                                             <option key={size} value={size}>
@@ -266,6 +267,9 @@ export default function ProfilePage() {
                                             </option>
                                         ))}
                                     </select>
+                                    <p id="table-page-size-hint" className={styles.hint}>
+                                        {t("profile.tablePageSizeHint")}
+                                    </p>
                                 </div>
 
                                 <div className={styles.field}>

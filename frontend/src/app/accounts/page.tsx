@@ -271,6 +271,7 @@ export default function AccountsPage() {
                             setPage(0);
                         }}
                         ariaLabel={t("accounts.pagesAria")}
+                        pageSizeLabelKey="accounts.perPage"
                     />
                 )}
             </div>
