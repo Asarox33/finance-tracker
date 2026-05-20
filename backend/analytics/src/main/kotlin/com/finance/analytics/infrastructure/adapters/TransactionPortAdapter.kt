@@ -23,7 +23,16 @@ class TransactionPortAdapter(
             )
         )
         return result.items.map {
-            TransactionSummary(it.accountId, it.amount, it.currency, it.date, it.type.name)
+            TransactionSummary(
+                accountId = it.accountId,
+                amount = it.amount,
+                currency = it.currency,
+                date = it.date,
+                type = it.type.name,
+                assetId = it.assetId,
+                assetQuantityMinor = it.assetQuantityMinor,
+                assetQuantityScale = it.assetQuantityScale
+            )
         }
     }
 }

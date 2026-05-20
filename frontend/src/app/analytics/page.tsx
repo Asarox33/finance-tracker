@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import clsx from "clsx";
 import {
     usePerformance,
     usePerformanceAfterFees,
@@ -35,6 +36,10 @@ export default function AnalyticsPage() {
 
     const valueLoading = currencyLoading || pvLoading;
     const perfSectionLoading = currencyLoading || perfLoading;
+
+    const grossLabel = t("analytics.gross");
+    const feesLabel = t("analytics.afterFees");
+    const inflationLabel = t("analytics.afterInflation");
 
     return (
         <div className={styles.page}>
@@ -107,156 +112,128 @@ export default function AnalyticsPage() {
                 {perf && (
                     <section aria-label={t("analytics.periodDetailsAria")} className={styles.section}>
                         <h2 className={styles.sectionTitle}>{t("analytics.periodDetails")}</h2>
-                        <Card>
-                            <table aria-label={t("analytics.performanceBreakdownAria")}>
-                                <thead>
-                                    <tr>
-                                        <th scope="col">{t("analytics.metric")}</th>
-                                        <th scope="col" style={{ textAlign: "right" }}>
-                                            {t("analytics.gross")}
-                                        </th>
-                                        <th scope="col" style={{ textAlign: "right" }}>
-                                            {t("analytics.afterFees")}
-                                        </th>
-                                        <th scope="col" style={{ textAlign: "right" }}>
-                                            {t("analytics.afterInflation")}
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td>{t("analytics.startValue")}</td>
-                                        <td
-                                            style={{
-                                                textAlign: "right",
-                                                fontFamily: "var(--font-mono)",
-                                            }}
-                                        >
-                                            {formatMoney(perf.startValue, referenceCurrency)}
-                                        </td>
-                                        <td
-                                            style={{
-                                                textAlign: "right",
-                                                fontFamily: "var(--font-mono)",
-                                            }}
-                                        >
-                                            {perfFees ? formatMoney(perfFees.startValue, referenceCurrency) : "—"}
-                                        </td>
-                                        <td
-                                            style={{
-                                                textAlign: "right",
-                                                fontFamily: "var(--font-mono)",
-                                            }}
-                                        >
-                                            {perfInflation
-                                                ? formatMoney(perfInflation.startValue, referenceCurrency)
-                                                : "—"}
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>{t("analytics.endValue")}</td>
-                                        <td
-                                            style={{
-                                                textAlign: "right",
-                                                fontFamily: "var(--font-mono)",
-                                            }}
-                                        >
-                                            {formatMoney(perf.endValue, referenceCurrency)}
-                                        </td>
-                                        <td
-                                            style={{
-                                                textAlign: "right",
-                                                fontFamily: "var(--font-mono)",
-                                            }}
-                                        >
-                                            {perfFees ? formatMoney(perfFees.endValue, referenceCurrency) : "—"}
-                                        </td>
-                                        <td
-                                            style={{
-                                                textAlign: "right",
-                                                fontFamily: "var(--font-mono)",
-                                            }}
-                                        >
-                                            {perfInflation
-                                                ? formatMoney(perfInflation.endValue, referenceCurrency)
-                                                : "—"}
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>{t("analytics.gainLoss")}</td>
-                                        <td
-                                            style={{
-                                                textAlign: "right",
-                                                fontFamily: "var(--font-mono)",
-                                                color: perf.gainLoss >= 0 ? "var(--success)" : "var(--danger)",
-                                            }}
-                                        >
-                                            {formatMoney(perf.gainLoss, referenceCurrency)}
-                                        </td>
-                                        <td
-                                            style={{
-                                                textAlign: "right",
-                                                fontFamily: "var(--font-mono)",
-                                                color:
-                                                    (perfFees?.gainLoss ?? 0) >= 0 ? "var(--success)" : "var(--danger)",
-                                            }}
-                                        >
-                                            {perfFees ? formatMoney(perfFees.gainLoss, referenceCurrency) : "—"}
-                                        </td>
-                                        <td
-                                            style={{
-                                                textAlign: "right",
-                                                fontFamily: "var(--font-mono)",
-                                                color:
+                        <Card className={styles.detailsCard}>
+                            <div className={styles.detailsTableWrap}>
+                                <table
+                                    className={styles.detailsTable}
+                                    aria-label={t("analytics.performanceBreakdownAria")}
+                                >
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">{t("analytics.metric")}</th>
+                                            <th scope="col" className={styles.numericHeader}>
+                                                {grossLabel}
+                                            </th>
+                                            <th scope="col" className={styles.numericHeader}>
+                                                {feesLabel}
+                                            </th>
+                                            <th scope="col" className={styles.numericHeader}>
+                                                {inflationLabel}
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr className={styles.detailsRow}>
+                                            <td className={styles.detailsMetric}>{t("analytics.startValue")}</td>
+                                            <td className={styles.numericCell} data-label={grossLabel}>
+                                                {formatMoney(perf.startValue, referenceCurrency)}
+                                            </td>
+                                            <td className={styles.numericCell} data-label={feesLabel}>
+                                                {perfFees ? formatMoney(perfFees.startValue, referenceCurrency) : "—"}
+                                            </td>
+                                            <td className={styles.numericCell} data-label={inflationLabel}>
+                                                {perfInflation
+                                                    ? formatMoney(perfInflation.startValue, referenceCurrency)
+                                                    : "—"}
+                                            </td>
+                                        </tr>
+                                        <tr className={styles.detailsRow}>
+                                            <td className={styles.detailsMetric}>{t("analytics.endValue")}</td>
+                                            <td className={styles.numericCell} data-label={grossLabel}>
+                                                {formatMoney(perf.endValue, referenceCurrency)}
+                                            </td>
+                                            <td className={styles.numericCell} data-label={feesLabel}>
+                                                {perfFees ? formatMoney(perfFees.endValue, referenceCurrency) : "—"}
+                                            </td>
+                                            <td className={styles.numericCell} data-label={inflationLabel}>
+                                                {perfInflation
+                                                    ? formatMoney(perfInflation.endValue, referenceCurrency)
+                                                    : "—"}
+                                            </td>
+                                        </tr>
+                                        <tr className={styles.detailsRow}>
+                                            <td className={styles.detailsMetric}>{t("analytics.gainLoss")}</td>
+                                            <td
+                                                className={clsx(
+                                                    styles.numericCell,
+                                                    perf.gainLoss >= 0 ? styles.positive : styles.negative
+                                                )}
+                                                data-label={grossLabel}
+                                            >
+                                                {formatMoney(perf.gainLoss, referenceCurrency)}
+                                            </td>
+                                            <td
+                                                className={clsx(
+                                                    styles.numericCell,
+                                                    (perfFees?.gainLoss ?? 0) >= 0 ? styles.positive : styles.negative
+                                                )}
+                                                data-label={feesLabel}
+                                            >
+                                                {perfFees ? formatMoney(perfFees.gainLoss, referenceCurrency) : "—"}
+                                            </td>
+                                            <td
+                                                className={clsx(
+                                                    styles.numericCell,
                                                     (perfInflation?.gainLoss ?? 0) >= 0
-                                                        ? "var(--success)"
-                                                        : "var(--danger)",
-                                            }}
-                                        >
-                                            {perfInflation
-                                                ? formatMoney(perfInflation.gainLoss, referenceCurrency)
-                                                : "—"}
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>{t("analytics.return")}</td>
-                                        <td
-                                            style={{
-                                                textAlign: "right",
-                                                fontFamily: "var(--font-mono)",
-                                                color:
-                                                    perf.gainLossBasisPoints >= 0 ? "var(--success)" : "var(--danger)",
-                                            }}
-                                        >
-                                            {formatBasisPoints(perf.gainLossBasisPoints)}
-                                        </td>
-                                        <td
-                                            style={{
-                                                textAlign: "right",
-                                                fontFamily: "var(--font-mono)",
-                                                color:
+                                                        ? styles.positive
+                                                        : styles.negative
+                                                )}
+                                                data-label={inflationLabel}
+                                            >
+                                                {perfInflation
+                                                    ? formatMoney(perfInflation.gainLoss, referenceCurrency)
+                                                    : "—"}
+                                            </td>
+                                        </tr>
+                                        <tr className={styles.detailsRow}>
+                                            <td className={styles.detailsMetric}>{t("analytics.return")}</td>
+                                            <td
+                                                className={clsx(
+                                                    styles.numericCell,
+                                                    perf.gainLossBasisPoints >= 0 ? styles.positive : styles.negative
+                                                )}
+                                                data-label={grossLabel}
+                                            >
+                                                {formatBasisPoints(perf.gainLossBasisPoints)}
+                                            </td>
+                                            <td
+                                                className={clsx(
+                                                    styles.numericCell,
                                                     (perfFees?.gainLossBasisPoints ?? 0) >= 0
-                                                        ? "var(--success)"
-                                                        : "var(--danger)",
-                                            }}
-                                        >
-                                            {perfFees ? formatBasisPoints(perfFees.gainLossBasisPoints) : "—"}
-                                        </td>
-                                        <td
-                                            style={{
-                                                textAlign: "right",
-                                                fontFamily: "var(--font-mono)",
-                                                color:
+                                                        ? styles.positive
+                                                        : styles.negative
+                                                )}
+                                                data-label={feesLabel}
+                                            >
+                                                {perfFees ? formatBasisPoints(perfFees.gainLossBasisPoints) : "—"}
+                                            </td>
+                                            <td
+                                                className={clsx(
+                                                    styles.numericCell,
                                                     (perfInflation?.gainLossBasisPoints ?? 0) >= 0
-                                                        ? "var(--success)"
-                                                        : "var(--danger)",
-                                            }}
-                                        >
-                                            {perfInflation ? formatBasisPoints(perfInflation.gainLossBasisPoints) : "—"}
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                                                        ? styles.positive
+                                                        : styles.negative
+                                                )}
+                                                data-label={inflationLabel}
+                                            >
+                                                {perfInflation
+                                                    ? formatBasisPoints(perfInflation.gainLossBasisPoints)
+                                                    : "—"}
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </Card>
                     </section>
                 )}

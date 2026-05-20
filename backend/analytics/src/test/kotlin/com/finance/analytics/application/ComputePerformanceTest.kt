@@ -1,6 +1,7 @@
 package com.finance.analytics.application
 
 import com.finance.analytics.StubAccountPort
+import com.finance.analytics.StubAssetMarkPricePort
 import com.finance.analytics.StubFxRatePort
 import com.finance.analytics.StubTransactionPort
 import com.finance.analytics.account
@@ -28,7 +29,8 @@ class ComputePerformanceTest {
                 transaction(account.id, 100000L, date = LocalDate.of(2023, 12, 1)),
                 transaction(account.id, 20000L, date = LocalDate.of(2024, 3, 1))
             )),
-            StubFxRatePort()
+            StubFxRatePort(),
+            StubAssetMarkPricePort()
         )
         val result = useCase.execute(ComputePerformance.Query(userId, from, to, Currency.EUR))
         assertEquals(100000L, result.startValue)
@@ -46,7 +48,8 @@ class ComputePerformanceTest {
                 transaction(account.id, 100000L, date = LocalDate.of(2023, 12, 1), type = "DEPOSIT"),
                 transaction(account.id, 20000L, date = LocalDate.of(2024, 3, 1), type = "WITHDRAWAL")
             )),
-            StubFxRatePort()
+            StubFxRatePort(),
+            StubAssetMarkPricePort()
         )
         val result = useCase.execute(ComputePerformance.Query(userId, from, to, Currency.EUR))
         assertEquals(80000L, result.endValue)
@@ -59,7 +62,8 @@ class ComputePerformanceTest {
         val useCase = ComputePerformance(
             StubAccountPort(listOf(account)),
             StubTransactionPort(listOf(transaction(account.id, 100000L, date = LocalDate.of(2023, 12, 1)))),
-            StubFxRatePort()
+            StubFxRatePort(),
+            StubAssetMarkPricePort()
         )
         val result = useCase.execute(ComputePerformance.Query(userId, from, to, Currency.EUR))
         assertEquals(0L, result.gainLoss)
@@ -67,7 +71,12 @@ class ComputePerformanceTest {
 
     @Test
     fun rejectsFromAfterTo() {
-        val useCase = ComputePerformance(StubAccountPort(), StubTransactionPort(), StubFxRatePort())
+        val useCase = ComputePerformance(
+            StubAccountPort(),
+            StubTransactionPort(),
+            StubFxRatePort(),
+            StubAssetMarkPricePort()
+        )
         assertThrows(InvalidRequestException::class.java) {
             useCase.execute(ComputePerformance.Query(userId, to, from, Currency.EUR))
         }

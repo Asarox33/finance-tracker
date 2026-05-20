@@ -61,6 +61,8 @@ export interface Transaction {
     appliedFxRateDate: string | null;
     appliedFxSourceCurrency: string | null;
     appliedFxTargetCurrency: string | null;
+    assetQuantityMinor: number | null;
+    assetQuantityScale: number | null;
 }
 
 export type TransactionType =
@@ -81,6 +83,16 @@ export interface PortfolioValue {
     snapshots: AccountSnapshot[];
 }
 
+export interface HoldingLine {
+    assetId: string;
+    /** From asset registry when available */
+    assetName?: string | null;
+    assetTicker?: string | null;
+    quantityMinor: number;
+    quantityScale: number;
+    valueInAccountCurrency: number;
+}
+
 export interface AccountSnapshot {
     accountId: string;
     accountName: string;
@@ -89,6 +101,9 @@ export interface AccountSnapshot {
     institutionName: string;
     institutionType: string;
     currency: string;
+    cashBalanceInAccountCurrency: number;
+    holdingsValueInAccountCurrency: number;
+    holdings: HoldingLine[];
     valueInAccountCurrency: number;
     valueInReferenceCurrency: number;
     referenceCurrency: string;
@@ -111,4 +126,25 @@ export interface Institution {
     country: string;
     type: string;
     bic: string | null;
+}
+
+export type AssetType =
+    | "CASH"
+    | "STOCK"
+    | "BOND"
+    | "ETF"
+    | "MUTUAL_FUND"
+    | "REAL_ESTATE"
+    | "CRYPTO"
+    | "COMMODITY"
+    | "OTHER";
+
+export interface Asset {
+    id: string;
+    name: string;
+    type: AssetType;
+    currency: string;
+    isin: string | null;
+    ticker: string | null;
+    createdByUserId: string;
 }

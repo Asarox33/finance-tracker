@@ -9,7 +9,10 @@ data class TransactionSummary(
     val amount: Long,
     val currency: Currency,
     val date: LocalDate,
-    val type: String
+    val type: String,
+    val assetId: UUID? = null,
+    val assetQuantityMinor: Long? = null,
+    val assetQuantityScale: Int? = null
 )
 
 interface TransactionPort {

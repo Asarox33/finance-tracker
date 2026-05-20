@@ -53,14 +53,16 @@ Features are integrated as vertical slices. Status is **functional** where marke
 | Auth (login / register / reset) | `/login`, `/login/register`, `/login/reset` | ✅ | ✅ | ✅ (`useAuth`, `authApi`, `format`) | ✅ `login.spec.ts` |
 | User profile | `/profile` | ✅ | ✅ | ✅ (`userProfileApi`, `useUserProfile`) | ✅ `profile.spec.ts` |
 | Institutions | `/institutions` | ✅ | ✅ | ✅ (`institutionsApi`, `useInstitutions`) | ✅ `institutions.spec.ts` |
+| Assets | `/assets` | ✅ | ✅ | ✅ (`assetsApi`, `useAssets`) | — |
 | Accounts | `/accounts` | ✅ | ✅ | ✅ (`accountsApi`, `useAccounts`) | ✅ `accounts.spec.ts` |
 | Transactions | `/transactions` | ✅ | ✅ | ✅ (`transactionsApi`, `useTransactions`) | ✅ `transactions.spec.ts` |
+| Prices | `/prices` | ✅ | ✅ | ✅ (`pricesApi`) | — |
 | Analytics | `/analytics` | ✅ | ✅ | ✅ (`analyticsApi`, `useAnalytics`) | ✅ `analytics.spec.ts` |
 | Dashboard | `/dashboard` | — (composes hooks) | — | — | ✅ `dashboard.spec.ts` |
 
 **Shared / lib**
 
-- ✅ `AppShell` — nav includes Dashboard, Accounts, **Institutions**, Transactions, Analytics; auth guard; **loading shell** while auth is resolving; profile-driven `ENG` / `FRA` / `ESP` / `ITA` i18n provider; **strict 10-minute inactivity timeout** with final 15-second warning, wake/focus deadline checks, and refresh-token revocation on logout; access-expiry modal fallback; responsive sidebar
+- ✅ `AppShell` — nav includes Dashboard, Institutions, **Assets**, Accounts, Transactions, **Prices**, Analytics; auth guard; **loading shell** while auth is resolving; profile-driven `ENG` / `FRA` / `ESP` / `ITA` i18n provider; **strict 10-minute inactivity timeout** with final 15-second warning, wake/focus deadline checks, and refresh-token revocation on logout; access-expiry modal fallback; responsive sidebar
 - ✅ `ThemeToggle`, shared UI primitives (`ui.tsx`)
 - ✅ `http.ts` — access JWT in `localStorage`, `credentials: "include"`, **refresh on 401** via cookie, `ensureSession()` for auth guard; **unit tests:** `src/lib/__tests__/http.test.ts`
 - ✅ `format.ts`, `currencies.ts`, `countries.ts` (used by accounts / profile / institutions); money/date formatters accept locale overrides
@@ -74,10 +76,12 @@ Features are integrated as vertical slices. Status is **functional** where marke
 | `/login` | Sign-in, locked-account handling |
 | `/login/register` | Registration |
 | `/login/reset` | Password reset (request → OTP + new password → success) |
-| `/dashboard` | Portfolio KPIs, 12-month performance, account breakdown with account/institution type badges, formatted currency values, and dedicated transaction links per account; contextual getting-started checklist while setup is incomplete (reference currency from profile `preferredCurrency`) |
+| `/dashboard` | Portfolio KPIs, 12-month performance, account breakdown (**cash**, **mark-to-market holdings**, total value) with account/institution type badges, formatted currency values, and dedicated transaction links per account; contextual getting-started checklist while setup is incomplete (reference currency from profile `preferredCurrency`) |
 | `/accounts` | Account cards with colored type labels, type filter, create form with institution picker, close/reactivate account, show-closed toggle, pagination, and dedicated links to filtered transaction history |
 | `/institutions` | Debounced list filters, type filter, localized country-name sorted dropdowns, clear filters, pagination, shared-repository notice, create institution with client validation, colored type/country cards (`flag-icons` for country flags) |
-| `/transactions` | Deep-linkable account selector (`accountId` query), optional closed-account history toggle, date-range filters, paginated table, create form and soft-delete for active accounts, read-only history for closed accounts; transaction signs follow operation type for deposits/withdrawals/buys/sells/fees/taxes; **no asset selector** |
+| `/assets` | Paginated asset cards with type pills (ticker/ISIN when present), create form (name, type, currency, optional ISIN/ticker with client validation) |
+| `/transactions` | Deep-linkable account selector (`accountId` query), optional closed-account history toggle, date-range filters, paginated table (**asset / quantity** column when recorded), create form with **AssetPicker** for `BUY`/`SELL`, **cash vs. asset-quantity** trade input (quantity mode requires a **price** for the trade date), soft-delete for active accounts, read-only history for closed accounts; transaction signs follow operation type |
+| `/prices` | Record end-of-day **asset prices** (minor units per full asset unit) in a quote currency — underpins quantity-led trades and dashboard mark-to-market |
 | `/analytics` | Period presets, performance variants; reference currency from profile `preferredCurrency` |
 | `/profile` | Profile and preferences, including preferred currency and display language |
 
@@ -88,8 +92,10 @@ Features are integrated as vertical slices. Status is **functional** where marke
 | Auth | `features/auth/__tests__/useAuth.test.ts`, `authApi.test.ts`, `format.test.ts` |
 | User profile | `features/user-profile/__tests__/userProfileApi.test.ts`, `useUserProfile.test.ts` |
 | Institutions | `features/institutions/__tests__/institutionsApi.test.ts`, `useInstitutions.test.ts` |
+| Assets | `features/assets/__tests__/assetsApi.test.ts`, `useAssets.test.ts` |
 | Accounts | `features/accounts/__tests__/accountsApi.test.ts`, `useAccounts.test.ts` |
 | Transactions | `features/transactions/__tests__/transactionsApi.test.ts`, `useTransactions.test.ts` |
+| Prices | `features/price/__tests__/priceApi.test.ts` |
 | Analytics | `features/analytics/__tests__/analyticsApi.test.ts`, `useAnalytics.test.ts` |
 | HTTP client | `src/lib/__tests__/http.test.ts` |
 
@@ -155,7 +161,7 @@ Features are integrated as vertical slices. Status is **functional** where marke
 
 #### Transactions
 
-- **No `assetId`** in create form for BUY/SELL.
+- Transaction create form **filters types by account type** and shows **`AssetPicker`** (3+ character search) for BUY/SELL; backend enforces type matrix and `assetId` on trades in `RecordTransaction`.
 
 #### Institution repository quality
 
@@ -285,8 +291,7 @@ Portfolio rebalancing, budget tracking, notifications, multi-currency time-serie
 
 ### Frontend
 
-- **Asset** vertical (`features/assets/`, management UI) — not started.
-- **Fees / price / fx / inflation** management pages — not started (REST exists).
+- **Fees / price / fx / inflation** management pages — not started (REST exists); asset management UI is at `/assets`.
 - **Internationalised** formatting (replace hardcoded `fr-FR`).
 - **Error boundary** and optional optimistic UI patterns.
 - Broader **E2E** as listed above.

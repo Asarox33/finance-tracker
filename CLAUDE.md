@@ -62,11 +62,11 @@ Integrate **one vertical slice at a time** (types in `shared/types`, `features/<
 | 1 | `auth` | `features/auth/` | Done |
 | 2 | `user-profile` | `features/user-profile/` | Done |
 | 3 | `institution` | `features/institutions/` | Done |
-| 4 | `asset` | `features/assets/` (to create) | Not started |
-| 5 | `account` | `features/accounts/` | In progress — align UX with institutions (picker / search; drop raw UUID where possible) |
-| 6 | `transaction` | `features/transactions/` | In progress — date filters, asset linkage for BUY/SELL, tests as needed |
+| 4 | `asset` | `features/assets/` | Done |
+| 5 | `account` | `features/accounts/` | Done |
+| 6 | `transaction` | `features/transactions/` | Done — BUY/SELL asset picker, cash vs quantity mode, stored quantity scale |
 | 7 | `fees` | `features/fees/` (to create) | Not started |
-| 8 | `price` | `features/price/` (to create) | Not started |
+| 8 | `price` | `features/price/` | Done — `/prices` manual asset price recording |
 | 9 | `fx` | `features/fx/` (to create) | Not started |
 | 10 | `inflation` | `features/inflation/` (to create) | Not started |
 | 11 | `analytics` | `features/analytics/` | In progress — preferred currency from profile, E2E |

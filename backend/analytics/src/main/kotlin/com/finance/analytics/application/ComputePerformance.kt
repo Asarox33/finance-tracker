@@ -2,6 +2,7 @@ package com.finance.analytics.application
 
 import com.finance.analytics.domain.PortfolioPerformance
 import com.finance.analytics.domain.ports.AccountPort
+import com.finance.analytics.domain.ports.AssetMarkPricePort
 import com.finance.analytics.domain.ports.FxRatePort
 import com.finance.analytics.domain.ports.TransactionPort
 import com.finance.shared.Currency
@@ -12,7 +13,8 @@ import java.util.UUID
 class ComputePerformance(
     private val accountPort: AccountPort,
     private val transactionPort: TransactionPort,
-    private val fxRatePort: FxRatePort
+    private val fxRatePort: FxRatePort,
+    private val assetMarkPricePort: AssetMarkPricePort
 ) {
     data class Query(
         val userId: UUID,
@@ -28,13 +30,13 @@ class ComputePerformance(
 
         val startValue = accounts.sumOf { account ->
             val txs = transactionPort.findByAccountId(query.userId, account.id, LocalDate.MIN, query.from)
-            val value = txs.sumOf { it.signedAmount() }
+            val value = economicValueInAccountCurrency(txs, account.currency, query.from, assetMarkPricePort)
             convertToRef(value, account.currency, query.referenceCurrency, query.from)
         }
 
         val endValue = accounts.sumOf { account ->
             val txs = transactionPort.findByAccountId(query.userId, account.id, LocalDate.MIN, query.to)
-            val value = txs.sumOf { it.signedAmount() }
+            val value = economicValueInAccountCurrency(txs, account.currency, query.to, assetMarkPricePort)
             convertToRef(value, account.currency, query.referenceCurrency, query.to)
         }
 

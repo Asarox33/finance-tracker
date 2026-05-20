@@ -3,6 +3,7 @@ package com.finance.asset.infrastructure
 import com.finance.asset.domain.Asset
 import com.finance.asset.domain.AssetRepository
 import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Component
 import java.util.UUID
 
@@ -35,14 +36,24 @@ class AssetRepositoryAdapter(
     override fun findById(id: UUID): Asset? =
         jpaRepo.findById(id).orElse(null)?.toDomain()
 
-    override fun findAll(page: Int, pageSize: Int): List<Asset> =
-        jpaRepo.findAllBy(PageRequest.of(page, pageSize)).content.map { it.toDomain() }
+    override fun findAll(page: Int, pageSize: Int, name: String?): List<Asset> {
+        val pageable = PageRequest.of(page, pageSize, ASSET_LIST_SORT)
+        val page = if (name != null) {
+            jpaRepo.searchByTerm(name, pageable)
+        } else {
+            jpaRepo.findAllBy(pageable)
+        }
+        return page.content.map { it.toDomain() }
+    }
 
-    override fun count(): Long = jpaRepo.count()
+    override fun count(name: String?): Long =
+        if (name != null) jpaRepo.countByTerm(name) else jpaRepo.count()
 
     override fun existsByIsin(isin: String): Boolean =
         jpaRepo.existsByIsin(isin)
 }
+
+private val ASSET_LIST_SORT = Sort.by(Sort.Order.asc("name").ignoreCase())
 
 private fun JpaAssetEntity.toDomain() = Asset(
     id = id,

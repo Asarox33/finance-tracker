@@ -17,17 +17,31 @@ class RecordAssetPrice(
         val date: LocalDate
     )
 
-    data class Result(val priceId: UUID)
+    data class Result(val priceId: UUID, val created: Boolean)
 
     fun execute(command: Command): Result {
         if (command.price <= 0) throw InvalidRequestException("Asset price must be positive")
-        val assetPrice = AssetPrice(
-            id = UUID.randomUUID(),
-            assetId = command.assetId,
-            price = command.price,
-            currency = command.currency,
-            date = command.date
-        )
-        return Result(priceId = assetPriceRepository.save(assetPrice).id)
+        val existing = assetPriceRepository.findByAssetIdAndDate(command.assetId, command.date)
+        val assetPrice =
+            if (existing != null) {
+                AssetPrice(
+                    id = existing.id,
+                    assetId = command.assetId,
+                    price = command.price,
+                    currency = command.currency,
+                    date = command.date,
+                    appliedPriceDate = command.date
+                )
+            } else {
+                AssetPrice(
+                    id = UUID.randomUUID(),
+                    assetId = command.assetId,
+                    price = command.price,
+                    currency = command.currency,
+                    date = command.date
+                )
+            }
+        val saved = assetPriceRepository.save(assetPrice)
+        return Result(priceId = saved.id, created = existing == null)
     }
 }

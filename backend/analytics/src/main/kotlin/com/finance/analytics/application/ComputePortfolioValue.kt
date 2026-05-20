@@ -3,6 +3,8 @@ package com.finance.analytics.application
 import com.finance.analytics.domain.AccountSnapshot
 import com.finance.analytics.domain.PortfolioValue
 import com.finance.analytics.domain.ports.AccountPort
+import com.finance.analytics.domain.ports.AssetLabelPort
+import com.finance.analytics.domain.ports.AssetMarkPricePort
 import com.finance.analytics.domain.ports.FxRatePort
 import com.finance.analytics.domain.ports.InstitutionPort
 import com.finance.analytics.domain.ports.TransactionPort
@@ -14,7 +16,9 @@ class ComputePortfolioValue(
     private val accountPort: AccountPort,
     private val institutionPort: InstitutionPort,
     private val transactionPort: TransactionPort,
-    private val fxRatePort: FxRatePort
+    private val fxRatePort: FxRatePort,
+    private val assetMarkPricePort: AssetMarkPricePort,
+    private val assetLabelPort: AssetLabelPort
 ) {
     data class Query(
         val userId: UUID,
@@ -28,7 +32,23 @@ class ComputePortfolioValue(
 
         val snapshots = accounts.map { account ->
             val transactions = transactionPort.findByAccountId(query.userId, account.id, LocalDate.MIN, query.asOf)
-            val valueInAccountCurrency = transactions.sumOf { it.signedAmount() }
+            val cashBalance = transactions.sumOf { it.signedAmount() }
+            val (holdingsValue, holdingLinesRaw) = aggregateHoldingsInAccountCurrency(
+                transactions,
+                account.currency,
+                query.asOf,
+                assetMarkPricePort
+            )
+            val labels = assetLabelPort.labelsFor(holdingLinesRaw.map { it.assetId }.toSet())
+            val holdingLines = holdingLinesRaw.map { line ->
+                val label = labels[line.assetId]
+                if (label != null) {
+                    line.copy(assetName = label.name, assetTicker = label.ticker)
+                } else {
+                    line
+                }
+            }
+            val valueInAccountCurrency = cashBalance + holdingsValue
 
             val valueInRef = if (account.currency == query.referenceCurrency) {
                 valueInAccountCurrency
@@ -52,6 +72,9 @@ class ComputePortfolioValue(
                 institutionName = institution?.name ?: UNKNOWN_INSTITUTION_NAME,
                 institutionType = institution?.type ?: UNKNOWN_INSTITUTION_TYPE,
                 currency = account.currency,
+                cashBalanceInAccountCurrency = cashBalance,
+                holdingsValueInAccountCurrency = holdingsValue,
+                holdings = holdingLines,
                 valueInAccountCurrency = valueInAccountCurrency,
                 valueInReferenceCurrency = valueInRef,
                 referenceCurrency = query.referenceCurrency,

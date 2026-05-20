@@ -5,6 +5,8 @@ import com.finance.analytics.application.ComputePerformanceAfterFees
 import com.finance.analytics.application.ComputePerformanceAfterInflation
 import com.finance.analytics.application.ComputePortfolioValue
 import com.finance.analytics.domain.ports.AccountPort
+import com.finance.analytics.domain.ports.AssetLabelPort
+import com.finance.analytics.domain.ports.AssetMarkPricePort
 import com.finance.analytics.domain.ports.FeePort
 import com.finance.analytics.domain.ports.FxRatePort
 import com.finance.analytics.domain.ports.InstitutionPort
@@ -21,24 +23,35 @@ class AnalyticsConfig {
         accountPort: AccountPort,
         institutionPort: InstitutionPort,
         transactionPort: TransactionPort,
-        fxRatePort: FxRatePort
-    ): ComputePortfolioValue = ComputePortfolioValue(accountPort, institutionPort, transactionPort, fxRatePort)
+        fxRatePort: FxRatePort,
+        assetMarkPricePort: AssetMarkPricePort,
+        assetLabelPort: AssetLabelPort
+    ): ComputePortfolioValue = ComputePortfolioValue(
+        accountPort,
+        institutionPort,
+        transactionPort,
+        fxRatePort,
+        assetMarkPricePort,
+        assetLabelPort
+    )
 
     @Bean
     fun computePerformance(
         accountPort: AccountPort,
         transactionPort: TransactionPort,
-        fxRatePort: FxRatePort
-    ): ComputePerformance = ComputePerformance(accountPort, transactionPort, fxRatePort)
+        fxRatePort: FxRatePort,
+        assetMarkPricePort: AssetMarkPricePort
+    ): ComputePerformance = ComputePerformance(accountPort, transactionPort, fxRatePort, assetMarkPricePort)
 
     @Bean
     fun computePerformanceAfterFees(
         accountPort: AccountPort,
         transactionPort: TransactionPort,
         feePort: FeePort,
-        fxRatePort: FxRatePort
+        fxRatePort: FxRatePort,
+        assetMarkPricePort: AssetMarkPricePort
     ): ComputePerformanceAfterFees =
-        ComputePerformanceAfterFees(accountPort, transactionPort, feePort, fxRatePort)
+        ComputePerformanceAfterFees(accountPort, transactionPort, feePort, fxRatePort, assetMarkPricePort)
 
     @Bean
     fun computePerformanceAfterInflation(
@@ -46,7 +59,15 @@ class AnalyticsConfig {
         transactionPort: TransactionPort,
         feePort: FeePort,
         fxRatePort: FxRatePort,
-        inflationPort: InflationPort
+        inflationPort: InflationPort,
+        assetMarkPricePort: AssetMarkPricePort
     ): ComputePerformanceAfterInflation =
-        ComputePerformanceAfterInflation(accountPort, transactionPort, feePort, fxRatePort, inflationPort)
+        ComputePerformanceAfterInflation(
+            accountPort,
+            transactionPort,
+            feePort,
+            fxRatePort,
+            inflationPort,
+            assetMarkPricePort
+        )
 }

@@ -22,6 +22,7 @@ class AccountAccessPortAdapter(
         return AccountAccessSummary(
             id = account.id,
             userId = account.userId,
+            type = account.type,
             currency = account.currency,
             active = account.status == AccountStatus.ACTIVE
         )

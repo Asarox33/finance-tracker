@@ -62,26 +62,3 @@ describe("useTransactions", () => {
         expect(apiModule.transactionsApi.list).not.toHaveBeenCalled();
     });
 });
-
-describe("useAccountTransactions", () => {
-    beforeEach(() => jest.clearAllMocks());
-
-    it("fetches all pages when totalItems is greater than one", async () => {
-        (apiModule.transactionsApi.list as jest.Mock)
-            .mockResolvedValueOnce({ items: [{ id: "tx-1" }], totalItems: 3 })
-            .mockResolvedValueOnce({ items: [{ id: "tx-1" }, { id: "tx-2" }, { id: "tx-3" }], totalItems: 3 });
-
-        const fetcher = jest.fn(async () => {
-            const probe = await apiModule.transactionsApi.list("acc-1", 0, 1, undefined, undefined);
-            if (probe.totalItems <= 1) {
-                return probe;
-            }
-            return apiModule.transactionsApi.list("acc-1", 0, probe.totalItems, undefined, undefined);
-        });
-
-        await fetcher();
-
-        expect(apiModule.transactionsApi.list).toHaveBeenNthCalledWith(1, "acc-1", 0, 1, undefined, undefined);
-        expect(apiModule.transactionsApi.list).toHaveBeenNthCalledWith(2, "acc-1", 0, 3, undefined, undefined);
-    });
-});

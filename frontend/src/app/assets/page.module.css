@@ -1,0 +1,251 @@
+.page {
+    min-height: 100vh;
+    animation: fadeIn 0.3s ease;
+}
+
+.body {
+    padding: 0 2rem 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.formCard {
+    border-color: var(--accent);
+}
+
+.formTitle {
+    font-family: var(--font-display), serif;
+    font-size: 1.125rem;
+    margin-bottom: 1.25rem;
+}
+
+.formError {
+    background: var(--danger-dim);
+    border: 1px solid var(--danger);
+    border-radius: var(--radius-sm);
+    color: var(--danger);
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    margin-bottom: 1rem;
+}
+
+.formGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+}
+
+.hint {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 0.375rem;
+}
+
+.formActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--border);
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+}
+
+.skels {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.cardSkel {
+    height: 120px;
+}
+
+.assetCard {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    min-height: 8rem;
+    transition:
+        border-color var(--transition),
+        box-shadow var(--transition);
+}
+
+.assetCard:hover {
+    border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+    box-shadow: var(--card-hover-shadow);
+}
+
+.cardHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.75rem;
+}
+
+.cardTitleBlock {
+    min-width: 0;
+    flex: 1;
+}
+
+.cardName {
+    font-weight: 500;
+    font-size: 1rem;
+    line-height: 1.35;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+}
+
+.currencyLine {
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+    margin-top: 0.25rem;
+}
+
+.typePill {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid currentColor;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    line-height: 1;
+    padding: 0.25rem 0.6rem;
+    white-space: nowrap;
+}
+
+.typeCash {
+    background: color-mix(in srgb, #22c55e 18%, transparent);
+    color: #4ade80;
+}
+
+.typeStock {
+    background: color-mix(in srgb, #3b82f6 18%, transparent);
+    color: #60a5fa;
+}
+
+.typeBond {
+    background: color-mix(in srgb, #6366f1 18%, transparent);
+    color: #818cf8;
+}
+
+.typeEtf {
+    background: color-mix(in srgb, #14b8a6 18%, transparent);
+    color: #2dd4bf;
+}
+
+.typeMutualFund {
+    background: color-mix(in srgb, #0ea5e9 18%, transparent);
+    color: #38bdf8;
+}
+
+.typeRealEstate {
+    background: color-mix(in srgb, #f59e0b 18%, transparent);
+    color: #fbbf24;
+}
+
+.typeCrypto {
+    background: color-mix(in srgb, #a855f7 18%, transparent);
+    color: #c084fc;
+}
+
+.typeCommodity {
+    background: color-mix(in srgb, #eab308 18%, transparent);
+    color: #facc15;
+}
+
+.typeOther {
+    background: color-mix(in srgb, #64748b 20%, transparent);
+    color: #94a3b8;
+}
+
+[data-theme="light"] .typeCash {
+    background: #d6f0e0;
+    color: #15803d;
+}
+
+[data-theme="light"] .typeStock {
+    background: #d7e3ef;
+    color: #255f9e;
+}
+
+[data-theme="light"] .typeBond {
+    background: #e0e2f5;
+    color: #4338ca;
+}
+
+[data-theme="light"] .typeEtf {
+    background: #d6eee5;
+    color: #0f766e;
+}
+
+[data-theme="light"] .typeMutualFund {
+    background: #d6ebf5;
+    color: #0369a1;
+}
+
+[data-theme="light"] .typeRealEstate {
+    background: #f0dfbd;
+    color: #8a4b0b;
+}
+
+[data-theme="light"] .typeCrypto {
+    background: #eadcf5;
+    color: #6b3fa0;
+}
+
+[data-theme="light"] .typeCommodity {
+    background: #f5edc8;
+    color: #854d0e;
+}
+
+[data-theme="light"] .typeOther {
+    background: #e2ded5;
+    color: #475569;
+}
+
+.cardMeta {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    flex-wrap: wrap;
+    min-height: 1.55rem;
+    margin-top: auto;
+    padding-top: 0.75rem;
+    border-top: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+}
+
+.identifier {
+    font-family: var(--font-mono), monospace;
+    font-size: 0.75rem;
+    font-weight: 700;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    padding: 0.25rem 0.55rem;
+    border-radius: 999px;
+    color: var(--accent);
+    letter-spacing: 0.05em;
+    line-height: 1;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.identifierPlaceholder {
+    min-height: 1.5rem;
+}

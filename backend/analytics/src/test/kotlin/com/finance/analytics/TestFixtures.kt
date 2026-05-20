@@ -2,6 +2,9 @@ package com.finance.analytics
 
 import com.finance.analytics.domain.ports.AccountPort
 import com.finance.analytics.domain.ports.AccountSummary
+import com.finance.analytics.domain.ports.AssetLabel
+import com.finance.analytics.domain.ports.AssetLabelPort
+import com.finance.analytics.domain.ports.AssetMarkPricePort
 import com.finance.analytics.domain.ports.FeePort
 import com.finance.analytics.domain.ports.FeeSummary
 import com.finance.analytics.domain.ports.FxRatePort
@@ -13,6 +16,7 @@ import com.finance.analytics.domain.ports.InflationPort
 import com.finance.analytics.domain.ports.TransactionPort
 import com.finance.analytics.domain.ports.TransactionSummary
 import com.finance.shared.Currency
+import com.finance.transaction.domain.ports.UnitPriceInCurrency
 import java.time.LocalDate
 import java.time.YearMonth
 import java.util.UUID
@@ -32,6 +36,26 @@ class StubTransactionPort(private val transactions: List<TransactionSummary> = e
 
 class StubFxRatePort(private val rate: FxRateSummary? = null) : FxRatePort {
     override fun getRate(source: Currency, target: Currency, date: LocalDate): FxRateSummary? = rate
+}
+
+class StubAssetMarkPricePort(
+    private val priceByAsset: Map<UUID, Long> = emptyMap()
+) : AssetMarkPricePort {
+    override fun findUnitPriceMinorInCurrency(
+        assetId: UUID,
+        currency: Currency,
+        date: LocalDate
+    ): UnitPriceInCurrency? {
+        val minor = priceByAsset[assetId] ?: return null
+        return UnitPriceInCurrency(priceMinorPerUnit = minor, pricedOn = date)
+    }
+}
+
+class StubAssetLabelPort(
+    private val labels: Map<UUID, AssetLabel> = emptyMap()
+) : AssetLabelPort {
+    override fun labelsFor(assetIds: Set<UUID>): Map<UUID, AssetLabel> =
+        assetIds.mapNotNull { id -> labels[id]?.let { id to it } }.toMap()
 }
 
 class StubFeePort(private val fees: List<FeeSummary> = emptyList()) : FeePort {
@@ -62,8 +86,20 @@ fun transaction(
     amount: Long,
     currency: Currency = Currency.EUR,
     date: LocalDate = LocalDate.of(2024, 1, 15),
-    type: String = "DEPOSIT"
-) = TransactionSummary(accountId, amount, currency, date, type)
+    type: String = "DEPOSIT",
+    assetId: UUID? = null,
+    assetQuantityMinor: Long? = null,
+    assetQuantityScale: Int? = null
+) = TransactionSummary(
+    accountId,
+    amount,
+    currency,
+    date,
+    type,
+    assetId,
+    assetQuantityMinor,
+    assetQuantityScale
+)
 
 fun fee(
     accountId: UUID,

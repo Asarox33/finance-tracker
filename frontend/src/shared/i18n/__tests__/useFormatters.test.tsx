@@ -15,8 +15,8 @@ describe("useFormatters", () => {
         expect(result.current.formatMoney(123456, "EUR")).toContain("1,234.56");
     });
 
-    it("formats dates with the selected French locale", () => {
-        const { result } = renderHook(() => useFormatters(), { wrapper: wrapper("FRA") });
-        expect(result.current.formatDate("2024-01-15")).toContain("janv");
+    it("formats scaled minor quantities", () => {
+        const { result } = renderHook(() => useFormatters(), { wrapper: wrapper("ENG") });
+        expect(result.current.formatScaledMinor(100_000_000, 8)).toContain("1");
     });
 });

@@ -40,4 +40,17 @@ class ListAssetsTest {
         val result = useCase.execute(ListAssets.Query(page = 0, pageSize = 3))
         assertEquals(2, result.totalPages)
     }
+
+    @Test
+    fun filtersByNameTickerOrIsin() {
+        repository.save(testAsset(name = "Apple Inc.", ticker = "AAPL", isin = "US0378331005"))
+        repository.save(testAsset(name = "Microsoft Corp.", ticker = "MSFT", isin = "US5949181045"))
+        val byName = useCase.execute(ListAssets.Query(name = "Apple"))
+        assertEquals(1, byName.items.size)
+        assertEquals("Apple Inc.", byName.items.single().name)
+        val byTicker = useCase.execute(ListAssets.Query(name = "MSFT"))
+        assertEquals(1, byTicker.items.size)
+        val byIsin = useCase.execute(ListAssets.Query(name = "US594918"))
+        assertEquals(1, byIsin.items.size)
+    }
 }

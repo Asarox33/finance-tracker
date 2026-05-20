@@ -91,7 +91,18 @@ class TransactionController(
 
         @param:JsonProperty("appliedFxTargetCurrency")
         @field:Schema(example = "EUR")
-        val appliedFxTargetCurrency: Currency? = null
+        val appliedFxTargetCurrency: Currency? = null,
+
+        @param:JsonProperty("assetQuantityMinor")
+        @field:Schema(
+            example = "100000000",
+            description = "Asset quantity in minor units at assetQuantityScale (BUY/SELL only). Omit to derive from cash using a recorded price."
+        )
+        val assetQuantityMinor: Long? = null,
+
+        @param:JsonProperty("assetQuantityScale")
+        @field:Schema(example = "8", description = "Decimal scale for assetQuantityMinor (e.g. 8 for BTC-style assets). Defaults to 8 when quantity is provided without scale.")
+        val assetQuantityScale: Int? = null
     )
 
     data class TransactionResponse(
@@ -108,7 +119,9 @@ class TransactionController(
         val appliedFxRateScale: Int?,
         val appliedFxRateDate: LocalDate?,
         val appliedFxSourceCurrency: Currency?,
-        val appliedFxTargetCurrency: Currency?
+        val appliedFxTargetCurrency: Currency?,
+        val assetQuantityMinor: Long?,
+        val assetQuantityScale: Int?
     )
 
     @PostMapping
@@ -132,7 +145,9 @@ class TransactionController(
                 appliedFxRateScale = request.appliedFxRateScale,
                 appliedFxRateDate = request.appliedFxRateDate,
                 appliedFxSourceCurrency = request.appliedFxSourceCurrency,
-                appliedFxTargetCurrency = request.appliedFxTargetCurrency
+                appliedFxTargetCurrency = request.appliedFxTargetCurrency,
+                assetQuantityMinor = request.assetQuantityMinor,
+                assetQuantityScale = request.assetQuantityScale
             )
         ).transactionId
         return getTransaction.execute(transactionId, UUID.fromString(userId)).toResponse()
@@ -183,6 +198,8 @@ class TransactionController(
         appliedFxRateScale = appliedFxRateScale,
         appliedFxRateDate = appliedFxRateDate,
         appliedFxSourceCurrency = appliedFxSourceCurrency,
-        appliedFxTargetCurrency = appliedFxTargetCurrency
+        appliedFxTargetCurrency = appliedFxTargetCurrency,
+        assetQuantityMinor = assetQuantityMinor,
+        assetQuantityScale = assetQuantityScale
     )
 }

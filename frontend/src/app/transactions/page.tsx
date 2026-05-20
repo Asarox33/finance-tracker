@@ -10,20 +10,16 @@ import ListPagination from "@/shared/components/ListPagination";
 import { useTablePageSize } from "@/shared/hooks/useTablePageSize";
 import { Badge, Button, Card, EmptyState, ErrorState, PageHeader, Skeleton } from "@/shared/components/ui";
 import { useFormatters, useI18n, type TranslationKey } from "@/shared/i18n";
-import type { Account, Transaction, TransactionType } from "@/shared/types";
+import AssetPicker, { formatAssetOptionLabel } from "@/features/assets/components/AssetPicker";
+import { useAsset } from "@/features/assets/hooks/useAssets";
+import {
+    allowedTransactionTypesForAccount,
+    isTransactionTypeAllowed,
+    pickDefaultTransactionType,
+    transactionTypeRequiresAsset,
+} from "@/lib/accountTransactionTypes";
+import type { Account, AccountType, Transaction, TransactionType } from "@/shared/types";
 import styles from "./page.module.css";
-
-const TRANSACTION_TYPES: TransactionType[] = [
-    "DEPOSIT",
-    "WITHDRAWAL",
-    "TRANSFER",
-    "BUY",
-    "SELL",
-    "DIVIDEND",
-    "FEE",
-    "TAX",
-    "OTHER",
-];
 
 const TYPE_VARIANTS: Record<string, "success" | "danger" | "warning" | "default"> = {
     DEPOSIT: "success",
@@ -74,6 +70,30 @@ function sanitizeAmountInput(value: string, type: TransactionType): string {
         }
         if (char === "-" && negativeAllowed && result.length === 0) {
             result += char;
+        }
+    }
+
+    return result;
+}
+
+function sanitizeQuantityInput(value: string): string {
+    const normalized = value.replace(",", ".");
+    let result = "";
+    let hasSeparator = false;
+    let decimalCount = 0;
+
+    for (const char of normalized) {
+        if (char >= "0" && char <= "9") {
+            if (hasSeparator) {
+                if (decimalCount >= 8) continue;
+                decimalCount += 1;
+            }
+            result += char;
+            continue;
+        }
+        if (char === "." && !hasSeparator) {
+            result += char;
+            hasSeparator = true;
         }
     }
 
@@ -334,10 +354,11 @@ export default function TransactionsPage() {
                     </Card>
                 )}
 
-                {showForm && selectedAccount && !selectedAccountIsClosed && (
+                {showForm && selectedAccount && !selectedAccountIsClosed && selectedAccountRecord && (
                     <AddTransactionForm
                         accountId={selectedAccount}
-                        currency={selectedAccountRecord?.currency ?? "EUR"}
+                        accountType={selectedAccountRecord.type}
+                        currency={selectedAccountRecord.currency}
                         onSuccess={() => {
                             setShowForm(false);
                             mutate();
@@ -385,14 +406,12 @@ export default function TransactionsPage() {
                             />
                         ) : (
                             <Card>
-                                <table
-                                    className={styles.transactionTable}
-                                    aria-label={t("transactions.tableAria")}
-                                >
+                                <table className={styles.transactionTable} aria-label={t("transactions.tableAria")}>
                                     <colgroup>
                                         <col className={styles.colDate} />
-                                        <col />
+                                        <col className={styles.colLabel} />
                                         <col className={styles.colType} />
+                                        <col className={styles.colAssetQty} />
                                         <col className={styles.colAmount} />
                                         <col className={styles.colActions} />
                                     </colgroup>
@@ -422,6 +441,13 @@ export default function TransactionsPage() {
                                             >
                                                 {t("transactions.type")}
                                             </SortHeader>
+                                            <th
+                                                scope="col"
+                                                className={styles.assetQtyHeader}
+                                                style={{ textAlign: "left" }}
+                                            >
+                                                {t("transactions.assetQuantityColumn")}
+                                            </th>
                                             <SortHeader
                                                 sortKey="amount"
                                                 currentSort={transactionSort}
@@ -567,45 +593,101 @@ function AccountOption({ account, closed = false }: { account: Account; closed?:
 
 function AddTransactionForm({
     accountId,
+    accountType,
     currency,
     onSuccess,
     onCancel,
 }: {
     accountId: string;
+    accountType: AccountType;
     currency: string;
     onSuccess: () => void;
     onCancel: () => void;
 }) {
     const { t } = useI18n();
-    const [type, setType] = useState<TransactionType>("DEPOSIT");
+    const allowedTypes = useMemo(() => allowedTransactionTypesForAccount(accountType), [accountType]);
+    const [type, setType] = useState<TransactionType>(() => pickDefaultTransactionType(accountType));
+    const [tradeLegMode, setTradeLegMode] = useState<"cash" | "quantity">("cash");
     const [amount, setAmount] = useState("");
     const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
     const [label, setLabel] = useState("");
     const [notes, setNotes] = useState("");
+    const [assetId, setAssetId] = useState("");
+    const [assetLabel, setAssetLabel] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const showAssetPicker = transactionTypeRequiresAsset(type);
+
+    useEffect(() => {
+        if (!isTransactionTypeAllowed(accountType, type)) {
+            const next = pickDefaultTransactionType(accountType);
+            setType(next);
+            setAmount((current) => sanitizeAmountInput(current, next));
+        }
+    }, [accountType, type]);
+
+    useEffect(() => {
+        if (!transactionTypeRequiresAsset(type)) {
+            setAssetId("");
+            setAssetLabel(null);
+            setTradeLegMode("cash");
+        }
+    }, [type]);
+
+    useEffect(() => {
+        setAmount("");
+    }, [tradeLegMode]);
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
-        const amountFloat = Number(amount);
-        if (isNaN(amountFloat) || amountFloat === 0) {
-            setError(t("transactions.amountValidationError"));
+        if (transactionTypeRequiresAsset(type) && !assetId.trim()) {
+            setError(t("transactions.assetRequired"));
             return;
         }
+
         setLoading(true);
         setError(null);
         try {
-            const fractionDigits = 2;
-            const amountMinor = Math.round(amountFloat * Math.pow(10, fractionDigits));
-            await transactionsApi.create({
-                accountId,
-                type,
-                amount: amountMinor,
-                currency,
-                date,
-                label,
-                notes: notes || undefined,
-            });
+            if (transactionTypeRequiresAsset(type) && tradeLegMode === "quantity") {
+                const qtyFloat = Number(amount);
+                if (isNaN(qtyFloat) || qtyFloat === 0) {
+                    setError(t("transactions.quantityValidationError"));
+                    setLoading(false);
+                    return;
+                }
+                const assetQuantityMinor = Math.round(qtyFloat * 1e8);
+                await transactionsApi.create({
+                    accountId,
+                    type,
+                    amount: 0,
+                    currency,
+                    date,
+                    label,
+                    notes: notes || undefined,
+                    assetId,
+                    assetQuantityMinor,
+                    assetQuantityScale: 8,
+                });
+            } else {
+                const amountFloat = Number(amount);
+                if (isNaN(amountFloat) || amountFloat === 0) {
+                    setError(t("transactions.amountValidationError"));
+                    setLoading(false);
+                    return;
+                }
+                const fractionDigits = 2;
+                const amountMinor = Math.round(amountFloat * Math.pow(10, fractionDigits));
+                await transactionsApi.create({
+                    accountId,
+                    type,
+                    amount: amountMinor,
+                    currency,
+                    date,
+                    label,
+                    notes: notes || undefined,
+                    ...(assetId ? { assetId } : {}),
+                });
+            }
             onSuccess();
         } catch (err) {
             setError((err as { message?: string }).message ?? t("transactions.createError"));
@@ -613,6 +695,17 @@ function AddTransactionForm({
             setLoading(false);
         }
     }
+
+    const amountLabel =
+        showAssetPicker && tradeLegMode === "quantity"
+            ? t("transactions.quantityLabel")
+            : t("transactions.amountWithCurrency", { currency });
+
+    const amountHint = showAssetPicker
+        ? tradeLegMode === "quantity"
+            ? t("transactions.quantityHint")
+            : t("transactions.buySellCashHint")
+        : t("transactions.withdrawalHint");
 
     return (
         <Card className={styles.formCard}>
@@ -625,39 +718,83 @@ function AddTransactionForm({
                 )}
 
                 <div className={styles.formGrid}>
-                    <div className={styles.field}>
-                        <label htmlFor="tx-type">{t("transactions.type")}</label>
-                        <select
-                            id="tx-type"
-                            value={type}
-                            onChange={(e) => {
-                                const nextType = e.target.value as TransactionType;
-                                setType(nextType);
-                                setAmount((current) => sanitizeAmountInput(current, nextType));
-                            }}
-                            disabled={loading}
-                        >
-                            {TRANSACTION_TYPES.map((transactionType) => (
-                                <option key={transactionType} value={transactionType}>
-                                    {t(`transactionType.${transactionType}` as TranslationKey)}
-                                </option>
-                            ))}
-                        </select>
+                    <div className={showAssetPicker ? styles.formRowTypeAsset : styles.formRowTypeOnly}>
+                        <div className={styles.field}>
+                            <label htmlFor="tx-type">{t("transactions.type")}</label>
+                            <select
+                                id="tx-type"
+                                className={styles.formSelect}
+                                value={type}
+                                onChange={(e) => {
+                                    const nextType = e.target.value as TransactionType;
+                                    setType(nextType);
+                                    setTradeLegMode("cash");
+                                    setAmount((current) => sanitizeAmountInput(current, nextType));
+                                }}
+                                disabled={loading}
+                            >
+                                {allowedTypes.map((transactionType) => (
+                                    <option key={transactionType} value={transactionType}>
+                                        {t(`transactionType.${transactionType}` as TranslationKey)}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {showAssetPicker && (
+                            <div className={styles.field}>
+                                <label htmlFor="tx-asset">{t("transactions.asset")}</label>
+                                <AssetPicker
+                                    value={assetId}
+                                    selectedLabel={assetLabel}
+                                    onChange={(id, asset) => {
+                                        setAssetId(id);
+                                        setAssetLabel(formatAssetOptionLabel(asset));
+                                    }}
+                                    onClear={() => {
+                                        setAssetId("");
+                                        setAssetLabel(null);
+                                    }}
+                                    disabled={loading}
+                                />
+                            </div>
+                        )}
                     </div>
 
+                    {showAssetPicker && (
+                        <div className={styles.tradeLegGroup} role="group" aria-labelledby="tx-trade-leg-label">
+                            <p id="tx-trade-leg-label" className={styles.tradeLegLabel}>
+                                {t("transactions.tradeLegMode")}
+                            </p>
+                            <div className={styles.tradeLegOptions}>
+                                <label className={styles.tradeLegOption}>
+                                    <input
+                                        type="radio"
+                                        name="tradeLeg"
+                                        className={styles.tradeLegRadio}
+                                        checked={tradeLegMode === "cash"}
+                                        onChange={() => setTradeLegMode("cash")}
+                                        disabled={loading}
+                                    />
+                                    <span>{t("transactions.tradeLegCash")}</span>
+                                </label>
+                                <label className={styles.tradeLegOption}>
+                                    <input
+                                        type="radio"
+                                        name="tradeLeg"
+                                        className={styles.tradeLegRadio}
+                                        checked={tradeLegMode === "quantity"}
+                                        onChange={() => setTradeLegMode("quantity")}
+                                        disabled={loading}
+                                    />
+                                    <span>{t("transactions.tradeLegQuantity")}</span>
+                                </label>
+                            </div>
+                        </div>
+                    )}
+
                     <div className={styles.field}>
-                        <label htmlFor="tx-amount">
-                            {t("transactions.amountWithCurrency", { currency })}
-                            <span
-                                style={{
-                                    fontWeight: 400,
-                                    color: "var(--text-dim)",
-                                    marginLeft: "0.5rem",
-                                }}
-                            >
-                                {t("transactions.withdrawalHint")}
-                            </span>
-                        </label>
+                        <label htmlFor="tx-amount">{amountLabel}</label>
                         <input
                             id="tx-amount"
                             type="text"
@@ -665,11 +802,25 @@ function AddTransactionForm({
                             required
                             aria-required="true"
                             value={amount}
-                            onChange={(e) => setAmount(sanitizeAmountInput(e.target.value, type))}
-                            placeholder={t("transactions.amountPlaceholder")}
+                            onChange={(e) =>
+                                setAmount(
+                                    showAssetPicker && tradeLegMode === "quantity"
+                                        ? sanitizeQuantityInput(e.target.value)
+                                        : sanitizeAmountInput(e.target.value, type)
+                                )
+                            }
+                            placeholder={
+                                showAssetPicker && tradeLegMode === "quantity"
+                                    ? "0.25"
+                                    : t("transactions.amountPlaceholder")
+                            }
                             disabled={loading}
                             style={{ fontFamily: "var(--font-mono)" }}
+                            aria-describedby="tx-amount-hint"
                         />
+                        <p id="tx-amount-hint" className={styles.fieldHint}>
+                            {amountHint}
+                        </p>
                     </div>
 
                     <div className={styles.field}>
@@ -746,8 +897,9 @@ function TransactionDetail({
     onClose: () => void;
     onDelete: () => void;
 }) {
-    const { formatDate, formatMoney } = useFormatters();
+    const { formatDate, formatMoney, formatScaledMinor } = useFormatters();
     const { t } = useI18n();
+    const { asset } = useAsset(tx.assetId ?? "");
 
     return (
         <Card className={styles.detailCard}>
@@ -775,8 +927,20 @@ function TransactionDetail({
                 </div>
                 <div>
                     <dt>{t("transactions.asset")}</dt>
-                    <dd>{tx.assetId ?? t("common.optional")}</dd>
+                    <dd>
+                        {tx.assetId
+                            ? asset?.name
+                                ? `${asset.name} (${tx.assetId})`
+                                : tx.assetId
+                            : t("common.optional")}
+                    </dd>
                 </div>
+                {tx.assetQuantityMinor != null && tx.assetQuantityScale != null ? (
+                    <div>
+                        <dt>{t("transactions.detailQuantity")}</dt>
+                        <dd>{formatScaledMinor(tx.assetQuantityMinor, tx.assetQuantityScale)}</dd>
+                    </div>
+                ) : null}
                 <div>
                     <dt>{t("transactions.notes")}</dt>
                     <dd>{tx.notes || t("common.optional")}</dd>
@@ -822,8 +986,12 @@ function TransactionRow({
 }) {
     const signedAmount = signedTransactionAmount(tx);
     const positive = signedAmount >= 0;
-    const { formatDate, formatMoney } = useFormatters();
+    const { formatDate, formatMoney, formatScaledMinor } = useFormatters();
     const { t } = useI18n();
+    const qtyCell =
+        tx.assetQuantityMinor != null && tx.assetQuantityScale != null
+            ? formatScaledMinor(tx.assetQuantityMinor, tx.assetQuantityScale)
+            : "—";
 
     return (
         <tr>
@@ -837,12 +1005,20 @@ function TransactionRow({
                         {tx.notes}
                     </p>
                 )}
+                {tx.assetId && (
+                    <p className={styles.assetIdHint} title={tx.assetId}>
+                        {tx.assetId.slice(0, 8)}…
+                    </p>
+                )}
             </td>
             <td className={styles.typeCell}>
                 <Badge variant={TYPE_VARIANTS[tx.type] ?? "default"}>
                     {t(`transactionType.${tx.type}` as TranslationKey)}
                 </Badge>
                 {tx.appliedFxRate && <span className={styles.typeFxHint}>{t("transactions.fx")}</span>}
+            </td>
+            <td className={styles.assetQtyCell} title={tx.assetId ?? undefined}>
+                <span className={styles.assetQtyValue}>{qtyCell}</span>
             </td>
             <td className={styles.numericCell}>
                 <span className={positive ? styles.amountPositive : styles.amountNegative}>

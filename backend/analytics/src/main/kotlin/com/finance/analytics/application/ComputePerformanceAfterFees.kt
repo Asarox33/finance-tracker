@@ -2,6 +2,7 @@ package com.finance.analytics.application
 
 import com.finance.analytics.domain.PortfolioPerformance
 import com.finance.analytics.domain.ports.AccountPort
+import com.finance.analytics.domain.ports.AssetMarkPricePort
 import com.finance.analytics.domain.ports.FeePort
 import com.finance.analytics.domain.ports.FxRatePort
 import com.finance.analytics.domain.ports.TransactionPort
@@ -14,7 +15,8 @@ class ComputePerformanceAfterFees(
     private val accountPort: AccountPort,
     private val transactionPort: TransactionPort,
     private val feePort: FeePort,
-    private val fxRatePort: FxRatePort
+    private val fxRatePort: FxRatePort,
+    private val assetMarkPricePort: AssetMarkPricePort
 ) {
     data class Query(
         val userId: UUID,
@@ -30,12 +32,22 @@ class ComputePerformanceAfterFees(
 
         val startValue = accounts.sumOf { account ->
             val txs = transactionPort.findByAccountId(query.userId, account.id, LocalDate.MIN, query.from)
-            convertToRef(txs.sumOf { it.signedAmount() }, account.currency, query.referenceCurrency, query.from)
+            convertToRef(
+                economicValueInAccountCurrency(txs, account.currency, query.from, assetMarkPricePort),
+                account.currency,
+                query.referenceCurrency,
+                query.from
+            )
         }
 
         val endValue = accounts.sumOf { account ->
             val txs = transactionPort.findByAccountId(query.userId, account.id, LocalDate.MIN, query.to)
-            convertToRef(txs.sumOf { it.signedAmount() }, account.currency, query.referenceCurrency, query.to)
+            convertToRef(
+                economicValueInAccountCurrency(txs, account.currency, query.to, assetMarkPricePort),
+                account.currency,
+                query.referenceCurrency,
+                query.to
+            )
         }
 
         val totalFees = accounts.sumOf { account ->

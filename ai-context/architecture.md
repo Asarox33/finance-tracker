@@ -74,10 +74,12 @@ frontend/src/
 │   │   ├── page.tsx              # Login form
 │   │   ├── register/page.tsx     # Registration form
 │   │   └── reset/page.tsx        # Password reset (3-step: request→confirm→done)
-│   ├── dashboard/                # Portfolio KPIs + quick links + account breakdown / empty state
+│   ├── dashboard/                # Portfolio KPIs + performance; account breakdown (cash + mark-to-market holdings + total) / empty state
 │   ├── accounts/                 # Account list + create + close/reactivate
 │   ├── institutions/             # Shared institution list, debounced filters, create, type/country cards
-│   ├── transactions/             # Transaction list + create + detail + soft delete
+│   ├── assets/                   # Paginated asset list + create (name, type, currency, identifiers)
+│   ├── transactions/             # Transaction list + create (cash- or quantity-led BUY/SELL) + detail + soft delete
+│   ├── prices/                  # Record/list asset prices (manual ops for mark-to-market)
 │   ├── analytics/                # Performance comparison + period details
 │   └── profile/                  # User profile edit form
 ├── features/                     # Business feature modules
@@ -93,6 +95,10 @@ frontend/src/
 │   │   ├── api/institutionsApi.ts
 │   │   ├── hooks/useInstitutions.ts
 │   │   └── __tests__/
+│   ├── assets/
+│   │   ├── api/assetsApi.ts
+│   │   ├── hooks/useAssets.ts
+│   │   └── __tests__/
 │   ├── analytics/
 │   │   ├── api/analyticsApi.ts   # portfolioValue, performance, performanceAfterFees, performanceAfterInflation
 │   │   ├── hooks/useAnalytics.ts # usePortfolioValue, usePerformance, usePerformanceAfterFees, usePerformanceAfterInflation
@@ -101,6 +107,9 @@ frontend/src/
 │   │   ├── api/transactionsApi.ts # list, get, create, delete
 │   │   ├── hooks/useTransactions.ts
 │   │   └── __tests__/
+│   ├── price/
+│   │   ├── api/priceApi.ts       # get, record, history
+│   │   └── (hooks optional)
 │   └── user-profile/
 │       ├── api/userProfileApi.ts  # getMe, updatePreferences
 │       ├── hooks/useUserProfile.ts # useUserProfile, useUpdatePreferences
@@ -216,8 +225,10 @@ Modules never depend on each other's infrastructure layer — only on applicatio
 | Auth | `POST /api/auth/login`, `POST /api/auth/register`, `POST /api/auth/refresh` (internal session refresh), `POST /api/auth/logout`, `POST /api/auth/password-reset/request`, `POST /api/auth/password-reset/confirm` |
 | User Profile | `GET /api/users/me`, `PUT /api/users/me/preferences` (includes preferred currency and display language) |
 | Institutions | `GET /api/institutions?page&pageSize&name&country&type`, `GET /api/institutions/:id`, `POST /api/institutions` |
+| Assets | `GET /api/assets?page&pageSize&name`, `GET /api/assets/:id`, `POST /api/assets` |
 | Accounts | `GET /api/accounts?page&pageSize&includeClosed&type`, `GET /api/accounts/:id`, `POST /api/accounts`, `DELETE /api/accounts/:id`, `POST /api/accounts/:id/reactivate` |
-| Transactions | `GET /api/transactions?accountId=...&from=...&to=...`, `GET /api/transactions/:id`, `POST /api/transactions`, `DELETE /api/transactions/:id` (soft delete) |
+| Transactions | `GET /api/transactions?accountId=...&from=...&to=...`, `GET /api/transactions/:id`, `POST /api/transactions` (BUY/SELL: `assetId`; optional `assetQuantityMinor` + `assetQuantityScale` for quantity-led trades; cash leg in account currency), `DELETE /api/transactions/:id` (soft delete) |
+| Prices | `GET /api/prices?assetId&date`, `POST /api/prices`, `GET /api/prices/history?assetId&page&pageSize` |
 | Analytics | `GET /api/analytics/portfolio-value`, `GET /api/analytics/performance`, `GET /api/analytics/performance-after-fees`, `GET /api/analytics/performance-after-inflation` |
 
 ---

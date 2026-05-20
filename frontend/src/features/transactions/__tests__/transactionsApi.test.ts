@@ -38,6 +38,8 @@ const mockTransaction = {
     appliedFxRateDate: null,
     appliedFxSourceCurrency: null,
     appliedFxTargetCurrency: null,
+    assetQuantityMinor: null,
+    assetQuantityScale: null,
 };
 
 describe("transactionsApi", () => {
@@ -173,17 +175,55 @@ describe("transactionsApi", () => {
         expect(mockFetch).not.toHaveBeenCalled();
     });
 
-    it("allows negative amounts for transfer transactions", async () => {
-        mockResponse({ ...mockTransaction, type: "TRANSFER", amount: -10000 }, 201);
+    it("allows zero cash amount for buy when asset quantity is provided", async () => {
+        mockResponse(mockTransaction, 201);
         await transactionsApi.create({
             accountId: "acc-1",
-            type: "TRANSFER",
-            amount: -10000,
+            type: "BUY",
+            amount: 0,
             currency: "EUR",
             date: "2024-01-15",
-            label: "Transfer",
+            label: "Buy BTC",
+            assetId: "asset-1",
+            assetQuantityMinor: 100_000_000,
+            assetQuantityScale: 8,
         });
         const body = JSON.parse(mockFetch.mock.calls[0][1].body);
-        expect(body.amount).toBe(-10000);
+        expect(body.amount).toBe(0);
+        expect(body.assetQuantityMinor).toBe(100_000_000);
+    });
+
+    it("rejects assetQuantityScale outside 0..18", () => {
+        expect(() =>
+            transactionsApi.create({
+                accountId: "acc-1",
+                type: "BUY",
+                amount: 0,
+                currency: "EUR",
+                date: "2024-01-15",
+                label: "Buy",
+                assetId: "asset-1",
+                assetQuantityMinor: 1,
+                assetQuantityScale: 19,
+            })
+        ).toThrow("assetQuantityScale must be an integer between 0 and 18.");
+        expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it("rejects non-integer assetQuantityScale", () => {
+        expect(() =>
+            transactionsApi.create({
+                accountId: "acc-1",
+                type: "BUY",
+                amount: 0,
+                currency: "EUR",
+                date: "2024-01-15",
+                label: "Buy",
+                assetId: "asset-1",
+                assetQuantityMinor: 1,
+                assetQuantityScale: 2.5,
+            })
+        ).toThrow("assetQuantityScale must be an integer between 0 and 18.");
+        expect(mockFetch).not.toHaveBeenCalled();
     });
 });

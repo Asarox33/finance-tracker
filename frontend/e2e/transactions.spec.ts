@@ -64,6 +64,8 @@ test("transactions supports date filters, details, and delete", async ({ page })
         id: "tx-1",
         accountId: "acc-1",
         assetId: null,
+        assetQuantityMinor: null,
+        assetQuantityScale: null,
         type: "DEPOSIT",
         amount: 10000,
         currency: "EUR",
@@ -132,7 +134,8 @@ test("transactions supports date filters, details, and delete", async ({ page })
     await page.getByLabel("Select account to view transactions").selectOption("acc-1");
     await page.getByLabel("From", { exact: true }).fill("2024-01-01");
     await page.getByLabel("To", { exact: true }).fill("2024-01-31");
-    await expect(page.getByText("Salary", { exact: true })).toBeVisible();
+    // Row is the stable visible target: inner label <p> can be reported as hidden when the label column clips in fixed layout.
+    await expect(page.getByRole("row", { name: /Salary/ })).toBeVisible();
     await page.getByRole("button", { name: "Details" }).click();
     await expect(page.getByRole("heading", { name: "Transaction details" })).toBeVisible();
     await page.getByRole("button", { name: "Delete" }).first().click();
@@ -156,6 +159,8 @@ test("transactions opens closed account history from deep link as read-only", as
         id: "tx-closed-1",
         accountId: "acc-closed",
         assetId: null,
+        assetQuantityMinor: null,
+        assetQuantityScale: null,
         type: "WITHDRAWAL",
         amount: -2500,
         currency: "EUR",
@@ -215,7 +220,7 @@ test("transactions opens closed account history from deep link as read-only", as
     await expect(page.getByLabel("Select account to view transactions")).toHaveValue("acc-closed");
     await expect(page.getByText("Closed account history")).toBeVisible();
     await expect(page.getByRole("button", { name: "+ New transaction" })).not.toBeVisible();
-    await expect(page.getByText("Archived card payment")).toBeVisible();
+    await expect(page.getByRole("row", { name: /Archived card payment/ })).toBeVisible();
     await expect(page.getByRole("button", { name: "Delete" })).not.toBeVisible();
     await page.getByRole("button", { name: "Details" }).click();
     await expect(page.getByRole("heading", { name: "Transaction details" })).toBeVisible();

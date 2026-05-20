@@ -23,6 +23,15 @@ export function formatBasisPoints(bp: number): string {
     return `${sign}${pct.toFixed(2)}%`;
 }
 
+export function formatScaledMinor(minor: number, scale: number, locale = "fr-FR"): string {
+    const maxDigits = Math.min(Math.max(scale, 0), 18);
+    const value = minor / Math.pow(10, scale);
+    return new Intl.NumberFormat(locale, {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: maxDigits,
+    }).format(value);
+}
+
 export function today(): string {
     return new Date().toISOString().split("T")[0];
 }

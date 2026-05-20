@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { useEffect, useId, useMemo, useState } from "react";
 import { useInstitutionSearch } from "@/features/institutions/hooks/useInstitutionSearch";
+import { isPickerCommitted } from "@/shared/components/searchPickerState";
 import { useI18n } from "@/shared/i18n";
 import type { Institution } from "@/shared/types";
-import styles from "./InstitutionPicker.module.css";
+import styles from "@/shared/components/picker.module.css";
 
 export interface InstitutionPickerProps {
     value: string;
@@ -28,16 +29,17 @@ export default function InstitutionPicker({
     const [open, setOpen] = useState(false);
     const [activeIndex, setActiveIndex] = useState(0);
 
-    const { institutions, totalItems, isLoading, error, canSearch } = useInstitutionSearch(query);
+    const committed = isPickerCommitted(value, selectedLabel, query, open);
+    const searchQuery = committed ? "" : query;
+    const { institutions, totalItems, isLoading, error, canSearch } = useInstitutionSearch(searchQuery);
 
     useEffect(() => {
-        if (selectedLabel) {
+        if (selectedLabel && !open) {
             setQuery(selectedLabel);
         }
-    }, [selectedLabel]);
+    }, [selectedLabel, open]);
 
-    const showList = open && canSearch && !disabled;
-
+    const showList = open && canSearch && !disabled && !committed;
     const options = useMemo(() => institutions, [institutions]);
 
     useEffect(() => {
@@ -48,6 +50,12 @@ export default function InstitutionPicker({
         onChange(inst.id, inst);
         setQuery(inst.name);
         setOpen(false);
+    }
+
+    function handleClearSelection() {
+        onClear();
+        setQuery("");
+        setOpen(true);
     }
 
     function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
@@ -69,6 +77,26 @@ export default function InstitutionPicker({
         } else if (e.key === "Escape") {
             setOpen(false);
         }
+    }
+
+    if (committed && selectedLabel) {
+        return (
+            <div className={styles.wrapper}>
+                <div className={styles.selectedCard} role="status" aria-live="polite">
+                    <span className={styles.selectedName} title={selectedLabel}>
+                        {selectedLabel}
+                    </span>
+                    <button
+                        type="button"
+                        className={styles.clearBtn}
+                        onClick={handleClearSelection}
+                        disabled={disabled}
+                    >
+                        {t("accounts.clearInstitution")}
+                    </button>
+                </div>
+            </div>
+        );
     }
 
     return (
@@ -111,14 +139,6 @@ export default function InstitutionPicker({
             )}
             {canSearch && totalItems > options.length && options.length > 0 && (
                 <p className={styles.hint}>{t("accounts.institutionSearchRefine")}</p>
-            )}
-            {value && selectedLabel && (
-                <div className={styles.selectedRow}>
-                    <span>{t("accounts.institutionSelected", { name: selectedLabel })}</span>
-                    <button type="button" className={styles.clearBtn} onClick={onClear} disabled={disabled}>
-                        {t("accounts.clearInstitution")}
-                    </button>
-                </div>
             )}
             {showList && options.length > 0 && (
                 <ul id={listId} className={styles.listbox} role="listbox">

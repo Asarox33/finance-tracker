@@ -1,6 +1,7 @@
 package com.finance.analytics.application
 
 import com.finance.analytics.StubAccountPort
+import com.finance.analytics.StubAssetMarkPricePort
 import com.finance.analytics.StubFeePort
 import com.finance.analytics.StubFxRatePort
 import com.finance.analytics.StubInflationPort
@@ -33,7 +34,8 @@ class ComputePerformanceAfterInflationTest {
             )),
             StubFeePort(),
             StubFxRatePort(),
-            StubInflationPort(InflationFactorSummary(factor = 1020000L, factorScale = 6))
+            StubInflationPort(InflationFactorSummary(factor = 1020000L, factorScale = 6)),
+            StubAssetMarkPricePort()
         )
         val result = useCase.execute(
             ComputePerformanceAfterInflation.Query(userId, from, to, Currency.EUR)
@@ -53,7 +55,8 @@ class ComputePerformanceAfterInflationTest {
             )),
             StubFeePort(),
             StubFxRatePort(),
-            StubInflationPort(null)
+            StubInflationPort(null),
+            StubAssetMarkPricePort()
         )
         val result = useCase.execute(
             ComputePerformanceAfterInflation.Query(userId, from, to, Currency.EUR)
@@ -64,7 +67,12 @@ class ComputePerformanceAfterInflationTest {
     @Test
     fun rejectsFromAfterTo() {
         val useCase = ComputePerformanceAfterInflation(
-            StubAccountPort(), StubTransactionPort(), StubFeePort(), StubFxRatePort(), StubInflationPort()
+            StubAccountPort(),
+            StubTransactionPort(),
+            StubFeePort(),
+            StubFxRatePort(),
+            StubInflationPort(),
+            StubAssetMarkPricePort()
         )
         assertThrows(InvalidRequestException::class.java) {
             useCase.execute(ComputePerformanceAfterInflation.Query(userId, to, from, Currency.EUR))

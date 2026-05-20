@@ -10,7 +10,7 @@ import { useTablePageSize } from "@/shared/hooks/useTablePageSize";
 import ListPagination from "@/shared/components/ListPagination";
 import { Card, ErrorState, PageHeader, Skeleton } from "@/shared/components/ui";
 import { useFormatters, useI18n, type TranslationKey } from "@/shared/i18n";
-import type { AccountSnapshot, AccountType } from "@/shared/types";
+import type { AccountSnapshot, AccountType, HoldingLine } from "@/shared/types";
 import { formatBasisPoints, today } from "@/lib/format";
 import styles from "./page.module.css";
 
@@ -32,7 +32,7 @@ const INSTITUTION_TYPE_CLASSES: Record<string, string> = {
     OTHER: styles.typeOther,
 };
 
-type BreakdownSortKey = "account" | "institution" | "accountValue" | "referenceValue";
+type BreakdownSortKey = "account" | "institution" | "cash" | "holdings" | "accountValue" | "referenceValue";
 type SortDirection = "asc" | "desc";
 
 interface BreakdownSort {
@@ -53,7 +53,7 @@ export default function DashboardPage() {
     const { data: portfolio, isLoading: pvLoading, error: pvError } = usePortfolioValue(analyticsCurrency);
     const { data: perf, isLoading: perfLoading, error: perfError } = usePerformance(analyticsCurrency, 12);
     const { data: institutionsCheck } = useInstitutions(0, undefined, undefined, 1);
-    const { formatDate, formatMoney } = useFormatters();
+    const { formatDate, formatMoney, formatScaledMinor } = useFormatters();
     const { t } = useI18n();
 
     const breakdownLoading = currencyLoading || pvLoading;
@@ -64,9 +64,16 @@ export default function DashboardPage() {
     const breakdownError = pvError;
     const hasSnapshots = (portfolio?.snapshots.length ?? 0) > 0;
     const nonZeroSnapshotCount =
-        portfolio?.snapshots.filter(
-            (snapshot) => snapshot.valueInAccountCurrency !== 0 || snapshot.valueInReferenceCurrency !== 0
-        ).length ?? 0;
+        portfolio?.snapshots.filter((snapshot) => {
+            const cash = snapshot.cashBalanceInAccountCurrency ?? 0;
+            const holdings = snapshot.holdingsValueInAccountCurrency ?? 0;
+            return (
+                snapshot.valueInAccountCurrency !== 0 ||
+                snapshot.valueInReferenceCurrency !== 0 ||
+                cash !== 0 ||
+                holdings !== 0
+            );
+        }).length ?? 0;
     const hasPortfolioActivity = nonZeroSnapshotCount > 0;
     const hasInstitutions = (institutionsCheck?.totalItems ?? 0) > 0;
     const activeAccountsCount = portfolio?.snapshots.length ?? 0;
@@ -177,122 +184,188 @@ export default function DashboardPage() {
                     ) : breakdownError ? (
                         <ErrorState message={t("dashboard.loadBreakdownError")} />
                     ) : showAccountBreakdown ? (
-                        <Card>
-                            <table className={styles.breakdownTable} aria-label={t("dashboard.accountValuesAria")}>
-                                <colgroup>
-                                    <col className={styles.colAccount} />
-                                    <col className={styles.colInstitution} />
-                                    <col className={styles.colValue} />
-                                    <col className={styles.colValue} />
-                                    <col className={styles.colActions} />
-                                </colgroup>
-                                <thead>
-                                    <tr>
-                                        <SortHeader
-                                            sortKey="account"
-                                            currentSort={breakdownSort}
-                                            onSort={handleBreakdownSort}
-                                            label={t("dashboard.sortByAccount")}
-                                        >
-                                            {t("dashboard.account")}
-                                        </SortHeader>
-                                        <SortHeader
-                                            sortKey="institution"
-                                            currentSort={breakdownSort}
-                                            onSort={handleBreakdownSort}
-                                            label={t("dashboard.sortByInstitution")}
-                                        >
-                                            {t("dashboard.institution")}
-                                        </SortHeader>
-                                        <SortHeader
-                                            sortKey="accountValue"
-                                            currentSort={breakdownSort}
-                                            onSort={handleBreakdownSort}
-                                            label={t("dashboard.sortByAccountValue")}
-                                            align="right"
-                                        >
-                                            {t("dashboard.value")}
-                                        </SortHeader>
-                                        <SortHeader
-                                            sortKey="referenceValue"
-                                            currentSort={breakdownSort}
-                                            onSort={handleBreakdownSort}
-                                            label={t("dashboard.sortByReferenceValue", { currency: referenceCurrency })}
-                                            align="right"
-                                        >
-                                            {t("dashboard.referenceCurrencyValue", { currency: referenceCurrency })}
-                                        </SortHeader>
-                                        <th scope="col" className={`${styles.fixedHeaderCell} ${styles.actionsCell}`}>
-                                            {t("dashboard.actions")}
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {pagedSnapshots.map((snap) => {
-                                        const accountType = snap.accountType as AccountType;
-                                        return (
-                                            <tr key={snap.accountId}>
-                                                <td>
-                                                    <div className={styles.entityCell}>
-                                                        <span className={styles.entityName} title={snap.accountName}>
-                                                            {snap.accountName}
-                                                        </span>
-                                                        <span
-                                                            className={`${styles.typePill} ${
-                                                                ACCOUNT_TYPE_CLASSES[accountType] ?? styles.typeOther
-                                                            }`}
-                                                        >
-                                                            {t(`accountType.${accountType}` as TranslationKey)}
-                                                        </span>
-                                                    </div>
-                                                </td>
-                                                <td>
-                                                    <div className={styles.entityCell}>
-                                                        <span
-                                                            className={styles.entityName}
-                                                            title={snap.institutionName}
-                                                        >
-                                                            {snap.institutionName}
-                                                        </span>
-                                                        <span
-                                                            className={`${styles.typePill} ${
-                                                                INSTITUTION_TYPE_CLASSES[snap.institutionType] ??
-                                                                styles.typeOther
-                                                            }`}
-                                                        >
-                                                            {t(
-                                                                `institutionType.${snap.institutionType}` as TranslationKey
-                                                            )}
-                                                        </span>
-                                                    </div>
-                                                </td>
-                                                <td className={styles.numericCell}>
-                                                    {formatMoney(snap.valueInAccountCurrency, snap.currency)}
-                                                </td>
-                                                <td className={styles.numericCell}>
-                                                    {formatMoney(snap.valueInReferenceCurrency, snap.referenceCurrency)}
-                                                </td>
-                                                <td className={styles.actionsCell}>
-                                                    <div className={styles.actionsCellInner}>
-                                                        <Link
-                                                            href={`/transactions?accountId=${encodeURIComponent(snap.accountId)}`}
-                                                            className={styles.transactionLink}
-                                                            aria-label={t("dashboard.viewTransactionsAria", {
-                                                                accountName: snap.accountName,
-                                                            })}
-                                                            title={t("dashboard.viewTransactionsAria", {
-                                                                accountName: snap.accountName,
-                                                            })}
-                                                        >
-                                                            <span aria-hidden="true">⇄</span>
-                                                        </Link>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
-                                </tbody>
-                            </table>
+                        <Card className={styles.breakdownCard}>
+                            <div className={styles.breakdownTableWrap}>
+                                <table className={styles.breakdownTable} aria-label={t("dashboard.accountValuesAria")}>
+                                    <colgroup>
+                                        <col className={styles.colAccount} />
+                                        <col className={styles.colInstitution} />
+                                        <col className={styles.colCash} />
+                                        <col className={styles.colHoldings} />
+                                        <col className={styles.colValue} />
+                                        <col className={styles.colValue} />
+                                        <col className={styles.colActions} />
+                                    </colgroup>
+                                    <thead>
+                                        <tr>
+                                            <SortHeader
+                                                sortKey="account"
+                                                currentSort={breakdownSort}
+                                                onSort={handleBreakdownSort}
+                                                label={t("dashboard.sortByAccount")}
+                                            >
+                                                {t("dashboard.account")}
+                                            </SortHeader>
+                                            <SortHeader
+                                                sortKey="institution"
+                                                currentSort={breakdownSort}
+                                                onSort={handleBreakdownSort}
+                                                label={t("dashboard.sortByInstitution")}
+                                            >
+                                                {t("dashboard.institution")}
+                                            </SortHeader>
+                                            <SortHeader
+                                                sortKey="cash"
+                                                currentSort={breakdownSort}
+                                                onSort={handleBreakdownSort}
+                                                label={t("dashboard.sortByCash")}
+                                                align="right"
+                                            >
+                                                {t("dashboard.cash")}
+                                            </SortHeader>
+                                            <SortHeader
+                                                sortKey="holdings"
+                                                currentSort={breakdownSort}
+                                                onSort={handleBreakdownSort}
+                                                label={t("dashboard.sortByHoldings")}
+                                                align="right"
+                                            >
+                                                {t("dashboard.holdingsMtm")}
+                                            </SortHeader>
+                                            <SortHeader
+                                                sortKey="accountValue"
+                                                currentSort={breakdownSort}
+                                                onSort={handleBreakdownSort}
+                                                label={t("dashboard.sortByAccountValue")}
+                                                align="right"
+                                            >
+                                                {t("dashboard.value")}
+                                            </SortHeader>
+                                            <SortHeader
+                                                sortKey="referenceValue"
+                                                currentSort={breakdownSort}
+                                                onSort={handleBreakdownSort}
+                                                label={t("dashboard.sortByReferenceValue", {
+                                                    currency: referenceCurrency,
+                                                })}
+                                                align="right"
+                                            >
+                                                {t("dashboard.referenceCurrencyValue", { currency: referenceCurrency })}
+                                            </SortHeader>
+                                            <th
+                                                scope="col"
+                                                className={`${styles.fixedHeaderCell} ${styles.actionsCell}`}
+                                            >
+                                                {t("dashboard.actions")}
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {pagedSnapshots.map((snap) => {
+                                            const accountType = snap.accountType as AccountType;
+                                            return (
+                                                <tr key={snap.accountId} className={styles.breakdownRow}>
+                                                    <td data-label={t("dashboard.account")}>
+                                                        <div className={styles.entityCell}>
+                                                            <span
+                                                                className={styles.entityName}
+                                                                title={snap.accountName}
+                                                            >
+                                                                {snap.accountName}
+                                                            </span>
+                                                            <span
+                                                                className={`${styles.typePill} ${
+                                                                    ACCOUNT_TYPE_CLASSES[accountType] ??
+                                                                    styles.typeOther
+                                                                }`}
+                                                            >
+                                                                {t(`accountType.${accountType}` as TranslationKey)}
+                                                            </span>
+                                                        </div>
+                                                    </td>
+                                                    <td data-label={t("dashboard.institution")}>
+                                                        <div className={styles.entityCell}>
+                                                            <span
+                                                                className={styles.entityName}
+                                                                title={snap.institutionName}
+                                                            >
+                                                                {snap.institutionName}
+                                                            </span>
+                                                            <span
+                                                                className={`${styles.typePill} ${
+                                                                    INSTITUTION_TYPE_CLASSES[snap.institutionType] ??
+                                                                    styles.typeOther
+                                                                }`}
+                                                            >
+                                                                {t(
+                                                                    `institutionType.${snap.institutionType}` as TranslationKey
+                                                                )}
+                                                            </span>
+                                                        </div>
+                                                    </td>
+                                                    <td className={styles.numericCell} data-label={t("dashboard.cash")}>
+                                                        {formatMoney(
+                                                            snap.cashBalanceInAccountCurrency ?? 0,
+                                                            snap.currency
+                                                        )}
+                                                    </td>
+                                                    <td
+                                                        className={`${styles.numericCell} ${styles.holdingsCell}`}
+                                                        data-label={t("dashboard.holdingsMtm")}
+                                                    >
+                                                        <DashboardHoldingsCell
+                                                            holdings={snap.holdings ?? []}
+                                                            accountValueInAccountCurrency={snap.valueInAccountCurrency}
+                                                            accountValueInReferenceCurrency={
+                                                                snap.valueInReferenceCurrency
+                                                            }
+                                                            referenceCurrency={snap.referenceCurrency}
+                                                            formatMoney={formatMoney}
+                                                            formatScaledMinor={formatScaledMinor}
+                                                        />
+                                                    </td>
+                                                    <td
+                                                        className={styles.numericCell}
+                                                        data-label={t("dashboard.value")}
+                                                    >
+                                                        {formatMoney(snap.valueInAccountCurrency, snap.currency)}
+                                                    </td>
+                                                    <td
+                                                        className={styles.numericCell}
+                                                        data-label={t("dashboard.referenceCurrencyValue", {
+                                                            currency: referenceCurrency,
+                                                        })}
+                                                    >
+                                                        {formatMoney(
+                                                            snap.valueInReferenceCurrency,
+                                                            snap.referenceCurrency
+                                                        )}
+                                                    </td>
+                                                    <td
+                                                        className={styles.actionsCell}
+                                                        data-label={t("dashboard.actions")}
+                                                    >
+                                                        <div className={styles.actionsCellInner}>
+                                                            <Link
+                                                                href={`/transactions?accountId=${encodeURIComponent(snap.accountId)}`}
+                                                                className={styles.transactionLink}
+                                                                aria-label={t("dashboard.viewTransactionsAria", {
+                                                                    accountName: snap.accountName,
+                                                                })}
+                                                                title={t("dashboard.viewTransactionsAria", {
+                                                                    accountName: snap.accountName,
+                                                                })}
+                                                            >
+                                                                <span aria-hidden="true">⇄</span>
+                                                            </Link>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
                             <ListPagination
                                 page={breakdownPage}
                                 pageSize={pageSize}
@@ -308,6 +381,76 @@ export default function DashboardPage() {
                 </section>
             </div>
         </div>
+    );
+}
+
+function holdingValueInReferenceCurrency(
+    holding: HoldingLine,
+    accountValueInAccountCurrency: number,
+    accountValueInReferenceCurrency: number
+): number {
+    if (accountValueInAccountCurrency === 0) {
+        return 0;
+    }
+    return Math.round(
+        (holding.valueInAccountCurrency * accountValueInReferenceCurrency) / accountValueInAccountCurrency
+    );
+}
+
+function holdingDisplayLabel(h: HoldingLine): string {
+    const name = h.assetName?.trim();
+    const ticker = h.assetTicker?.trim();
+    if (name && ticker) {
+        return `${name} (${ticker})`;
+    }
+    if (name) {
+        return name;
+    }
+    if (ticker) {
+        return ticker;
+    }
+    return h.assetId.length > 10 ? `${h.assetId.slice(0, 8)}…` : h.assetId;
+}
+
+function DashboardHoldingsCell({
+    holdings,
+    accountValueInAccountCurrency,
+    accountValueInReferenceCurrency,
+    referenceCurrency,
+    formatMoney,
+    formatScaledMinor,
+}: {
+    holdings: HoldingLine[];
+    accountValueInAccountCurrency: number;
+    accountValueInReferenceCurrency: number;
+    referenceCurrency: string;
+    formatMoney: (amount: number, currency: string) => string;
+    formatScaledMinor: (minor: number, scale: number) => string;
+}) {
+    if (holdings.length === 0) {
+        return <span className={styles.holdingsEmpty}>—</span>;
+    }
+    return (
+        <ul className={styles.holdingsList}>
+            {holdings.map((h) => {
+                const valueInRef = holdingValueInReferenceCurrency(
+                    h,
+                    accountValueInAccountCurrency,
+                    accountValueInReferenceCurrency
+                );
+                const valueTitle = formatMoney(valueInRef, referenceCurrency);
+                return (
+                    <li key={h.assetId}>
+                        <div className={styles.holdingsLine} title={valueTitle}>
+                            <span className={styles.holdingsLabel}>{holdingDisplayLabel(h)}</span>
+                            <span className={styles.holdingsQty}>
+                                {formatScaledMinor(h.quantityMinor, h.quantityScale)}
+                            </span>
+                        </div>
+                    </li>
+                );
+            })}
+        </ul>
     );
 }
 
@@ -356,7 +499,10 @@ function SortHeader({
 }
 
 function defaultSortDirection(key: BreakdownSortKey): SortDirection {
-    return key === "accountValue" || key === "referenceValue" ? "desc" : "asc";
+    if (key === "accountValue" || key === "referenceValue" || key === "cash" || key === "holdings") {
+        return "desc";
+    }
+    return "asc";
 }
 
 function compareSnapshots(a: AccountSnapshot, b: AccountSnapshot, sort: BreakdownSort): number {
@@ -369,6 +515,12 @@ function compareSnapshots(a: AccountSnapshot, b: AccountSnapshot, sort: Breakdow
             break;
         case "institution":
             result = compareText(a.institutionName, b.institutionName);
+            break;
+        case "cash":
+            result = (a.cashBalanceInAccountCurrency ?? 0) - (b.cashBalanceInAccountCurrency ?? 0);
+            break;
+        case "holdings":
+            result = (a.holdingsValueInAccountCurrency ?? 0) - (b.holdingsValueInAccountCurrency ?? 0);
             break;
         case "accountValue":
             result = a.valueInAccountCurrency - b.valueInAccountCurrency;

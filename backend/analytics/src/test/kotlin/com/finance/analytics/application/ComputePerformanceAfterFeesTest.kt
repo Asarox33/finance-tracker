@@ -1,6 +1,7 @@
 package com.finance.analytics.application
 
 import com.finance.analytics.StubAccountPort
+import com.finance.analytics.StubAssetMarkPricePort
 import com.finance.analytics.StubFeePort
 import com.finance.analytics.StubFxRatePort
 import com.finance.analytics.StubTransactionPort
@@ -31,7 +32,8 @@ class ComputePerformanceAfterFeesTest {
                 transaction(account.id, 20000L, date = LocalDate.of(2024, 3, 1))
             )),
             StubFeePort(listOf(fee(account.id, 500L))),
-            StubFxRatePort()
+            StubFxRatePort(),
+            StubAssetMarkPricePort()
         )
         val result = useCase.execute(ComputePerformanceAfterFees.Query(userId, from, to, Currency.EUR))
         assertEquals(19500L, result.gainLoss)
@@ -47,7 +49,8 @@ class ComputePerformanceAfterFeesTest {
                 transaction(account.id, 20000L, date = LocalDate.of(2024, 3, 1))
             )),
             StubFeePort(),
-            StubFxRatePort()
+            StubFxRatePort(),
+            StubAssetMarkPricePort()
         )
         val result = useCase.execute(ComputePerformanceAfterFees.Query(userId, from, to, Currency.EUR))
         assertEquals(20000L, result.gainLoss)
@@ -56,7 +59,11 @@ class ComputePerformanceAfterFeesTest {
     @Test
     fun rejectsFromAfterTo() {
         val useCase = ComputePerformanceAfterFees(
-            StubAccountPort(), StubTransactionPort(), StubFeePort(), StubFxRatePort()
+            StubAccountPort(),
+            StubTransactionPort(),
+            StubFeePort(),
+            StubFxRatePort(),
+            StubAssetMarkPricePort()
         )
         assertThrows(InvalidRequestException::class.java) {
             useCase.execute(ComputePerformanceAfterFees.Query(userId, to, from, Currency.EUR))

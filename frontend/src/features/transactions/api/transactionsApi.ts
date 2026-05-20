@@ -12,6 +12,15 @@ function assertValidAmountForType(type: string, amount: number) {
     }
 }
 
+function isQuantityLedTrade(type: string, assetQuantityMinor?: number): boolean {
+    return (
+        (type === "BUY" || type === "SELL") &&
+        assetQuantityMinor != null &&
+        Number.isInteger(assetQuantityMinor) &&
+        assetQuantityMinor > 0
+    );
+}
+
 export const transactionsApi = {
     list: (accountId: string, page = 0, pageSize = 20, from?: string, to?: string) => {
         const params = new URLSearchParams({
@@ -35,8 +44,21 @@ export const transactionsApi = {
         date: string;
         label: string;
         notes?: string;
+        assetQuantityMinor?: number;
+        assetQuantityScale?: number;
     }) => {
-        assertValidAmountForType(body.type, body.amount);
+        const quantityLed = isQuantityLedTrade(body.type, body.assetQuantityMinor);
+        if (quantityLed && body.amount === 0) {
+            // validated server-side; cash is derived from price
+        } else {
+            assertValidAmountForType(body.type, body.amount);
+        }
+        if (
+            body.assetQuantityScale != null &&
+            (!Number.isInteger(body.assetQuantityScale) || body.assetQuantityScale < 0 || body.assetQuantityScale > 18)
+        ) {
+            throw new Error("assetQuantityScale must be an integer between 0 and 18.");
+        }
         return http.post<Transaction>("/transactions", body);
     },
 

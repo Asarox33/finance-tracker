@@ -115,9 +115,8 @@
 **Key use cases:** `CreateAsset`, `GetAsset`, `ListAssets`
 
 **Frontend integration:**
-- No asset management UI exists yet
-- The transaction form does not expose an asset selector; `assetId` is not sent even for BUY/SELL transactions
-- Assets must be created via the API directly
+- **`/assets`** — `features/assets/` vertical slice: list (paginated, `profile.tablePageSize`), create form (name, type, currency, optional ISIN/ticker with client validation)
+- Transaction create form uses `AssetPicker` for BUY/SELL (`useAssetSearch` + optional `name` filter on list API)
 
 ---
 
@@ -153,9 +152,13 @@
 
 **Domain rules:**
 - `label` must not be blank
-- `amount` must not be zero (negative amounts are allowed for withdrawals/sells)
+- `amount` must not be zero after resolution (negative amounts are allowed for `TRANSFER`/`OTHER` only when submitted)
+- Transaction `currency` must match the account currency
+- Optional `assetQuantityMinor` + `assetQuantityScale` on `BUY`/`SELL` store units acquired or sold (positive minor count at the given scale; default scale **8** when deriving from cash-only input)
+- **Trade legs:** For `BUY`/`SELL`, provide **cash in account currency** and/or **asset quantity**; the missing leg is derived using `AssetTradePricingPort` (**unit price in account currency** from `price` + `fx` when quote currency differs). Both legs may be supplied together (validated against the recorded unit price within one minor tolerance). Cash-only and quantity-only modes are supported. If the pricing port is not wired or no price exists, recording fails with a clear validation error unless both legs are posted without validation (no port).
 - FX rate fields (`appliedFxRate`, `appliedFxRateScale`, `appliedFxRateDate`, `appliedFxSourceCurrency`, `appliedFxTargetCurrency`) must be **all provided or all absent** — partial set is rejected
-- `assetId` is optional (required for BUY/SELL, optional otherwise — not enforced at domain level)
+- `assetId` is required for `BUY` and `SELL`, forbidden for all other types (enforced in `RecordTransaction`)
+- Transaction type must be allowed for the account's `AccountType` (see `AccountTransactionCompatibility.kt` in the transaction module; mirrored in `frontend/src/lib/accountTransactionTypes.ts`)
 - `status` is either `ACTIVE` or `DELETED`; delete is soft and normal list/detail/analytics ignore deleted transactions
 - Record/list/get/delete requests verify the transaction account belongs to the authenticated user. Creating a transaction on a closed account is rejected.
 
@@ -169,10 +172,16 @@
 - `GET /api/transactions?accountId=...&page=0&pageSize=20&from=YYYY-MM-DD&to=YYYY-MM-DD` → `PageResult<Transaction>`; displayed as a table on `/transactions`
 - `GET /api/transactions/:id` → loads the user-facing transaction details panel
 - Account must be selected from a dropdown; `ACTIVE` accounts are listed by default, while closed accounts are listed when the include-closed toggle is enabled. `/transactions?accountId=<id>` deep-links to a selected account and automatically enables closed-account history for closed accounts.
-- `POST /api/transactions` → body includes `accountId`, `type`, `amount` (minor units), `currency`, `date`, `label`, `notes?`
+- `POST /api/transactions` → body includes `accountId`, `type`, `amount` (minor units; **0** allowed for `BUY`/`SELL` when `assetQuantityMinor`/`assetQuantityScale` derive cash server-side), `currency`, `date`, `label`, `notes?`, optional `assetId`, optional `assetQuantityMinor`/`assetQuantityScale`
 - `DELETE /api/transactions/:id` → soft-deletes a transaction after confirmation for active-account views only; closed-account history hides create/delete actions.
-- Amount input accepts digits plus one decimal separator (e.g. `100.50`); converted to minor units before sending: `Math.round(float * 10^2)`.
+- Amount input for non-quantity mode accepts digits plus one decimal separator (e.g. `100.50`); converted to minor units before sending: `Math.round(float * 10^2)`. **BUY/SELL quantity mode** uses up to **8** decimals and posts `assetQuantityMinor` at scale **8** with `amount: 0` so the backend derives cash from `GetAssetPrice` (+ FX to account currency when needed) via `AssetPricingBridge` in `app`.
 - `-` is accepted only for `TRANSFER` and `OTHER`; API/use case validation rejects negative amounts for all directional types.
+- **BUY/SELL** show `AssetPicker` and a **trade input** control: **cash in account currency** (default) or **asset quantity** (derives cash using a recorded price on the transaction date — users should maintain prices under **Prices** in the UI or via API)
+- Create form **transaction type** options depend on the selected account's type (`allowedTransactionTypesForAccount` in `src/lib/accountTransactionTypes.ts`, must match backend `AccountTransactionCompatibility.kt`):
+  - **CHECKING:** cash movements only (`DEPOSIT`, `WITHDRAWAL`, `TRANSFER`, `FEE`, `TAX`, `OTHER`) — no `BUY`/`SELL`/`DIVIDEND`
+  - **SAVINGS:** cash movements + `DIVIDEND` (e.g. interest)
+  - **BROKERAGE / CRYPTO / REAL_ESTATE / RETIREMENT:** full set including `BUY`/`SELL`/`DIVIDEND`
+  - **OTHER:** all transaction types
 - Transaction type badge colors: `DEPOSIT`/`DIVIDEND` → success (green), `WITHDRAWAL`/`FEE`/`TAX` → danger (red), `BUY`/`SELL` → warning (yellow), `TRANSFER`/`OTHER` → default (grey)
 - Pagination is implemented (previous/next buttons, page X of Y display)
 
@@ -206,9 +215,9 @@
 
 **Lookup strategy:** Exact date first, then latest on-or-before within `price.lookback-days` (default 30). Throws `NotFoundException` if none found.
 
-**Key use cases:** `RecordAssetPrice`, `GetAssetPrice`, `ListAssetPrices`
+**Key use cases:** `RecordAssetPrice` (insert or **replace** price for the same asset + date), `GetAssetPrice`, `ListAssetPrices`
 
-**Frontend integration:** No UI. Prices must be managed via the API directly.
+**Frontend integration:** Manual recording UI at `/prices` (`features/price/api/priceApi.ts`) posts `POST /api/prices`. For reliable `BUY`/`SELL` quantity mode and portfolio mark-to-market, keep prices current in the **account currency** (or in another quote currency if the corresponding FX pair exists).
 
 ---
 
@@ -270,13 +279,15 @@
 | `TransactionPort` | `ListAccountTransactions` use case |
 | `FeePort` | `ListFees` use case |
 | `FxRatePort` | `GetFxRate` use case |
+| `AssetMarkPricePort` | `AssetPricingBridge` in `app` (`GetAssetPrice` + `GetFxRate`) |
+| `AssetLabelPort` | `AssetLabelBridge` in `app` (`AssetRepository`) — name + ticker for dashboard holdings |
 | `InflationPort` | `ComputeInflationFactor` use case |
 
 **Key computations:**
 
 | Use Case | Description |
 |---|---|
-| `ComputePortfolioValue` | Sum of account balances in a reference currency at a given date |
+| `ComputePortfolioValue` | Per account: **cash** = sum of transaction signed amounts; **holdings** = net long `BUY`/`SELL` quantities with `assetQuantityMinor` × mark price from `AssetMarkPricePort` (same bridge as trades: `price` + `fx`); **total** = cash + holdings; converted to reference currency via `FxRatePort`. Snapshots expose `cashBalanceInAccountCurrency`, `holdingsValueInAccountCurrency`, `holdings[]` (per-asset `quantityMinor` / `quantityScale`, `valueInAccountCurrency`, plus `assetName` / `assetTicker` from `AssetLabelPort` when the asset exists). |
 | `ComputePerformance` | Gain/loss and basis points between two dates |
 | `ComputePerformanceAfterFees` | Performance minus total fees in the period |
 | `ComputePerformanceAfterInflation` | Performance adjusted for inflation (real return) |
@@ -294,7 +305,7 @@
 - Same shape for `performance-after-fees` and `performance-after-inflation`
 - Dashboard uses `useReferenceCurrency()` to feed profile `preferredCurrency` into `usePortfolioValue()` and `usePerformance(..., 12)` for KPI cards
 - Dashboard shows a contextual getting-started checklist while setup is incomplete (institution, account, transaction/portfolio snapshot), instead of duplicating permanent sidebar navigation
-- Each `AccountSnapshot` includes `accountName`, `accountType`, `institutionId`, `institutionName`, `institutionType` (fallbacks `"Unknown"` / `OTHER` if institution missing). Dashboard Account Breakdown rows default to sorting by reference-currency value descending, expose sortable account/institution/value column headers, and include a dedicated link to `/transactions?accountId=<id>`; account-scoped analytics links remain deferred until analytics supports account filters.
+- Each `AccountSnapshot` includes `accountName`, `accountType`, `institutionId`, `institutionName`, `institutionType` (fallbacks `"Unknown"` / `OTHER` if institution missing). Dashboard Account Breakdown rows default to sorting by reference-currency value descending, expose sortable account/institution/value column headers, and include a dedicated link to `/transactions?accountId=<id>`; account-scoped analytics links remain deferred until analytics supports account filters. Multi-asset accounts show each holding on its own line with **asset label** (name and ticker when available) and **quantity** only in the Titres column; aggregate holdings value stays in the account-value columns.
 - Dashboard currently shows current global state; backlog item: decide whether to add an `asOf` date picker here or keep historical date exploration in Analytics.
 - Analytics page adds period selector (3M/6M/1Y/3Y) that changes the `months` parameter; `monthsAgo(n)` and `today()` compute the date range. Backlog: add YTD.
 - All three performance variants are shown side-by-side in a comparison grid and detail table

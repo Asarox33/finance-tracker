@@ -1,5 +1,6 @@
 package com.finance.transaction
 
+import com.finance.account.domain.AccountType
 import com.finance.shared.Currency
 import com.finance.transaction.domain.Transaction
 import com.finance.transaction.domain.TransactionRepository
@@ -66,8 +67,23 @@ fun testTransaction(
     date: LocalDate = LocalDate.of(2024, 1, 15),
     label: String = "Monthly salary",
     notes: String? = null,
-    status: TransactionStatus = TransactionStatus.ACTIVE
-) = Transaction(id, accountId, assetId, type, amount, currency, date, label, notes, status)
+    status: TransactionStatus = TransactionStatus.ACTIVE,
+    assetQuantityMinor: Long? = null,
+    assetQuantityScale: Int? = null
+) = Transaction(
+    id,
+    accountId,
+    assetId,
+    type,
+    amount,
+    currency,
+    date,
+    label,
+    notes,
+    status,
+    assetQuantityMinor = assetQuantityMinor,
+    assetQuantityScale = assetQuantityScale
+)
 
 class StubAccountAccessPort(
     private val accounts: List<AccountAccessSummary> = emptyList()
@@ -79,6 +95,7 @@ class StubAccountAccessPort(
 fun accountAccessSummary(
     id: UUID = UUID.randomUUID(),
     userId: UUID = UUID.randomUUID(),
+    type: AccountType = AccountType.CHECKING,
     currency: Currency = Currency.EUR,
     active: Boolean = true
-) = AccountAccessSummary(id, userId, currency, active)
+) = AccountAccessSummary(id, userId, type, currency, active)

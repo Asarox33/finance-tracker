@@ -103,11 +103,19 @@
 
 .colAccount,
 .colInstitution {
-    width: 26%;
+    width: 18%;
+}
+
+.colCash {
+    width: 11%;
+}
+
+.colHoldings {
+    width: 15%;
 }
 
 .colValue {
-    width: 22%;
+    width: 14%;
 }
 
 .colActions {
@@ -145,7 +153,7 @@
     letter-spacing: 0.06em;
     padding: 0;
     text-transform: uppercase;
-    vertical-align: middle;
+    vertical-align: bottom;
 }
 
 .breakdownTable .fixedHeaderCell {
@@ -155,6 +163,8 @@
 
 .breakdownTable .sortableHeaderCell {
     color: var(--accent);
+    padding: 0.75rem 1rem;
+    vertical-align: bottom;
 }
 
 .sortHeader {
@@ -168,15 +178,15 @@
     font: inherit;
     gap: 0.35rem;
     justify-content: flex-start;
-    margin: 0.35rem;
+    margin: 0;
     min-height: 2.05rem;
-    padding: 0.4rem 0.65rem;
+    padding: 0.35rem 0;
     text-transform: uppercase;
     transition:
         background var(--transition),
         color var(--transition);
     white-space: nowrap;
-    width: calc(100% - 0.7rem);
+    width: 100%;
 }
 
 .sortHeaderRight {
@@ -396,6 +406,190 @@
 
 .onboardingLink:hover {
     color: var(--accent);
+}
+
+/* Override .numericCell: nowrap + overflow would paint over the next column with table-layout:fixed */
+.holdingsCell {
+    font-family: inherit;
+    font-size: 0.8125rem;
+    max-width: none;
+    overflow-wrap: break-word;
+    vertical-align: top;
+    white-space: normal;
+}
+
+.holdingsList {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-end;
+    min-width: 0;
+}
+
+.holdingsList li {
+    display: block;
+    font-variant-numeric: tabular-nums;
+    max-width: 100%;
+    text-align: right;
+}
+
+.holdingsLine {
+    align-items: baseline;
+    cursor: help;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.25rem 0.5rem;
+    justify-content: flex-end;
+    max-width: 100%;
+}
+
+.holdingsLabel {
+    color: var(--text-dim);
+    flex: 0 1 auto;
+    font-size: 0.75rem;
+    font-weight: 400;
+    line-height: 1.3;
+    max-width: 100%;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    text-align: right;
+    white-space: normal;
+}
+
+.holdingsQty {
+    color: var(--text);
+    flex-shrink: 0;
+    font-family: var(--font-mono), monospace;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    line-height: 1.3;
+    white-space: nowrap;
+}
+
+.holdingsEmpty {
+    color: var(--text-dim);
+}
+
+.breakdownCard {
+    min-width: 0;
+}
+
+.breakdownTableWrap {
+    min-width: 0;
+}
+
+@media (max-width: 768px) {
+    .body {
+        padding: 0 1rem 1.5rem;
+        gap: 1.25rem;
+    }
+
+    .kpis {
+        grid-template-columns: 1fr;
+    }
+
+    .kpiValue {
+        font-size: 1.625rem;
+    }
+
+    .sectionTitle {
+        font-size: 1rem;
+    }
+
+    .breakdownTable colgroup,
+    .breakdownTable thead {
+        display: none;
+    }
+
+    .breakdownTable,
+    .breakdownTable tbody {
+        display: block;
+        width: 100%;
+    }
+
+    .breakdownRow {
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        display: block;
+        margin-bottom: 0.75rem;
+        padding: 0.25rem 0;
+    }
+
+    .breakdownRow:last-child {
+        margin-bottom: 0;
+    }
+
+    .breakdownTable td {
+        align-items: start;
+        border-bottom: 1px solid var(--border-subtle);
+        display: grid;
+        gap: 0.35rem 0.75rem;
+        grid-template-columns: minmax(0, 38%) minmax(0, 62%);
+        padding: 0.625rem 0.75rem;
+        text-align: left;
+        vertical-align: top;
+    }
+
+    .breakdownTable td::before {
+        color: var(--text-muted);
+        content: attr(data-label);
+        font-size: 0.6875rem;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        line-height: 1.3;
+        text-transform: uppercase;
+    }
+
+    .breakdownTable td:last-child {
+        border-bottom: none;
+    }
+
+    .breakdownTable .numericCell {
+        font-family: var(--font-mono), monospace;
+        text-align: right;
+        white-space: normal;
+    }
+
+    .breakdownTable .numericCell::before {
+        text-align: left;
+    }
+
+    .breakdownTable .holdingsCell {
+        max-width: none;
+    }
+
+    .breakdownTable .holdingsList {
+        align-items: flex-start;
+    }
+
+    .breakdownTable .holdingsLine {
+        justify-content: flex-start;
+    }
+
+    .breakdownTable .holdingsLabel {
+        text-align: left;
+    }
+
+    .breakdownTable .actionsCell {
+        display: block;
+        padding-top: 0.25rem;
+        text-align: center;
+    }
+
+    .breakdownTable .actionsCell::before {
+        display: block;
+        margin-bottom: 0.35rem;
+    }
+
+    .breakdownTable .actionsCellInner {
+        justify-content: center;
+        width: 100%;
+    }
 }
 
 @media (max-width: 640px) {

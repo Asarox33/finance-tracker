@@ -156,17 +156,20 @@ describe("InstitutionPicker", () => {
 
     it("calls onClear when input is emptied", async () => {
         const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
-        const { onClear } = renderPicker({ value: "inst-1", selectedLabel: "BNP Paribas" });
+        const { onClear } = renderPicker();
 
-        await user.clear(screen.getByRole("combobox"));
+        const input = screen.getByRole("combobox");
+        await user.type(input, "BNP");
+        await user.clear(input);
         expect(onClear).toHaveBeenCalled();
     });
 
-    it("shows selected institution row and clear button", async () => {
+    it("shows selected institution card and clear button", async () => {
         const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
         const { onClear } = renderPicker({ value: "inst-1", selectedLabel: "BNP Paribas" });
 
-        expect(screen.getByText("Selected: BNP Paribas")).toBeInTheDocument();
+        expect(screen.getByText("BNP Paribas")).toBeInTheDocument();
+        expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
         await user.click(screen.getByRole("button", { name: "Clear selection" }));
         expect(onClear).toHaveBeenCalled();
     });
@@ -201,6 +204,6 @@ describe("InstitutionPicker", () => {
             </I18nProvider>
         );
 
-        expect(screen.getByRole("combobox")).toHaveValue("Updated Bank");
+        expect(screen.getByText("Updated Bank")).toBeInTheDocument();
     });
 });

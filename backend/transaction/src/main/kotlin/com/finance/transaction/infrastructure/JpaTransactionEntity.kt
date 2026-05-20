@@ -63,5 +63,11 @@ class JpaTransactionEntity(
 
     @Enumerated(EnumType.STRING)
     @Column(name = "applied_fx_target_currency", length = 3)
-    var appliedFxTargetCurrency: Currency?
+    var appliedFxTargetCurrency: Currency?,
+
+    @Column(name = "asset_quantity_minor")
+    var assetQuantityMinor: Long?,
+
+    @Column(name = "asset_quantity_scale")
+    var assetQuantityScale: Int?
 )

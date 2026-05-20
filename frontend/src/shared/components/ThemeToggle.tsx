@@ -6,7 +6,7 @@ import { useTheme } from "@/shared/hooks/useTheme";
 import { useI18n } from "@/shared/i18n";
 import styles from "./ThemeToggle.module.css";
 
-export default function ThemeToggle() {
+export default function ThemeToggle({ compact = false }: { compact?: boolean }) {
     const { theme, toggle } = useTheme();
     const { t } = useI18n();
     const label = theme === "dark" ? t("theme.light") : t("theme.dark");
@@ -14,7 +14,7 @@ export default function ThemeToggle() {
         <button
             type="button"
             onClick={toggle}
-            className={clsx(styles.btn, styles.btnFloating)}
+            className={clsx(styles.btn, compact ? styles.btnCompact : styles.btnFloating)}
             aria-label={theme === "dark" ? t("theme.switchToLight") : t("theme.switchToDark")}
             title={label}
         >

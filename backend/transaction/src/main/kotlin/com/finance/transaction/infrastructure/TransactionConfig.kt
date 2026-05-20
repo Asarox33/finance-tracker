@@ -6,6 +6,8 @@ import com.finance.transaction.application.ListAccountTransactions
 import com.finance.transaction.application.RecordTransaction
 import com.finance.transaction.domain.TransactionRepository
 import com.finance.transaction.domain.ports.AccountAccessPort
+import com.finance.transaction.domain.ports.AssetTradePricingPort
+import org.springframework.beans.factory.ObjectProvider
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
@@ -15,9 +17,14 @@ class TransactionConfig {
     @Bean
     fun recordTransaction(
         transactionRepository: TransactionRepository,
-        accountAccessPort: AccountAccessPort
+        accountAccessPort: AccountAccessPort,
+        assetTradePricingPort: ObjectProvider<AssetTradePricingPort>
     ): RecordTransaction =
-        RecordTransaction(transactionRepository, accountAccessPort)
+        RecordTransaction(
+            transactionRepository,
+            accountAccessPort,
+            assetTradePricingPort.getIfAvailable()
+        )
 
     @Bean
     fun getTransaction(
