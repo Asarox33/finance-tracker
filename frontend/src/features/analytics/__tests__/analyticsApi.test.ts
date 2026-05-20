@@ -85,6 +85,22 @@ describe("analyticsApi", () => {
         });
     });
 
+    it("fetches portfolio history in one request", async () => {
+        mockResponse({
+            referenceCurrency: "EUR",
+            points: [
+                { date: "2024-06-01", totalValue: 10000, currency: "EUR" },
+                { date: "2024-06-30", totalValue: 12000, currency: "EUR" },
+            ],
+        });
+        await analyticsApi.portfolioHistory(30, "EUR");
+        expect(mockFetch).toHaveBeenCalledTimes(1);
+        expect(mockFetch).toHaveBeenCalledWith(
+            expect.stringContaining("/analytics/portfolio-history?days=30"),
+            expect.anything()
+        );
+    });
+
     it("fetches performance with date range", async () => {
         mockResponse(mockPerf);
         await analyticsApi.performance("2023-06-30", "2024-06-30", "EUR");

@@ -65,15 +65,15 @@ Integrate **one vertical slice at a time** (types in `shared/types`, `features/<
 | 4 | `asset` | `features/assets/` | Done |
 | 5 | `account` | `features/accounts/` | Done |
 | 6 | `transaction` | `features/transactions/` | Done — BUY/SELL asset picker, cash vs quantity mode, stored quantity scale |
-| 7 | `fees` | `features/fees/` (to create) | Not started |
-| 8 | `price` | `features/price/` | Done — `/prices` manual asset price recording |
-| 9 | `fx` | `features/fx/` (to create) | Not started |
-| 10 | `inflation` | `features/inflation/` (to create) | Not started |
-| 11 | `analytics` | `features/analytics/` | In progress — preferred currency from profile, E2E |
+| 7 | `fees` | `features/fees/` | Done — optional management fees (`/fees`, linked from profile) |
+| 8 | `price` | `features/price/` | Done — `/prices` manual + `POST /import` (EOD provider TBD) |
+| 9 | `fx` | `features/fx/` | Done — `/fx` import UI + Frankfurter job |
+| 10 | `inflation` | `features/inflation/` | Done — `/inflation` index list |
+| 11 | `analytics` | `features/analytics/` | Done — dashboard net KPI, YTD period, `performance-summary` |
 
-**Composite UI:** `/dashboard` combines data from **account** + **analytics**; refine it after rows **5** and **11** are in good shape.
+**Product north star:** personal savings aggregator — **dashboard** shows total, **daily change**, **real 12m return** (`performance-after-inflation` when CPI exists). **Composite UI:** `/dashboard` = account + analytics.
 
-When resuming: pick the **next single row** by order (or the lowest-numbered row still “In progress” / “Not started”), finish it, then stop per scope discipline.
+When resuming: account-scoped analytics, EOD equity price provider, deeper E2E — see `ai-context/current-state.md` backlog.
 
 ---
 
@@ -198,7 +198,8 @@ src/
 - No cross-feature imports (e.g. `analytics` must not import from `accounts`)
 - All API calls go through `src/lib/http.ts` — never raw `fetch` in components or hooks
 - All shared TypeScript types live in `src/shared/types/index.ts` — never duplicated in features
-- CSS Modules only — no Tailwind, no external component libraries
+- CSS Modules only — no Tailwind, no external **UI component libraries** (no MUI, Chakra, etc.)
+- **Charting:** [Recharts](https://recharts.org/) only (`PortfolioHistoryChart` on dashboard) — pinned in `package.json`; do not add a second chart library
 - Every authenticated page section has a `layout.tsx` that wraps children in `<AppShell>`
 - Monetary amounts are **always minor-unit integers** end-to-end (e.g. €100.50 = `10050`)
 

@@ -3,6 +3,7 @@ package com.finance.price.infrastructure
 import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.finance.price.application.GetAssetPrice
+import com.finance.price.application.ImportEndOfDayPrices
 import com.finance.price.application.ListAssetPrices
 import com.finance.price.application.RecordAssetPrice
 import com.finance.price.domain.AssetPrice
@@ -13,6 +14,7 @@ import jakarta.validation.Valid
 import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
@@ -27,8 +29,10 @@ import java.util.UUID
 class AssetPriceController(
     private val recordAssetPrice: RecordAssetPrice,
     private val getAssetPrice: GetAssetPrice,
-    private val listAssetPrices: ListAssetPrices
+    private val listAssetPrices: ListAssetPrices,
+    private val importEndOfDayPrices: ImportEndOfDayPrices
 ) {
+    data class ImportPricesResponse(val importedCount: Int, val candidates: Int, val date: LocalDate)
     data class RecordAssetPriceRequest @JsonCreator constructor(
         @param:JsonProperty("assetId")
         @field:Schema(example = "3fa85f64-5717-4562-b3fc-2c963f66afa6")
@@ -80,6 +84,17 @@ class AssetPriceController(
         @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") date: LocalDate
     ): AssetPriceResponse =
         getAssetPrice.execute(GetAssetPrice.Query(assetId, date)).toResponse()
+
+    @PostMapping("/import")
+    fun importPrices(
+        @AuthenticationPrincipal userId: String,
+        @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") date: LocalDate?
+    ): ImportPricesResponse {
+        check(userId.isNotBlank())
+        val priceDate = date ?: LocalDate.now().minusDays(1)
+        val result = importEndOfDayPrices.execute(ImportEndOfDayPrices.Command(priceDate))
+        return ImportPricesResponse(result.importedCount, result.candidates, result.date)
+    }
 
     @GetMapping("/history")
     fun list(

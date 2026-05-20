@@ -3,6 +3,8 @@ package com.finance.analytics.infrastructure
 import com.finance.analytics.application.ComputePerformance
 import com.finance.analytics.application.ComputePerformanceAfterFees
 import com.finance.analytics.application.ComputePerformanceAfterInflation
+import com.finance.analytics.application.ComputePerformanceSummary
+import com.finance.analytics.application.ComputePortfolioHistory
 import com.finance.analytics.application.ComputePortfolioValue
 import com.finance.analytics.domain.PortfolioPerformance
 import com.finance.analytics.domain.PortfolioValue
@@ -20,10 +22,46 @@ import java.util.UUID
 @RequestMapping("/api/analytics")
 class AnalyticsController(
     private val computePortfolioValue: ComputePortfolioValue,
+    private val computePortfolioHistory: ComputePortfolioHistory,
     private val computePerformance: ComputePerformance,
     private val computePerformanceAfterFees: ComputePerformanceAfterFees,
-    private val computePerformanceAfterInflation: ComputePerformanceAfterInflation
+    private val computePerformanceAfterInflation: ComputePerformanceAfterInflation,
+    private val computePerformanceSummary: ComputePerformanceSummary
 ) {
+    data class PerformanceSummaryResponse(
+        val gross: PortfolioPerformance,
+        val afterFees: PortfolioPerformance,
+        val afterInflation: PortfolioPerformance,
+        val inflationApplied: Boolean
+    )
+    data class PortfolioHistoryPointResponse(
+        val date: LocalDate,
+        val totalValue: Long,
+        val currency: Currency
+    )
+
+    data class PortfolioHistoryResponse(
+        val points: List<PortfolioHistoryPointResponse>,
+        val referenceCurrency: Currency
+    )
+
+    @GetMapping("/portfolio-history")
+    fun portfolioHistory(
+        @AuthenticationPrincipal userId: String,
+        @RequestParam(defaultValue = "30") days: Int,
+        @RequestParam referenceCurrency: Currency
+    ): PortfolioHistoryResponse {
+        val result = computePortfolioHistory.execute(
+            ComputePortfolioHistory.Query(UUID.fromString(userId), days, referenceCurrency)
+        )
+        return PortfolioHistoryResponse(
+            points = result.points.map {
+                PortfolioHistoryPointResponse(it.date, it.totalValue, it.currency)
+            },
+            referenceCurrency = result.referenceCurrency
+        )
+    }
+
     @GetMapping("/portfolio-value")
     fun portfolioValue(
         @AuthenticationPrincipal userId: String,
@@ -55,6 +93,24 @@ class AnalyticsController(
         computePerformanceAfterFees.execute(
             ComputePerformanceAfterFees.Query(UUID.fromString(userId), from, to, referenceCurrency)
         )
+
+    @GetMapping("/performance-summary")
+    fun performanceSummary(
+        @AuthenticationPrincipal userId: String,
+        @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") from: LocalDate,
+        @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") to: LocalDate,
+        @RequestParam referenceCurrency: Currency
+    ): PerformanceSummaryResponse {
+        val result = computePerformanceSummary.execute(
+            ComputePerformanceSummary.Query(UUID.fromString(userId), from, to, referenceCurrency)
+        )
+        return PerformanceSummaryResponse(
+            gross = result.gross,
+            afterFees = result.afterFees,
+            afterInflation = result.afterInflation,
+            inflationApplied = result.inflationApplied
+        )
+    }
 
     @GetMapping("/performance-after-inflation")
     fun performanceAfterInflation(

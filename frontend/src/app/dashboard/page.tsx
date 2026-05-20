@@ -3,11 +3,20 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
-import { usePerformance, usePortfolioValue } from "@/features/analytics/hooks/useAnalytics";
+import {
+    useDashboardPerformance,
+    usePortfolioDailyChange,
+    usePortfolioHistory,
+    usePortfolioValue,
+} from "@/features/analytics/hooks/useAnalytics";
+import { computePortfolioDayChange } from "@/lib/dashboardPerformance";
 import { useInstitutions } from "@/features/institutions/hooks/useInstitutions";
 import { useReferenceCurrency } from "@/shared/hooks/useReferenceCurrency";
 import { useTablePageSize } from "@/shared/hooks/useTablePageSize";
 import ListPagination from "@/shared/components/ListPagination";
+import PortfolioHistoryChart, {
+    PortfolioHistoryChartLoading,
+} from "@/shared/components/PortfolioHistoryChart";
 import { Card, ErrorState, PageHeader, Skeleton } from "@/shared/components/ui";
 import { useFormatters, useI18n, type TranslationKey } from "@/shared/i18n";
 import type { AccountSnapshot, AccountType, HoldingLine } from "@/shared/types";
@@ -51,16 +60,35 @@ export default function DashboardPage() {
     const { pageSize, setPageSize } = useTablePageSize();
 
     const { data: portfolio, isLoading: pvLoading, error: pvError } = usePortfolioValue(analyticsCurrency);
-    const { data: perf, isLoading: perfLoading, error: perfError } = usePerformance(analyticsCurrency, 12);
+    const { data: dailyChange, isLoading: dailyLoading, error: dailyError } =
+        usePortfolioDailyChange(analyticsCurrency);
+    const {
+        data: netPerf,
+        isLoading: netPerfLoading,
+        error: netPerfError,
+    } = useDashboardPerformance(analyticsCurrency, 12);
+    const { data: historyPoints, isLoading: historyLoading } = usePortfolioHistory(analyticsCurrency, 30);
     const { data: institutionsCheck } = useInstitutions(0, undefined, undefined, 1);
-    const { formatDate, formatMoney, formatScaledMinor } = useFormatters();
+    const { formatChartAxisDate, formatDate, formatMoney, formatMoneyAxis, formatScaledMinor } =
+        useFormatters();
     const { t } = useI18n();
 
     const breakdownLoading = currencyLoading || pvLoading;
     const kpiLoading = currencyLoading || pvLoading;
-    const perfKpiLoading = currencyLoading || perfLoading;
+    const perfKpiLoading = currencyLoading || netPerfLoading;
+    const dailyKpiLoading = currencyLoading || dailyLoading;
 
-    const gainPositive = (perf?.gainLossBasisPoints ?? 0) >= 0;
+    const dayChange = useMemo(() => {
+        if (!dailyChange) return null;
+        return computePortfolioDayChange(
+            dailyChange.today.totalValue,
+            dailyChange.yesterday.totalValue
+        );
+    }, [dailyChange]);
+
+    const displayPerf = netPerf?.display;
+    const gainPositive = (displayPerf?.gainLossBasisPoints ?? 0) >= 0;
+    const dayChangePositive = (dayChange?.basisPoints ?? 0) >= 0;
     const breakdownError = pvError;
     const hasSnapshots = (portfolio?.snapshots.length ?? 0) > 0;
     const nonZeroSnapshotCount =
@@ -132,19 +160,51 @@ export default function DashboardPage() {
                     </Card>
 
                     <Card className={styles.kpi}>
-                        <p className={styles.kpiLabel}>{t("dashboard.performance12Month")}</p>
+                        <p className={styles.kpiLabel}>{t("dashboard.dailyChange")}</p>
+                        {dailyKpiLoading ? (
+                            <Skeleton className={styles.kpiSkel} />
+                        ) : dailyError ? (
+                            <ErrorState message={t("dashboard.loadDailyChangeError")} />
+                        ) : dayChange == null ? (
+                            <p className={styles.kpiSub}>—</p>
+                        ) : (
+                            <>
+                                <p
+                                    className={`${styles.kpiValue} ${dayChangePositive ? styles.positive : styles.negative}`}
+                                >
+                                    {formatBasisPoints(dayChange.basisPoints)}
+                                </p>
+                                <p className={styles.kpiSub}>
+                                    {formatMoney(dayChange.deltaMinor, portfolio?.currency ?? referenceCurrency)}{" "}
+                                    {t("dashboard.vsYesterday")}
+                                </p>
+                            </>
+                        )}
+                    </Card>
+
+                    <Card className={styles.kpi}>
+                        <p className={styles.kpiLabel}>{t("dashboard.realPerformance12Month")}</p>
                         {perfKpiLoading ? (
                             <Skeleton className={styles.kpiSkel} />
-                        ) : perfError ? (
+                        ) : netPerfError ? (
                             <ErrorState message={t("dashboard.loadPerformanceError")} />
                         ) : (
                             <>
                                 <p className={`${styles.kpiValue} ${gainPositive ? styles.positive : styles.negative}`}>
-                                    {formatBasisPoints(perf?.gainLossBasisPoints ?? 0)}
+                                    {formatBasisPoints(displayPerf?.gainLossBasisPoints ?? 0)}
                                 </p>
                                 <p className={styles.kpiSub}>
-                                    {formatMoney(perf?.gainLoss ?? 0, perf?.currency ?? referenceCurrency)}{" "}
+                                    {formatMoney(displayPerf?.gainLoss ?? 0, displayPerf?.currency ?? referenceCurrency)}{" "}
                                     {t("dashboard.gainLoss")}
+                                </p>
+                                {netPerf?.mode === "afterFees" && !netPerf.inflationApplied && (
+                                    <p className={styles.kpiHint}>{t("dashboard.inflationUnavailable")}</p>
+                                )}
+                                {netPerf?.mode === "gross" && (
+                                    <p className={styles.kpiHint}>{t("dashboard.grossPerformanceHint")}</p>
+                                )}
+                                <p className={styles.kpiHint}>
+                                    <Link href="/analytics">{t("dashboard.viewAnalytics")}</Link>
                                 </p>
                             </>
                         )}
@@ -162,6 +222,30 @@ export default function DashboardPage() {
                         <p className={styles.kpiSub}>{t("dashboard.acrossInstitutions")}</p>
                     </Card>
                 </section>
+
+                {!showingGettingStarted && (
+                    <section
+                        aria-label={t("dashboard.historyAria")}
+                        className={`${styles.section} ${styles.historySection}`}
+                    >
+                        <h2 className={styles.sectionTitle}>{t("dashboard.history30Day")}</h2>
+                        <Card className={styles.historyCard}>
+                            {historyLoading ? (
+                                <PortfolioHistoryChartLoading />
+                            ) : (
+                                <PortfolioHistoryChart
+                                    points={historyPoints ?? []}
+                                    currency={portfolio?.currency ?? referenceCurrency}
+                                    dayCount={30}
+                                    formatMoney={formatMoney}
+                                    formatDate={formatDate}
+                                    formatChartAxisDate={formatChartAxisDate}
+                                    formatMoneyAxis={formatMoneyAxis}
+                                />
+                            )}
+                        </Card>
+                    </section>
+                )}
 
                 {showingGettingStarted && (
                     <GettingStartedCard

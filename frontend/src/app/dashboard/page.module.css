@@ -47,6 +47,25 @@
     color: var(--text-muted);
 }
 
+.kpiHint {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    margin: 0.25rem 0 0;
+}
+
+.kpiHint a {
+    color: var(--accent);
+}
+
+.historySection {
+    width: 100%;
+}
+
+.historyCard {
+    padding: 1rem 1.25rem;
+    width: 100%;
+}
+
 .positive {
     color: var(--success);
 }

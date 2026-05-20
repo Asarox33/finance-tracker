@@ -2,8 +2,10 @@ package com.finance.fx.infrastructure
 
 import com.finance.fx.application.ConvertAmount
 import com.finance.fx.application.GetFxRate
+import com.finance.fx.application.ImportFxRates
 import com.finance.fx.application.RecordFxRate
 import com.finance.fx.domain.FxRateRepository
+import com.finance.fx.domain.ports.FxQuotePort
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -26,4 +28,8 @@ class FxConfig {
         fxRateRepository: FxRateRepository,
         @Value($$"${fx.lookback-days:30}") lookbackDays: Int
     ): ConvertAmount = ConvertAmount(fxRateRepository, lookbackDays)
+
+    @Bean
+    fun importFxRates(fxQuotePort: FxQuotePort, recordFxRate: RecordFxRate): ImportFxRates =
+        ImportFxRates(fxQuotePort, recordFxRate)
 }

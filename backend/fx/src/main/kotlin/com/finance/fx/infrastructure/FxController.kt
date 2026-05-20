@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.finance.fx.application.ConvertAmount
 import com.finance.fx.application.GetFxRate
+import com.finance.fx.application.ImportFxRates
 import com.finance.fx.application.RecordFxRate
 import com.finance.fx.domain.FxConversion
 import com.finance.fx.domain.FxRate
@@ -28,8 +29,10 @@ import java.util.UUID
 class FxController(
     private val recordFxRate: RecordFxRate,
     private val getFxRate: GetFxRate,
-    private val convertAmount: ConvertAmount
+    private val convertAmount: ConvertAmount,
+    private val importFxRates: ImportFxRates
 ) {
+    data class ImportFxRatesResponse(val importedCount: Int, val date: LocalDate)
     data class RecordFxRateRequest @JsonCreator constructor(
         @param:JsonProperty("sourceCurrency")
         @field:Schema(example = "USD")
@@ -95,9 +98,10 @@ class FxController(
     @PostMapping("/rates")
     @ResponseStatus(HttpStatus.CREATED)
     fun record(
-        @AuthenticationPrincipal _userId: String,
+        @AuthenticationPrincipal userId: String,
         @Valid @RequestBody request: RecordFxRateRequest
     ): FxRateResponse {
+        check(userId.isNotBlank())
         recordFxRate.execute(
             RecordFxRate.Command(
                 sourceCurrency = request.sourceCurrency,
@@ -114,19 +118,33 @@ class FxController(
 
     @GetMapping("/rates")
     fun getRate(
-        @AuthenticationPrincipal _userId: String,
+        @AuthenticationPrincipal userId: String,
         @RequestParam sourceCurrency: Currency,
         @RequestParam targetCurrency: Currency,
         @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") date: LocalDate
-    ): FxRateResponse =
-        getFxRate.execute(GetFxRate.Query(sourceCurrency, targetCurrency, date)).toResponse()
+    ): FxRateResponse {
+        check(userId.isNotBlank())
+        return getFxRate.execute(GetFxRate.Query(sourceCurrency, targetCurrency, date)).toResponse()
+    }
+
+    @PostMapping("/import")
+    fun importRates(
+        @AuthenticationPrincipal userId: String,
+        @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") date: LocalDate?
+    ): ImportFxRatesResponse {
+        check(userId.isNotBlank())
+        val rateDate = date ?: LocalDate.now().minusDays(1)
+        val result = importFxRates.execute(ImportFxRates.Command(rateDate))
+        return ImportFxRatesResponse(result.importedCount, result.date)
+    }
 
     @PostMapping("/convert")
     fun convert(
-        @AuthenticationPrincipal _userId: String,
+        @AuthenticationPrincipal userId: String,
         @Valid @RequestBody request: ConvertRequest
-    ): ConversionResponse =
-        convertAmount.execute(
+    ): ConversionResponse {
+        check(userId.isNotBlank())
+        return convertAmount.execute(
             ConvertAmount.Command(
                 amount = request.amount,
                 sourceCurrency = request.sourceCurrency,
@@ -134,6 +152,7 @@ class FxController(
                 rateDate = request.rateDate
             )
         ).toResponse()
+    }
 
     private fun FxRate.toResponse() = FxRateResponse(
         id = id,

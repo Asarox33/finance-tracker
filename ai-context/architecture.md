@@ -107,6 +107,10 @@ frontend/src/
 │   │   ├── api/transactionsApi.ts # list, get, create, delete
 │   │   ├── hooks/useTransactions.ts
 │   │   └── __tests__/
+│   ├── fees/
+│   │   ├── api/feesApi.ts        # list, get, record
+│   │   ├── hooks/useFees.ts
+│   │   └── __tests__/
 │   ├── price/
 │   │   ├── api/priceApi.ts       # get, record, history
 │   │   └── (hooks optional)
@@ -228,8 +232,13 @@ Modules never depend on each other's infrastructure layer — only on applicatio
 | Assets | `GET /api/assets?page&pageSize&name`, `GET /api/assets/:id`, `POST /api/assets` |
 | Accounts | `GET /api/accounts?page&pageSize&includeClosed&type`, `GET /api/accounts/:id`, `POST /api/accounts`, `DELETE /api/accounts/:id`, `POST /api/accounts/:id/reactivate` |
 | Transactions | `GET /api/transactions?accountId=...&from=...&to=...`, `GET /api/transactions/:id`, `POST /api/transactions` (BUY/SELL: `assetId`; optional `assetQuantityMinor` + `assetQuantityScale` for quantity-led trades; cash leg in account currency), `DELETE /api/transactions/:id` (soft delete) |
-| Prices | `GET /api/prices?assetId&date`, `POST /api/prices`, `GET /api/prices/history?assetId&page&pageSize` |
-| Analytics | `GET /api/analytics/portfolio-value`, `GET /api/analytics/performance`, `GET /api/analytics/performance-after-fees`, `GET /api/analytics/performance-after-inflation` |
+| Fees | `GET /api/fees?accountId&page&pageSize`, `GET /api/fees/:feeId`, `POST /api/fees` |
+| Analytics | `GET /api/analytics/portfolio-value`, `GET /api/analytics/portfolio-history?days&referenceCurrency`, `GET /api/analytics/performance`, `GET /api/analytics/performance-after-fees`, `GET /api/analytics/performance-after-inflation`, `GET /api/analytics/performance-summary` |
+| FX | `POST /api/fx/rates`, `GET /api/fx/rates`, `POST /api/fx/import`, `POST /api/fx/convert` |
+| Inflation | `POST /api/inflation/indices`, `GET /api/inflation/indices`, `GET /api/inflation/indices/list`, `GET /api/inflation/factor` |
+| Prices | `POST /api/prices`, `GET /api/prices`, `GET /api/prices/history`, `POST /api/prices/import` |
+| Dashboard | `portfolio-value` (today + yesterday), `performance-summary`, `portfolio-history?days=30` for chart |
+| FX / Prices admin | `/fx`, `/prices` trigger `POST /api/fx/import` and `POST /api/prices/import`; `MarketDataScheduler` in `app` runs both on `market-data.eod-cron` |
 
 ---
 

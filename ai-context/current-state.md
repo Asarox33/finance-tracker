@@ -76,14 +76,17 @@ Features are integrated as vertical slices. Status is **functional** where marke
 | `/login` | Sign-in, locked-account handling |
 | `/login/register` | Registration |
 | `/login/reset` | Password reset (request → OTP + new password → success) |
-| `/dashboard` | Portfolio KPIs, 12-month performance, account breakdown (**cash**, **mark-to-market holdings**, total value) with account/institution type badges, formatted currency values, and dedicated transaction links per account; contextual getting-started checklist while setup is incomplete (reference currency from profile `preferredCurrency`) |
+| `/dashboard` | **North-star home:** total portfolio value, **change vs yesterday**, **12-month real return** (after inflation when CPI data exists; fallback after-fees/gross), 30-day sparkline, account breakdown (**cash**, **holdings**, values); reference currency from profile |
 | `/accounts` | Account cards with colored type labels, type filter, create form with institution picker, close/reactivate account, show-closed toggle, pagination, and dedicated links to filtered transaction history |
 | `/institutions` | Debounced list filters, type filter, localized country-name sorted dropdowns, clear filters, pagination, shared-repository notice, create institution with client validation, colored type/country cards (`flag-icons` for country flags) |
 | `/assets` | Paginated asset cards with type pills (ticker/ISIN when present), create form (name, type, currency, optional ISIN/ticker with client validation) |
 | `/transactions` | Deep-linkable account selector (`accountId` query), optional closed-account history toggle, date-range filters, paginated table (**asset / quantity** column when recorded), create form with **AssetPicker** for `BUY`/`SELL`, **cash vs. asset-quantity** trade input (quantity mode requires a **price** for the trade date), soft-delete for active accounts, read-only history for closed accounts; transaction signs follow operation type |
-| `/prices` | Record end-of-day **asset prices** (minor units per full asset unit) in a quote currency — underpins quantity-led trades and dashboard mark-to-market |
-| `/analytics` | Period presets, performance variants; reference currency from profile `preferredCurrency` |
-| `/profile` | Profile and preferences, including preferred currency and display language |
+| `/prices` | Manual asset prices + **`POST /api/prices/import`** (scheduled EOD job; equity quote provider still stub) |
+| `/fees` | Optional **management fees** (rate calculator); nav via **profile** only |
+| `/fx` | **`POST /api/fx/import`** + Frankfurter scheduled job; admin page `/fx` |
+| `/inflation` | List CPI indices (`/inflation`); seeds in dev |
+| `/analytics` | Period presets incl. **YTD**; gross / after-fees / after-inflation comparison |
+| `/profile` | Preferences + links to fees, FX, inflation, prices |
 
 #### Frontend Test Coverage (Jest)
 
@@ -234,6 +237,7 @@ Not built (unchanged product backlog):
 | JUnit Jupiter | 6.0.3 | `libs.versions.toml` |
 | Next.js | 16.2.6 | `frontend/package.json` |
 | React / React DOM | 19.2.6 | `frontend/package.json` |
+| Recharts | 3.8.1 | `frontend/package.json` — dashboard 30-day portfolio chart |
 | TypeScript | 6.0.3 | `frontend/package.json` |
 | Playwright | 1.60.0 | `frontend/package.json` |
 | Jest | 30.4.2 | `frontend/package.json` |
@@ -291,7 +295,9 @@ Portfolio rebalancing, budget tracking, notifications, multi-currency time-serie
 
 ### Frontend
 
-- **Fees / price / fx / inflation** management pages — not started (REST exists); asset management UI is at `/assets`.
+- **EOD equity price provider** not chosen — `StubAssetQuoteAdapter` returns no quotes until replaced.
+- **Account-scoped analytics** links from dashboard deferred.
+- Asset management UI at `/assets`.
 - **Internationalised** formatting (replace hardcoded `fr-FR`).
 - **Error boundary** and optional optimistic UI patterns.
 - Broader **E2E** as listed above.

@@ -3,35 +3,51 @@
 import { useState } from "react";
 import clsx from "clsx";
 import {
-    usePerformance,
-    usePerformanceAfterFees,
-    usePerformanceAfterInflation,
+    usePerformanceAfterFeesRange,
+    usePerformanceAfterInflationRange,
+    usePerformanceRange,
     usePortfolioValue,
 } from "@/features/analytics/hooks/useAnalytics";
 import { useReferenceCurrency } from "@/shared/hooks/useReferenceCurrency";
 import { Badge, Card, ErrorState, PageHeader, Skeleton } from "@/shared/components/ui";
 import { useFormatters, useI18n, type TranslationKey } from "@/shared/i18n";
-import { formatBasisPoints } from "@/lib/format";
+import { formatBasisPoints, monthsAgo, today, yearToDateStart } from "@/lib/format";
 import type { PortfolioPerformance } from "@/shared/types";
 import styles from "./page.module.css";
 
 const PERIODS = [
-    { labelKey: "analytics.period3M", months: 3 },
-    { labelKey: "analytics.period6M", months: 6 },
-    { labelKey: "analytics.period1Y", months: 12 },
-    { labelKey: "analytics.period3Y", months: 36 },
-] satisfies { labelKey: TranslationKey; months: number }[];
+    { id: "3m", labelKey: "analytics.period3M", months: 3 },
+    { id: "6m", labelKey: "analytics.period6M", months: 6 },
+    { id: "1y", labelKey: "analytics.period1Y", months: 12 },
+    { id: "3y", labelKey: "analytics.period3Y", months: 36 },
+    { id: "ytd", labelKey: "analytics.periodYtd", ytd: true },
+] satisfies { id: string; labelKey: TranslationKey; months?: number; ytd?: boolean }[];
 
 export default function AnalyticsPage() {
     const { t } = useI18n();
-    const [months, setMonths] = useState(12);
+    const [periodId, setPeriodId] = useState("1y");
+    const period = PERIODS.find((p) => p.id === periodId) ?? PERIODS[2];
+    const from = period.ytd ? yearToDateStart() : monthsAgo(period.months ?? 12);
+    const to = today();
     const { referenceCurrency, isLoading: currencyLoading } = useReferenceCurrency();
     const analyticsCurrency = currencyLoading ? undefined : referenceCurrency;
 
     const { data: portfolio, isLoading: pvLoading } = usePortfolioValue(analyticsCurrency);
-    const { data: perf, isLoading: perfLoading, error: perfError } = usePerformance(analyticsCurrency, months);
-    const { data: perfFees, isLoading: feesLoading } = usePerformanceAfterFees(analyticsCurrency, months);
-    const { data: perfInflation, isLoading: inflLoading } = usePerformanceAfterInflation(analyticsCurrency, months);
+    const { data: perf, isLoading: perfLoading, error: perfError } = usePerformanceRange(
+        analyticsCurrency,
+        from,
+        to
+    );
+    const { data: perfFees, isLoading: feesLoading } = usePerformanceAfterFeesRange(
+        analyticsCurrency,
+        from,
+        to
+    );
+    const { data: perfInflation, isLoading: inflLoading } = usePerformanceAfterInflationRange(
+        analyticsCurrency,
+        from,
+        to
+    );
     const { formatDate, formatMoney } = useFormatters();
 
     const valueLoading = currencyLoading || pvLoading;
@@ -47,14 +63,14 @@ export default function AnalyticsPage() {
             <div className={styles.body}>
                 <div className={styles.controls}>
                     <div role="group" aria-label={t("analytics.timePeriodAria")} className={styles.periods}>
-                        {PERIODS.map(({ labelKey, months: m }) => (
+                        {PERIODS.map((p) => (
                             <button
-                                key={labelKey}
-                                className={`${styles.periodBtn} ${months === m ? styles.active : ""}`}
-                                onClick={() => setMonths(m)}
-                                aria-pressed={months === m}
+                                key={p.id}
+                                className={`${styles.periodBtn} ${periodId === p.id ? styles.active : ""}`}
+                                onClick={() => setPeriodId(p.id)}
+                                aria-pressed={periodId === p.id}
                             >
-                                {t(labelKey)}
+                                {t(p.labelKey)}
                             </button>
                         ))}
                     </div>

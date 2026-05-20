@@ -4,9 +4,11 @@ import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.finance.inflation.application.ComputeInflationFactor
 import com.finance.inflation.application.GetInflationIndex
+import com.finance.inflation.application.ListInflationIndices
 import com.finance.inflation.application.RecordInflationIndex
 import com.finance.inflation.domain.InflationIndex
 import com.finance.shared.Currency
+import com.finance.shared.PageResult
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
@@ -26,7 +28,8 @@ import java.util.UUID
 class InflationController(
     private val recordInflationIndex: RecordInflationIndex,
     private val getInflationIndex: GetInflationIndex,
-    private val computeInflationFactor: ComputeInflationFactor
+    private val computeInflationFactor: ComputeInflationFactor,
+    private val listInflationIndices: ListInflationIndices
 ) {
     data class RecordInflationIndexRequest @JsonCreator constructor(
         @param:JsonProperty("currency")
@@ -68,9 +71,10 @@ class InflationController(
     @PostMapping("/indices")
     @ResponseStatus(HttpStatus.CREATED)
     fun record(
-        @AuthenticationPrincipal _userId: String,
+        @AuthenticationPrincipal userId: String,
         @Valid @RequestBody request: RecordInflationIndexRequest
     ): InflationIndexResponse {
+        check(userId.isNotBlank())
         val yearMonth = YearMonth.parse(request.yearMonth)
         recordInflationIndex.execute(
             RecordInflationIndex.Command(
@@ -87,21 +91,36 @@ class InflationController(
 
     @GetMapping("/indices")
     fun get(
-        @AuthenticationPrincipal _userId: String,
+        @AuthenticationPrincipal userId: String,
         @RequestParam currency: Currency,
         @RequestParam yearMonth: String
-    ): InflationIndexResponse =
-        getInflationIndex.execute(
+    ): InflationIndexResponse {
+        check(userId.isNotBlank())
+        return getInflationIndex.execute(
             GetInflationIndex.Query(currency, YearMonth.parse(yearMonth))
         ).toResponse()
+    }
+
+    @GetMapping("/indices/list")
+    fun list(
+        @AuthenticationPrincipal userId: String,
+        @RequestParam currency: Currency,
+        @RequestParam(defaultValue = "0") page: Int,
+        @RequestParam(defaultValue = "24") pageSize: Int
+    ): PageResult<InflationIndexResponse> {
+        check(userId.isNotBlank())
+        val result = listInflationIndices.execute(ListInflationIndices.Query(currency, page, pageSize))
+        return PageResult.of(result.items.map { it.toResponse() }, page, pageSize, result.totalItems)
+    }
 
     @GetMapping("/factor")
     fun factor(
-        @AuthenticationPrincipal _userId: String,
+        @AuthenticationPrincipal userId: String,
         @RequestParam currency: Currency,
         @RequestParam from: String,
         @RequestParam to: String
     ): InflationFactorResponse {
+        check(userId.isNotBlank())
         val result = computeInflationFactor.execute(
             ComputeInflationFactor.Query(currency, YearMonth.parse(from), YearMonth.parse(to))
         )

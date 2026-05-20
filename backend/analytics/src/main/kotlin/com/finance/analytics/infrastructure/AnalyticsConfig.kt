@@ -3,6 +3,8 @@ package com.finance.analytics.infrastructure
 import com.finance.analytics.application.ComputePerformance
 import com.finance.analytics.application.ComputePerformanceAfterFees
 import com.finance.analytics.application.ComputePerformanceAfterInflation
+import com.finance.analytics.application.ComputePerformanceSummary
+import com.finance.analytics.application.ComputePortfolioHistory
 import com.finance.analytics.application.ComputePortfolioValue
 import com.finance.analytics.domain.ports.AccountPort
 import com.finance.analytics.domain.ports.AssetLabelPort
@@ -34,6 +36,10 @@ class AnalyticsConfig {
         assetMarkPricePort,
         assetLabelPort
     )
+
+    @Bean
+    fun computePortfolioHistory(computePortfolioValue: ComputePortfolioValue): ComputePortfolioHistory =
+        ComputePortfolioHistory(computePortfolioValue)
 
     @Bean
     fun computePerformance(
@@ -69,5 +75,17 @@ class AnalyticsConfig {
             fxRatePort,
             inflationPort,
             assetMarkPricePort
+        )
+
+    @Bean
+    fun computePerformanceSummary(
+        computePerformance: ComputePerformance,
+        computePerformanceAfterFees: ComputePerformanceAfterFees,
+        computePerformanceAfterInflation: ComputePerformanceAfterInflation
+    ): ComputePerformanceSummary =
+        ComputePerformanceSummary(
+            computePerformance,
+            computePerformanceAfterFees,
+            computePerformanceAfterInflation
         )
 }

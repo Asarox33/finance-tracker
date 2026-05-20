@@ -43,18 +43,24 @@ test("dashboard renders translated labels", async ({ page }) => {
             body: JSON.stringify({ totalValue: 0, currency: "EUR", asOf: "2024-01-15", snapshots: [] }),
         })
     );
-    await page.route("**/api/analytics/performance**", (route) =>
+    const performancePayload = {
+        startValue: 0,
+        endValue: 0,
+        currency: "EUR",
+        gainLoss: 0,
+        gainLossBasisPoints: 0,
+        from: "2023-01-15",
+        to: "2024-01-15",
+    };
+    await page.route("**/api/analytics/performance-summary**", (route) =>
         route.fulfill({
             status: 200,
             contentType: "application/json",
             body: JSON.stringify({
-                startValue: 0,
-                endValue: 0,
-                currency: "EUR",
-                gainLoss: 0,
-                gainLossBasisPoints: 0,
-                from: "2023-01-15",
-                to: "2024-01-15",
+                gross: performancePayload,
+                afterFees: performancePayload,
+                afterInflation: performancePayload,
+                inflationApplied: false,
             }),
         })
     );
@@ -62,6 +68,8 @@ test("dashboard renders translated labels", async ({ page }) => {
     await page.goto("/dashboard");
     await expect(page.getByRole("heading", { name: "Tableau de bord" })).toBeVisible();
     await expect(page.getByText("Valeur du portefeuille", { exact: true })).toBeVisible();
+    await expect(page.getByText("Depuis hier", { exact: true })).toBeVisible();
+    await expect(page.getByText("Performance réelle sur 12 mois", { exact: true })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Bien démarrer" })).toBeVisible();
     await expect(page.getByRole("link", { name: "Ajouter votre première institution" })).toBeVisible();
     await expect(page.getByRole("link", { name: "Ajouter un compte" })).toBeVisible();
@@ -113,18 +121,24 @@ test("dashboard account breakdown links to filtered transactions", async ({ page
             }),
         })
     );
-    await page.route("**/api/analytics/performance**", (route) =>
+    const perf = {
+        startValue: 10000,
+        endValue: 12345,
+        currency: "EUR",
+        gainLoss: 2345,
+        gainLossBasisPoints: 2345,
+        from: "2023-01-15",
+        to: "2024-01-15",
+    };
+    await page.route("**/api/analytics/performance-summary**", (route) =>
         route.fulfill({
             status: 200,
             contentType: "application/json",
             body: JSON.stringify({
-                startValue: 10000,
-                endValue: 12345,
-                currency: "EUR",
-                gainLoss: 2345,
-                gainLossBasisPoints: 2345,
-                from: "2023-01-15",
-                to: "2024-01-15",
+                gross: perf,
+                afterFees: perf,
+                afterInflation: perf,
+                inflationApplied: false,
             }),
         })
     );
@@ -193,18 +207,24 @@ test("dashboard breakdown paginates enriched snapshots", async ({ page }) => {
             }),
         })
     );
-    await page.route("**/api/analytics/performance**", (route) =>
+    const perfPaginated = {
+        startValue: 10000,
+        endValue: 32500,
+        currency: "EUR",
+        gainLoss: 22500,
+        gainLossBasisPoints: 2250,
+        from: "2023-01-15",
+        to: "2024-01-15",
+    };
+    await page.route("**/api/analytics/performance-summary**", (route) =>
         route.fulfill({
             status: 200,
             contentType: "application/json",
             body: JSON.stringify({
-                startValue: 10000,
-                endValue: 32500,
-                currency: "EUR",
-                gainLoss: 22500,
-                gainLossBasisPoints: 2250,
-                from: "2023-01-15",
-                to: "2024-01-15",
+                gross: perfPaginated,
+                afterFees: perfPaginated,
+                afterInflation: perfPaginated,
+                inflationApplied: false,
             }),
         })
     );

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { useUpdatePreferences, useUserProfile } from "@/features/user-profile/hooks/useUserProfile";
 import { Button, Card, ErrorState, PageHeader, Skeleton } from "@/shared/components/ui";
@@ -306,6 +307,25 @@ export default function ProfilePage() {
                         </form>
                     </Card>
                 )}
+
+                <Card>
+                    <h2 className={styles.sectionTitle}>{t("profile.dataToolsTitle")}</h2>
+                    <p className={styles.hint}>{t("profile.dataToolsDescription")}</p>
+                    <ul className={styles.toolLinks}>
+                        <li>
+                            <Link href="/fees">{t("profile.linkFees")}</Link>
+                        </li>
+                        <li>
+                            <Link href="/fx">{t("profile.linkFx")}</Link>
+                        </li>
+                        <li>
+                            <Link href="/inflation">{t("profile.linkInflation")}</Link>
+                        </li>
+                        <li>
+                            <Link href="/prices">{t("profile.linkPrices")}</Link>
+                        </li>
+                    </ul>
+                </Card>
             </div>
         </div>
     );

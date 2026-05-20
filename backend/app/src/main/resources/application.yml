@@ -71,3 +71,8 @@ price:
 
 fx:
   lookback-days: 30
+
+market-data:
+  import-enabled: true
+  eod-cron: "0 0 19 * * *"
+  timezone: Europe/Paris

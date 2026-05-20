@@ -187,9 +187,13 @@
 
 ---
 
+### Product north star (personal savings)
+
+The app aggregates **personal savings** across institutions (livret, PEA, PER/assurance vie, etc.). Primary UX is **`/dashboard`**: total value, **daily change**, **real period return** (via `performance-after-inflation` when CPI indices exist). Optional **management fees** (`fees` module) adjust analytics — do not duplicate the same cost as a `FEE` transaction.
+
 ### fees
 
-**Purpose:** Records fees associated with accounts or transactions.
+**Purpose:** Records fees associated with accounts or transactions (optional management charges, e.g. PER % on encours).
 
 **Domain rules:**
 - `label` must not be blank
@@ -199,8 +203,9 @@
 **Key use cases:** `RecordFee`, `GetFee`, `ListFees`
 
 **Frontend integration:**
-- No fee recording or viewing UI exists yet
-- Fees are included in analytics calculations (via `FeePortAdapter`) but not directly visible to the user in the UI
+- `/fees` — record fees per account; optional link via `TransactionPicker` (account-scoped, label: date · label · type · amount); rate calculator for annual % on a base (PER / life-insurance style, e.g. 0.2% on encours); default type `MANAGEMENT` for `RETIREMENT` / `OTHER` accounts
+- Do **not** duplicate cash fees already recorded as transaction type `FEE` — module fees adjust analytics only
+- Fees are included in analytics calculations (via `FeePortAdapter`) and in `performance-after-fees`
 
 ---
 
@@ -310,6 +315,8 @@
 - Analytics page adds period selector (3M/6M/1Y/3Y) that changes the `months` parameter; `monthsAgo(n)` and `today()` compute the date range. Backlog: add YTD.
 - All three performance variants are shown side-by-side in a comparison grid and detail table
 - Dashboard and analytics read reference currency from user profile preferences; hooks still default to `"EUR"` only when called without a currency argument
+- **Dashboard net KPI** = `performance-after-inflation` when CPI indices cover the period (`inflationApplied` on `performance-summary`); else after-fees, else gross
+- **Daily change** = two `portfolio-value` calls (today / yesterday); optional 30-day sparkline recalculates client-side
 
 ---
 

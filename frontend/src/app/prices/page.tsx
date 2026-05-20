@@ -133,6 +133,26 @@ export default function PricesPage() {
                             <Button type="submit" variant="primary" loading={loading}>
                                 {t("prices.submit")}
                             </Button>
+                            <Button
+                                type="button"
+                                variant="secondary"
+                                disabled={loading}
+                                onClick={async () => {
+                                    setError(null);
+                                    setSuccess(false);
+                                    setLoading(true);
+                                    try {
+                                        await pricesApi.importEndOfDay();
+                                        setSuccess(true);
+                                    } catch {
+                                        setError(t("prices.importError"));
+                                    } finally {
+                                        setLoading(false);
+                                    }
+                                }}
+                            >
+                                {t("prices.importButton")}
+                            </Button>
                         </div>
                     </form>
                 </Card>

@@ -148,3 +148,33 @@ export interface Asset {
     ticker: string | null;
     createdByUserId: string;
 }
+
+export type FeeType =
+    | "BROKERAGE"
+    | "MANAGEMENT"
+    | "CUSTODY"
+    | "TRANSACTION"
+    | "SUBSCRIPTION"
+    | "WITHDRAWAL"
+    | "OTHER";
+
+export interface Fee {
+    id: string;
+    accountId: string | null;
+    transactionId: string | null;
+    type: FeeType;
+    amount: number;
+    currency: string;
+    date: string;
+    label: string;
+}
+
+export interface RecordFeeRequest {
+    accountId: string;
+    transactionId?: string;
+    type: FeeType;
+    amount: number;
+    currency: string;
+    date: string;
+    label: string;
+}
